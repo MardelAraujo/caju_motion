@@ -1,12 +1,12 @@
 import { getRequestListener } from '@hono/node-server';
-import { createApi } from './api';
+import { createApi, type ApiExtension } from './api';
 
 /**
  * Monta a API (/api/*) dentro do dev server do Vite: editor e API na MESMA porta.
  * Tipado estruturalmente para não acoplar este pacote à versão do Vite.
  */
-export function cajuApiPlugin({ projectsDir }: { projectsDir: string }) {
-  const listener = getRequestListener(createApi({ projectsDir }).fetch);
+export function cajuApiPlugin({ projectsDir, extensions }: { projectsDir: string; extensions?: ApiExtension[] }) {
+  const listener = getRequestListener(createApi({ projectsDir, extensions }).fetch);
   return {
     name: 'caju-api',
     configureServer(server: {

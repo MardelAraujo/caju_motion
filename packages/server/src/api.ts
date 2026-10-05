@@ -11,9 +11,18 @@ export const CAJU_VERSION: string = (
   JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
 ).version;
 
-export function createApi({ projectsDir }: { projectsDir: string }) {
+/**
+ * Extensão da API: recebe o app (já com basePath `/api`) e registra rotas próprias.
+ * Usado por recursos que vivem em outros pacotes/arquivos (render, componentes) sem acoplar este módulo a eles.
+ */
+export type ApiExtension = (app: Hono, ctx: { projectsDir: string }) => void;
+
+export type ApiOptions = { projectsDir: string; extensions?: ApiExtension[] };
+
+export function createApi({ projectsDir, extensions = [] }: ApiOptions) {
   const store = createProjectStore(projectsDir);
   const app = new Hono().basePath('/api');
+  for (const extend of extensions) extend(app, { projectsDir: store.root });
 
   app.onError((err, c) => {
     if (err instanceof ProjectStoreError) return c.json({ error: err.message }, err.status);

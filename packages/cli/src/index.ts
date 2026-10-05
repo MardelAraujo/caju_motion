@@ -31,6 +31,7 @@ async function main(argv: string[]): Promise<number> {
       format: { type: 'string', default: 'reel-9x16' },
       open: { type: 'boolean', default: false },
       dev: { type: 'boolean', default: false },
+      components: { type: 'string' },
       version: { type: 'boolean', short: 'v', default: false },
       help: { type: 'boolean', short: 'h', default: false },
     },
@@ -53,7 +54,7 @@ async function main(argv: string[]): Promise<number> {
         console.error(`porta inválida: ${values.port}`);
         return 1;
       }
-      await studioCommand({ dir: values.dir, port, open: values.open, dev: values.dev });
+      await studioCommand({ dir: values.dir, port, open: values.open, dev: values.dev, components: values.components });
       return -1; // continua rodando
     }
     case 'new': {

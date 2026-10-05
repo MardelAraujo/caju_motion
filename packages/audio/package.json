@@ -1,0 +1,16 @@
+{
+  "name": "@caju-motion/audio",
+  "version": "0.1.0",
+  "description": "Caju Motion audio: builds the FFmpeg mix (filtergraph) of a project from its audio/video clips.",
+  "license": "MIT",
+  "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/audio" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "exports": {
+    ".": { "source": "./src/index.ts", "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": { "build": "tsup --config ../../tsup.config.ts" },
+  "dependencies": { "@caju-motion/schema": "0.1.0" },
+  "publishConfig": { "access": "public", "provenance": true }
+}

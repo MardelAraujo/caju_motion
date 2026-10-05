@@ -1,0 +1,38 @@
+{
+  "name": "@caju-motion/renderer-node",
+  "version": "0.1.0",
+  "description": "Caju Motion export: renders a project to MP4/MOV/WebM/GIF/PNG with headless Chromium + FFmpeg (renderMedia / renderStill).",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MardelAraujo/caju_motion.git",
+    "directory": "packages/renderer-node"
+  },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.ts"
+  },
+  "dependencies": {
+    "@caju-motion/audio": "0.1.0",
+    "@caju-motion/schema": "0.1.0",
+    "@caju-motion/server": "0.1.0",
+    "@caju-motion/studio": "0.1.0",
+    "ffmpeg-static": "^5.3.0",
+    "playwright-core": "^1.63.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
