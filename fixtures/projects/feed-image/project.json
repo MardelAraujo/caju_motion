@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "feed-image",
+  "name": "Feed com imagem",
+  "settings": {
+    "format": "feed-4x5",
+    "width": 1080,
+    "height": 1350,
+    "fps": 30,
+    "background": "#100F0F"
+  },
+  "assets": [
+    { "id": "badge", "kind": "image", "name": "Selo", "src": "assets/badge.svg", "meta": { "width": 400, "height": 400 } }
+  ],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "clips": [
+        {
+          "id": "img",
+          "type": "image",
+          "assetId": "badge",
+          "start": 0,
+          "duration": 60,
+          "transform": { "x": 540, "y": 675 },
+          "keyframes": {
+            "transform.scale": [
+              { "frame": 0, "value": 0.6, "easing": "backOut" },
+              { "frame": 20, "value": 1 }
+            ],
+            "transform.rotation": [
+              { "frame": 0, "value": -8, "easing": "easeOut" },
+              { "frame": 20, "value": 0 }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "overlay",
+      "kind": "overlay",
+      "clips": [
+        {
+          "id": "caption",
+          "type": "text",
+          "start": 20,
+          "duration": 40,
+          "transform": { "x": 540, "y": 1150 },
+          "props": { "text": "Frame por frame.", "fontFamily": "Red Hat Display", "fontSize": 64, "color": "#F3F3F0" },
+          "animationIn": { "preset": "fade-up", "duration": 12 }
+        }
+      ]
+    }
+  ]
+}

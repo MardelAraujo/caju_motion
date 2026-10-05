@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "hello-reel",
+  "name": "Hello Reel",
+  "settings": {
+    "format": "reel-9x16",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "background": "#03045E"
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "clips": [
+        {
+          "id": "bg",
+          "type": "shape",
+          "start": 0,
+          "duration": 90,
+          "transform": { "x": 540, "y": 960 },
+          "props": { "shape": "rect", "width": 1080, "height": 1920, "fill": "#03045E" }
+        }
+      ]
+    },
+    {
+      "id": "text",
+      "kind": "text",
+      "name": "Textos",
+      "clips": [
+        {
+          "id": "title",
+          "type": "text",
+          "start": 10,
+          "duration": 70,
+          "transform": { "x": 540, "y": 900 },
+          "props": { "text": "Olá, frame", "fontFamily": "Plus Jakarta Sans", "fontSize": 120, "color": "#FFFFFF" },
+          "keyframes": {
+            "opacity": [
+              { "frame": 0, "value": 0, "easing": "expoOut" },
+              { "frame": 15, "value": 1 }
+            ],
+            "transform.y": [
+              { "frame": 0, "value": 960, "easing": "expoOut" },
+              { "frame": 15, "value": 900 }
+            ],
+            "props.color": [
+              { "frame": 40, "value": "#FFFFFF", "easing": "easeInOut" },
+              { "frame": 60, "value": "#FA094E" }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "markers": [{ "id": "m-title", "frame": 10, "label": "título entra" }]
+}

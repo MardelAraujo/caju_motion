@@ -1,0 +1,38 @@
+{
+  "name": "caju-motion-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Caju Motion — code it, then move it: video by code + a visual timeline editor (Caju Studio), on the same project.json.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "caju": "tsx --conditions=source packages/cli/src/index.ts",
+    "studio": "tsx --conditions=source packages/cli/src/index.ts studio --dev",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "tsx scripts/lint-determinism.ts",
+    "test": "vitest run",
+    "skills:install": "tsx packages/skills/src/install.ts",
+    "check:fixtures": "tsx --conditions=source packages/cli/src/index.ts check --dir fixtures/projects",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run check:fixtures",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "npm run build && changeset publish"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.7",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2"
+  }
+}

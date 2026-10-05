@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      # os pacotes publicados precisam funcionar sem o monorepo: empacota e confere o CLI instalado
+      - name: smoke test (npm pack + install)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p /tmp/pack && for p in schema core renderer server studio cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
+          cd /tmp/pack && npm init -y >/dev/null
+          for p in schema core server studio; do npm pkg set "overrides.@caju-motion/$p=file:./$(ls caju-motion-$p-*.tgz)"; done
+          npm install --no-audit --no-fund ./caju-motion-cli-*.tgz ./caju-motion-renderer-*.tgz
+          npx caju --version
+          npx caju new smoke --format square-1x1 && npx caju check smoke

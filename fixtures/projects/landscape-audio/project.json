@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "id": "landscape-audio",
+  "name": "16:9 com claquete de áudio",
+  "settings": {
+    "format": "landscape-16x9",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "background": "#000000",
+    "duration": 60
+  },
+  "assets": [
+    {
+      "id": "beep",
+      "kind": "audio",
+      "name": "Beep 1 kHz (claquete)",
+      "src": "assets/beep.wav",
+      "meta": { "durationSec": 1 }
+    }
+  ],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "clips": [
+        {
+          "id": "flash",
+          "type": "shape",
+          "start": 30,
+          "duration": 1,
+          "transform": { "x": 960, "y": 540 },
+          "props": { "shape": "rect", "width": 1920, "height": 1080, "fill": "#FFFFFF" }
+        }
+      ]
+    },
+    {
+      "id": "audio-1",
+      "kind": "audio",
+      "clips": [
+        {
+          "id": "beep-clip",
+          "type": "audio",
+          "assetId": "beep",
+          "start": 30,
+          "duration": 30,
+          "audio": { "volume": 0.8, "fadeIn": 0, "fadeOut": 3 }
+        }
+      ]
+    }
+  ],
+  "markers": [{ "id": "sync", "frame": 30, "label": "flash + beep devem coincidir" }]
+}

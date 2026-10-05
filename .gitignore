@@ -1,0 +1,19 @@
+node_modules/
+dist/
+out/
+*.log
+*.tgz
+.DS_Store
+
+# cache e histórico locais de cada projeto (.frame/ = nome antigo)
+.caju/
+.frame/
+
+# cache dos geradores (narração etc.)
+.cache/
+
+# fontes locais do Studio (não redistribuíveis), ver packages/studio/public/fonts/local
+packages/studio/public/fonts/local/
+
+# arquivos temporários do teste das skills
+packages/skills/.check/

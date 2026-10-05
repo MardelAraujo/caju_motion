@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "id": "exemplo",
+  "name": "Exemplo",
+  "settings": {
+    "format": "reel-9x16",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "background": "#03045E"
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "bg",
+          "type": "shape",
+          "start": 0,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 960,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1920,
+            "fill": "#03045E"
+          },
+          "effects": [],
+          "origin": "editor",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "text",
+      "kind": "text",
+      "name": "Textos",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "title",
+          "type": "text",
+          "start": 10,
+          "duration": 70,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 351.07317286899297,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "expoOut"
+              },
+              {
+                "frame": 15,
+                "value": 1,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 411.07317286899297,
+                "easing": "expoOut"
+              },
+              {
+                "frame": 15,
+                "value": 351.07317286899297,
+                "easing": "linear"
+              }
+            ],
+            "props.color": [
+              {
+                "frame": 40,
+                "value": "#FFFFFF",
+                "easing": "easeInOut"
+              },
+              {
+                "frame": 60,
+                "value": "#FA094E",
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Olá, frame",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 120,
+            "color": "#FFFFFF"
+          },
+          "effects": [],
+          "origin": "editor",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "m-title",
+      "frame": 10,
+      "label": "título entra",
+      "color": "#F6B73C"
+    }
+  ],
+  "meta": {
+    "updatedAt": "2026-09-30T18:16:41.121Z"
+  }
+}

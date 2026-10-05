@@ -1,0 +1,26 @@
+{
+  "name": "@caju-motion/core",
+  "version": "0.1.0",
+  "description": "Caju Motion runtime: useFrame, Sequence, interpolate, spring, easing, keyframes, deterministic random, delayRender.",
+  "license": "MIT",
+  "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/core" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "sideEffects": false,
+  "exports": {
+    ".": { "source": "./src/index.ts", "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": { "build": "tsup --config ../../tsup.config.ts" },
+  "dependencies": {
+    "@caju-motion/schema": "0.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "publishConfig": { "access": "public", "provenance": true }
+}

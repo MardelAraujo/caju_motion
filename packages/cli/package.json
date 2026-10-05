@@ -1,0 +1,29 @@
+{
+  "name": "@caju-motion/cli",
+  "version": "0.1.0",
+  "description": "The `caju` command: open Caju Studio, create and validate Caju Motion projects.",
+  "license": "MIT",
+  "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/cli" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "bin": {
+    "caju": "./dist/index.js",
+    "caju-motion": "./dist/index.js"
+  },
+  "exports": {
+    ".": { "source": "./src/index.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist"],
+  "scripts": { "build": "tsup --config ../../tsup.config.ts" },
+  "engines": { "node": ">=20.11" },
+  "dependencies": {
+    "@caju-motion/schema": "0.1.0",
+    "@caju-motion/server": "0.1.0",
+    "@caju-motion/studio": "0.1.0",
+    "@hono/node-server": "^2.1.3"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "publishConfig": { "access": "public", "provenance": true }
+}

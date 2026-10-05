@@ -1,0 +1,14 @@
+{
+  "name": "@caju-motion/skills",
+  "version": "0.1.0",
+  "description": "Agent skills (Claude Code / Agent Skills format) that teach coding agents to install Caju Motion and generate videos.",
+  "license": "MIT",
+  "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/skills" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "files": ["skills", "README.md"],
+  "devDependencies": {
+    "@caju-motion/schema": "0.1.0"
+  },
+  "publishConfig": { "access": "public", "provenance": true }
+}

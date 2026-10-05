@@ -1,0 +1,27 @@
+{
+  "name": "@caju-motion/studio",
+  "version": "0.1.0",
+  "description": "Caju Studio: the visual timeline editor for Caju Motion, shipped prebuilt (served by the `caju` CLI).",
+  "license": "MIT",
+  "type": "module",
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/studio" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "exports": {
+    ".": { "source": "./src/index.ts", "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
+  "files": ["dist", "!dist/app/fonts/local"],
+  "scripts": { "build": "tsup --config ../../tsup.config.ts && vite build" },
+  "devDependencies": {
+    "@caju-motion/core": "0.1.0",
+    "@caju-motion/renderer": "0.1.0",
+    "@caju-motion/schema": "0.1.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "immer": "^11.1.18",
+    "lucide-react": "^1.48.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "vite": "^8.3.1",
+    "zustand": "^5.0.15"
+  },
+  "publishConfig": { "access": "public", "provenance": true }
+}
