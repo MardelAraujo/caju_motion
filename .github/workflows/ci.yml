@@ -25,7 +25,10 @@ jobs:
         if: runner.os == 'Linux'
         env:
           CAJU_RENDER_IT: '1'
-        run: npx vitest run packages/renderer-node --maxWorkers=1
+        run: |
+          # o render usa o ffmpeg-static; o ffprobe do sistema só verifica os arquivos gerados
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          npx vitest run packages/renderer-node --maxWorkers=1
       # os pacotes publicados precisam funcionar sem o monorepo: empacota e confere o CLI instalado
       - name: smoke test (npm pack + install)
         if: runner.os == 'Linux'

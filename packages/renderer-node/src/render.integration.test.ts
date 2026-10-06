@@ -26,6 +26,7 @@ function probe(file: string) {
     ['-v', 'error', '-count_frames', '-show_entries', 'stream=codec_type,codec_name,width,height,nb_read_frames:format=duration', '-of', 'json', file],
     { encoding: 'utf8' },
   );
+  if (r.error) throw new Error(`ffprobe não encontrado no PATH (necessário só para verificar os arquivos): ${r.error.message}`);
   if (r.status !== 0) throw new Error(`ffprobe falhou: ${r.stderr}`);
   return JSON.parse(r.stdout) as {
     streams: { codec_type: string; codec_name: string; width?: number; height?: number; nb_read_frames?: string }[];
