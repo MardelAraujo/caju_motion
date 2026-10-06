@@ -1,0 +1,610 @@
+{
+  "schemaVersion": 1,
+  "id": "reel",
+  "name": "Reel legendado",
+  "settings": {
+    "format": "reel-9x16",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "background": "#171512"
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": []
+    },
+    {
+      "id": "t00-0",
+      "kind": "overlay",
+      "name": "Fundo",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "fundo",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 0,
+          "duration": 273,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 960,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1920,
+            "fill": "#171512",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": true,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "t01-0",
+      "kind": "text",
+      "name": "Legendas",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "legenda-1",
+          "type": "text",
+          "name": "Todo vídeo começa com uma ideia.",
+          "start": 15,
+          "duration": 66,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1180,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Todo vídeo começa com uma ideia.",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 54,
+            "fontWeight": 800,
+            "color": "#171512",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": "#F6B73C"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "legenda-2",
+          "type": "text",
+          "name": "O Caju transforma código",
+          "start": 81,
+          "duration": 48,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1180,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "O Caju transforma código",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 54,
+            "fontWeight": 800,
+            "color": "#171512",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": "#F6B73C"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "legenda-3",
+          "type": "text",
+          "name": "em vídeo editável no Studio.",
+          "start": 129,
+          "duration": 60,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1180,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "em vídeo editável no Studio.",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 54,
+            "fontWeight": 800,
+            "color": "#171512",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": "#F6B73C"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "legenda-4",
+          "type": "text",
+          "name": "Edite, renderize e publique.",
+          "start": 189,
+          "duration": 54,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1180,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 6,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Edite, renderize e publique.",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 54,
+            "fontWeight": 800,
+            "color": "#171512",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": "#F6B73C"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-1",
+      "kind": "overlay",
+      "name": "Camada 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "circulo",
+          "type": "shape",
+          "name": "Círculo",
+          "start": 0,
+          "duration": 273,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 960,
+            "y": 420,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 24,
+                "value": 1,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 24,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "shape": "ellipse",
+            "width": 560,
+            "height": 560,
+            "fill": "#2A2520",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-2",
+      "kind": "overlay",
+      "name": "Camada 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "traco",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 4,
+          "duration": 269,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 470,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 259,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 268,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.x": [
+              {
+                "frame": 0,
+                "value": 480,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 540,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "shape": "rect",
+            "width": 160,
+            "height": 12,
+            "fill": "#F6B73C",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-3",
+      "kind": "overlay",
+      "name": "Camada 3",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "tarja",
+          "type": "component",
+          "name": "LowerThird",
+          "start": 30,
+          "duration": 120,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1500,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "title": "Seu Nome",
+            "subtitle": "@seu_perfil",
+            "component": "LowerThird"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-1",
+      "kind": "text",
+      "name": "Texto 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "titulo",
+          "type": "text",
+          "name": "Como o Caju",
+          "start": 0,
+          "duration": 273,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 640,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 263,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 272,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 680,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 640,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Como o Caju\nfunciona",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 104,
+            "fontWeight": 800,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.05,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "m-reel",
+      "frame": 0,
+      "label": "Reel",
+      "color": "#F6B73C"
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z",
+    "generator": "caju-motion/sdk"
+  }
+}

@@ -2,8 +2,10 @@ import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { buildCommand } from './commands/build';
 import { checkCommand } from './commands/check';
+import { doctorCommand } from './commands/doctor';
 import { newCommand } from './commands/new';
 import { renderCommand, stillCommand } from './commands/render';
+import { skillsCommand } from './commands/skills';
 import { studioCommand } from './commands/studio';
 import { componentsDirFor } from './extensions';
 
@@ -21,6 +23,9 @@ Uso:
                                                          exporta vídeo (Chromium + FFmpeg)
   caju still <id> --frame <n> [--out quadro.png] [--resolution 1080]
                                                          exporta um quadro como imagem
+  caju doctor [--dir projects]                           diagnostica o ambiente (Node, FFmpeg, navegador, Studio…)
+  caju skills add [--target .] [--agents claude|all]     instala as skills de agente em .claude/skills/
+                                                         (all: também o bloco do Caju no AGENTS.md)
 
 Opções:
   --dev        (studio) modo de desenvolvimento do próprio Studio, com Vite/HMR — só no repositório
@@ -58,6 +63,8 @@ async function main(argv: string[]): Promise<number> {
       components: { type: 'string' },
       force: { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },
+      target: { type: 'string' },
+      agents: { type: 'string' },
       version: { type: 'boolean', short: 'v', default: false },
       help: { type: 'boolean', short: 'h', default: false },
     },
@@ -131,6 +138,10 @@ async function main(argv: string[]): Promise<number> {
       return buildCommand({ dir: values.dir, ids: rest, force: values.force, dryRun: values['dry-run'] });
     case 'check':
       return checkCommand({ dir: values.dir, ids: rest, componentsDir: componentsDirFor(values.dir, values.components) });
+    case 'doctor':
+      return doctorCommand({ dir: values.dir, componentsDir: componentsDirFor(values.dir, values.components) });
+    case 'skills':
+      return skillsCommand({ action: rest[0], target: values.target, agents: values.agents });
     default:
       console.error(`comando desconhecido: ${command}\n\n${HELP}`);
       return 1;

@@ -1,18 +1,20 @@
 /**
- * Copia as skills para `<destino>/.claude/skills/` (padrão: raiz do repo).
- * Precursor do `caju skills add` (F3).  Uso: npm run skills:install [-- <destino>]
+ * Copia as skills para `<destino>/.claude/skills/` (padrão: raiz do repo), com a mesma lógica do
+ * `caju skills add` (idempotente; `--agents all` também atualiza o AGENTS.md).
+ * Uso: npm run skills:install [-- <destino>] [--agents all]
  */
-import { cpSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { addSkills } from '../../cli/src/commands/skills';
 
 const SKILLS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'skills');
 const ROOT = path.resolve(SKILLS_DIR, '..', '..', '..');
 
-const target = path.resolve(process.argv[2] ?? ROOT, '.claude', 'skills');
-for (const name of readdirSync(SKILLS_DIR)) {
-  const dest = path.join(target, name);
-  if (existsSync(dest)) rmSync(dest, { recursive: true });
-  cpSync(path.join(SKILLS_DIR, name), dest, { recursive: true });
-  console.log(`✓ ${path.relative(process.cwd(), dest) || dest}`);
-}
+const args = process.argv.slice(2);
+const agents = args.includes('--agents') && args[args.indexOf('--agents') + 1] === 'all' ? 'all' : 'claude';
+const positional = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--agents');
+const target = path.resolve(positional[0] ?? ROOT);
+
+const r = addSkills({ source: SKILLS_DIR, target, agents });
+for (const s of r.skills) console.log(`${s.status === 'unchanged' ? '·' : '✓'} ${path.join(target, '.claude', 'skills', s.skill)} (${s.status})`);
+if (r.agentsMd) console.log(`${r.agentsMd === 'unchanged' ? '·' : '✓'} ${path.join(target, 'AGENTS.md')} (${r.agentsMd})`);

@@ -1,0 +1,645 @@
+{
+  "schemaVersion": 1,
+  "id": "dados",
+  "name": "Vídeo de dados",
+  "settings": {
+    "format": "feed-4x5",
+    "width": 1080,
+    "height": 1350,
+    "fps": 30,
+    "background": "#171512",
+    "duration": 240
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": []
+    },
+    {
+      "id": "t00-0",
+      "kind": "overlay",
+      "name": "Fundo",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "fundo-1",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 0,
+          "duration": 150,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 675,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1350,
+            "fill": "#171512",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": true,
+          "hidden": false
+        },
+        {
+          "id": "fundo-2",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 150,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 675,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1350,
+            "fill": "#171512",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": true,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-1",
+      "kind": "overlay",
+      "name": "Camada 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "grafico",
+          "type": "component",
+          "name": "BarChart",
+          "start": 0,
+          "duration": 150,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 760,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 140,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 149,
+                "value": 0,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "data": [
+              {
+                "label": "T1",
+                "value": 120
+              },
+              {
+                "label": "T2",
+                "value": 185
+              },
+              {
+                "label": "T3",
+                "value": 160
+              },
+              {
+                "label": "T4",
+                "value": 240
+              }
+            ],
+            "suffix": "",
+            "barColor": "#F6B73C",
+            "textColor": "#FFF8E9",
+            "width": 920,
+            "height": 820,
+            "component": "BarChart"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-1",
+      "kind": "text",
+      "name": "Texto 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "titulo",
+          "type": "text",
+          "name": "Vendas por trimestre",
+          "start": 0,
+          "duration": 150,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 170,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 140,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 149,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 200,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 170,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Vendas por trimestre",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 64,
+            "fontWeight": 800,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "total-rotulo",
+          "type": "text",
+          "name": "Total no ano",
+          "start": 150,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 480,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 80,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 89,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 504,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 480,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Total no ano",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 56,
+            "fontWeight": 700,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-2",
+      "kind": "text",
+      "name": "Texto 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "unidade",
+          "type": "text",
+          "name": "em mil",
+          "start": 6,
+          "duration": 144,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 250,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 134,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 143,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 270,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 250,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "em mil",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 36,
+            "fontWeight": 600,
+            "color": "#F6B73C",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "total",
+          "type": "text",
+          "name": "705 mil",
+          "start": 156,
+          "duration": 84,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 640,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 74,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 83,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "705 mil",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 150,
+            "fontWeight": 800,
+            "color": "#F6B73C",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-3",
+      "kind": "text",
+      "name": "Texto 3",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "fonte",
+          "type": "text",
+          "name": "Dados de exemplo — troque por assets/dat",
+          "start": 20,
+          "duration": 130,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1260,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 120,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 129,
+                "value": 0,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Dados de exemplo — troque por assets/data/vendas.json",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 26,
+            "fontWeight": 500,
+            "color": "#8C8579",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "melhor",
+          "type": "text",
+          "name": "melhor trimestre: T4",
+          "start": 166,
+          "duration": 74,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 820,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 64,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 73,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 844,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 820,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "melhor trimestre: T4",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 48,
+            "fontWeight": 600,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "m-grafico",
+      "frame": 0,
+      "label": "Gráfico",
+      "color": "#F6B73C"
+    },
+    {
+      "id": "m-destaque",
+      "frame": 150,
+      "label": "Destaque",
+      "color": "#F6B73C"
+    }
+  ],
+  "meta": {
+    "generator": "caju-motion/sdk"
+  }
+}

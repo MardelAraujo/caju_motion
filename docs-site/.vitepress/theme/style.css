@@ -1,0 +1,144 @@
+/**
+ * Caju brand theme for VitePress.
+ * Colors: gold #F6B73C, orange #F47B35, red #E94B35, cashew #D99432, ink #171512, cream #FFF8E9.
+ * Type: Plus Jakarta Sans (UI) + JetBrains Mono (code). Radius 8 / 16 / 24.
+ */
+:root {
+  --caju-gold: #f6b73c;
+  --caju-orange: #f47b35;
+  --caju-red: #e94b35;
+  --caju-cashew: #d99432;
+  --caju-ink: #171512;
+  --caju-cream: #fff8e9;
+  --caju-gradient: linear-gradient(135deg, #d99432 0%, #f6b73c 35%, #f47b35 70%, #e94b35 100%);
+
+  --vp-font-family-base: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* light theme: cream paper, ink text, burnt-orange accents (gold is too light on cream) */
+  --vp-c-bg: #fffdf7;
+  --vp-c-bg-alt: #fff8e9;
+  --vp-c-bg-soft: #fbf0d9;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-text-1: #171512;
+  --vp-c-text-2: #4a443b;
+  --vp-c-text-3: #7a7266;
+  --vp-c-divider: #eadfc7;
+  --vp-c-gutter: #eadfc7;
+
+  --vp-c-brand-1: #b4501c;
+  --vp-c-brand-2: #d0622a;
+  --vp-c-brand-3: #f47b35;
+  --vp-c-brand-soft: rgba(244, 123, 53, 0.14);
+
+  --vp-button-brand-bg: #171512;
+  --vp-button-brand-text: #fff8e9;
+  --vp-button-brand-hover-bg: #2a2620;
+  --vp-button-brand-hover-text: #fff8e9;
+  --vp-button-brand-active-bg: #2a2620;
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: var(--caju-gradient);
+  --vp-home-hero-image-background-image: linear-gradient(135deg, rgba(246, 183, 60, 0.45), rgba(233, 75, 53, 0.35));
+  --vp-home-hero-image-filter: blur(56px);
+
+  --vp-code-block-bg: #1f1c18;
+  --vp-custom-block-tip-bg: rgba(246, 183, 60, 0.12);
+  --vp-custom-block-tip-border: transparent;
+  --vp-c-tip-1: #b4501c;
+}
+
+.dark {
+  --vp-c-bg: #171512;
+  --vp-c-bg-alt: #110f0d;
+  --vp-c-bg-soft: #221f1b;
+  --vp-c-bg-elv: #1d1a16;
+  --vp-c-text-1: #fff8e9;
+  --vp-c-text-2: rgba(255, 248, 233, 0.74);
+  --vp-c-text-3: rgba(255, 248, 233, 0.5);
+  --vp-c-divider: #2e2a24;
+  --vp-c-gutter: #0d0c0a;
+  --vp-c-border: #3a352d;
+
+  --vp-c-brand-1: #f6b73c;
+  --vp-c-brand-2: #f8c661;
+  --vp-c-brand-3: #f47b35;
+  --vp-c-brand-soft: rgba(246, 183, 60, 0.16);
+
+  --vp-button-brand-bg: #f6b73c;
+  --vp-button-brand-text: #171512;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-bg: #f8c661;
+  --vp-button-brand-hover-text: #171512;
+  --vp-button-brand-active-bg: #f47b35;
+  --vp-button-alt-bg: #221f1b;
+  --vp-button-alt-hover-bg: #2e2a24;
+
+  --vp-code-block-bg: #110f0d;
+  --vp-c-tip-1: #f6b73c;
+  --vp-custom-block-tip-bg: rgba(246, 183, 60, 0.1);
+}
+
+/* generous, rounded shapes (brand radius 8 / 16 / 24) */
+.vp-doc div[class*='language-'],
+.vp-code-group .tabs,
+.custom-block {
+  border-radius: 16px !important;
+}
+.vp-doc :not(pre) > code {
+  border-radius: 8px;
+}
+.VPFeature,
+.VPButton.medium,
+.VPLocalSearchBox .shell {
+  border-radius: 24px !important;
+}
+.VPButton.medium {
+  font-weight: 700;
+}
+.vp-doc table {
+  border-radius: 16px;
+  overflow: hidden;
+  display: table;
+  width: 100%;
+}
+
+/* wordmark: "caju" heavy, "motion" light (brand kit 3.2) */
+.VPNavBarTitle .title {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 18px;
+}
+
+.VPHero .name {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.VPHero .text {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.vp-doc h1,
+.vp-doc h2 {
+  letter-spacing: -0.02em;
+  font-weight: 800;
+}
+
+/* brand gradient accent under h1 */
+.vp-doc h1::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 6px;
+  margin-top: 14px;
+  border-radius: 8px;
+  background: var(--caju-gradient);
+}
+
+.VPFeature .title {
+  font-weight: 700;
+}
+.VPFeature:hover {
+  border-color: var(--vp-c-brand-1);
+}

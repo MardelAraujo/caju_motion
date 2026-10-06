@@ -17,7 +17,12 @@
     "test": "vitest run",
     "skills:install": "tsx packages/skills/src/install.ts",
     "check:fixtures": "tsx --conditions=source packages/cli/src/index.ts check --dir fixtures/projects",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run check:fixtures",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run check:fixtures && npm run lint:docs",
+    "docs:dev": "vitepress dev docs-site",
+    "docs:build": "tsx scripts/llms.ts && vitepress build docs-site",
+    "docs:preview": "vitepress preview docs-site",
+    "llms": "tsx scripts/llms.ts",
+    "lint:docs": "tsx scripts/llms.ts --check",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "npm run build && changeset publish"

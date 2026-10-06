@@ -1,6 +1,6 @@
 ---
 name: caju-setup
-description: Install and set up Caju Motion (formerly "frame") and diagnose environment problems. Use when the user wants to install Caju, start a new video project, open Caju Studio, or hits errors with Node, npm, ffmpeg, ports, Chrome or Windows/macOS/Linux paths.
+description: Install and set up Caju Motion and diagnose environment problems (npm create caju, caju doctor, caju skills add). Use when the user wants to install Caju, start a new video project, open Caju Studio, or hits errors with Node, npm, ffmpeg, the render browser, ports, memory/disk or Windows/macOS/Linux paths.
 version: 0.2.0
 ---
 
@@ -9,34 +9,66 @@ version: 0.2.0
 ## Requirements
 | Tool | Version | Why | Check |
 |---|---|---|---|
-| Node.js | ≥ 20 (22 LTS recommended) | Studio, CLI, scripts | `node -v` |
-| npm | ≥ 10 | workspaces | `npm -v` |
-| Git | any | get the source | `git --version` |
-| FFmpeg + ffprobe | ≥ 6 (on PATH) | preparing assets (convert, loudness, durations) | `ffmpeg -version` |
-| Chrome / Edge | recent | Studio, single-frame capture, eyedropper | — |
+| Node.js | ≥ 20.11 (22 LTS recommended) | Studio, CLI, `video.ts` | `node -v` |
+| npm (or pnpm/yarn/bun) | recent | install packages | `npm -v` |
+| Chrome or Edge | recent | Studio, render (headless), eyedropper | — |
+| FFmpeg + ffprobe | optional | **asset preparation** only (convert, loudness, durations). Render uses the bundled FFmpeg | `ffmpeg -version` |
 
-Rendering uses the bundled FFmpeg (`ffmpeg-static`, or `CAJU_FFMPEG_PATH`) and an installed Chrome or Edge (or `CAJU_BROWSER_PATH`); no browser download is needed. A system FFmpeg/ffprobe is still useful for **asset preparation**. Before the first render from a repo checkout, run `npm run build -w @caju-motion/studio` (and again after Studio changes).
+Render needs no browser download: it uses an installed Chrome or Edge (or `CAJU_BROWSER_PATH`) and the bundled FFmpeg (or `CAJU_FFMPEG_PATH`). Plan for about 1 GB of free RAM and a few GB of disk for renders.
 
-## Install (today: from source)
+**`caju doctor` checks all of this** and prints a ✓/!/✗ list with fixes:
+- Node, npm and FFmpeg;
+- the browser used for render;
+- whether the Studio app is built;
+- projects and components;
+- disk, memory and write permission.
+
+It exits with code 1 if something blocks. **Run it first whenever something fails.**
+
+## New project (recommended)
+> Packages go to npm with the first release. Until then, use the repo checkout below.
 ```bash
-git clone <caju-repo-url> caju
-cd caju
-npm install
-npm run check        # typecheck + determinism lint + tests + fixtures: must be green
-npm run studio       # http://localhost:3700
+npm create caju@latest my-video          # asks for template, installs deps, adds agent skills
+cd my-video
+npm run dev                               # = caju studio --open
 ```
-- Projects live in `projects/<id>/` by default. **Every command accepts `--dir <projectsFolder>`** to use another folder (absolute or relative to the repo root):
-  - `npm run caju -- studio --dir <folder> [--port 3701]`
-  - `npm run caju -- new <id> --format reel-9x16 --dir <folder>`
-  - `npm run caju -- check [<id>...] --dir <folder>`
-- Formats: `reel-9x16`, `feed-4x5`, `square-1x1`, `landscape-16x9`.
+- Non-interactive: `npm create caju@latest my-video -- --template explainer-16x9 --yes`.
+- Flags: `-t/--template`, `-y/--yes`, `--no-install`, `--skills`/`--no-skills`, `--pm npm|pnpm|yarn|bun`.
+- Templates:
 
-## Install (planned, F3; do not use yet)
-`npm create caju-motion@latest my-video` → `cd my-video` → `npm run dev` (= `caju studio`). Then `npx caju skills add` installs these skills into `.claude/skills/`. Without a project, `npx @caju-motion/cli studio` (never bare `npx caju`, which would fetch an unrelated package).
+  | Template | Format | What it shows |
+  |---|---|---|
+  | `blank` | 9:16 | minimal title scene (`projects/meu-video`) |
+  | `reel-legendado` | 9:16 | title, captions timed from voice-over durations, `LowerThird` |
+  | `explainer-16x9` | 16:9 | three scenes with shapes, step cards, `CountUp` |
+  | `data-video` | 4:5 | `BarChart` component fed by `assets/data/*.json` |
+  | `audiograma` | 1:1 | `Waveform` component + progress, optional audio |
+
+- The generated project has scripts `dev`, `build` (`caju build`), `check`, `render`, `still` and `doctor`, plus `AGENTS.md`/`CLAUDE.md` pointing agents to these skills.
+- Folder layout: `projects/<id>/{video.ts, project.json, assets/}`, `components/`, `renders/` (ignored), `.caju/` (ignored except `last-build.json`).
+
+## Agent skills in any project
+`npx caju skills add [--target .] [--agents claude|all]`
+- It copies the skills to `.claude/skills/` and, with `all`, keeps a marked block in `AGENTS.md`.
+- It is idempotent: run it again after upgrading Caju.
+
+## From source (contributors, or before the first release)
+```bash
+git clone https://github.com/MardelAraujo/caju_motion.git
+cd caju_motion
+npm install
+npm run check                          # typecheck + lint + tests + fixtures + docs: must be green
+npm run studio                         # Studio in dev mode (Vite) at http://localhost:3700
+npm run build -w @caju-motion/studio   # once before rendering (and after Studio changes)
+```
+- In the checkout, run commands as `npm run caju -- <command>`, e.g. `npm run caju -- doctor`.
+- Every command accepts `--dir <projectsFolder>`, and `studio`/`check`/`render` accept `--components <dir>`.
+- Formats: `reel-9x16`, `feed-4x5`, `square-1x1`, `landscape-16x9`.
+- `npx caju …` works inside a project that has the packages installed. Outside a project, use `npx caju@latest …` after the release.
 
 ## Before reporting success, verify
-1. `npm run check` passes.
-2. `npm run studio` prints the URL and the page shows the "caju studio" top bar.
-3. `npm run caju -- check` lists the projects with ✓.
+1. `caju doctor` shows no ✗.
+2. `caju check` lists the projects with ✓.
+3. The Studio opens and shows the "caju studio" top bar.
 
 Troubleshooting: [troubleshooting.md](troubleshooting.md).

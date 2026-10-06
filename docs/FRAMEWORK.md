@@ -11,7 +11,7 @@
 |---|---|---|
 | Licença | **Open-core**: núcleo MIT; monetização em render em nuvem, templates/temas premium e Studio colaborativo/hospedado | A licença paga do Remotion (grátis só até 3 pessoas; US$ 25/dev/mês + cobrança por render) é a maior objeção a ele. Abrir o núcleo é o atalho de adoção |
 | Autoria | **Híbrida**: `project.json` é a verdade; SDK TS (`defineProject`) gera o JSON; `defineComponent` traz React próprio | Diferencial real: código e timeline editável na mesma fonte. No Remotion, timeline é produto pago e o Studio só ajusta props |
-| Nomes | Escopo npm **`@caju-motion/*`**, CLI `caju` (alias `caju-motion`), scaffolder `npm create caju-motion` | O escopo `@caju` já pertence a uma org no npm (verificado em 05/10/2026); `@caju-motion` estava livre. Os nomes sem escopo `caju` e `create-caju-motion` também estavam livres; vale reservá-los |
+| Nomes | Escopo npm **`@caju-motion/*`**, CLI `caju` (alias `caju-motion`), scaffolder `npm create caju` (pacote sem escopo `create-caju`) e atalho `caju` | O escopo `@caju` já pertence a uma org no npm (verificado em 05/10/2026); `@caju-motion` estava livre. Os nomes sem escopo `caju` e `create-caju` também estavam livres; vale reservá-los |
 | Engenharia | **Clean-room** em relação ao Remotion | A licença do Remotion proíbe derivar o código. Usamos ideias e APIs públicas como referência, nunca código |
 
 ## 2. Onde estamos vs. Remotion
@@ -39,7 +39,7 @@
 | `@caju-motion/server` | `packages/server` | API Hono + store. Novo: `POST /render`, progresso via SSE/WebSocket, watcher | MIT |
 | `@caju-motion/studio` | `packages/editor` | Editor, publicado já buildado (`dist/`) e servido estático pelo CLI | MIT |
 | `@caju-motion/cli` (`caju`) | `packages/cli` | `studio`, `render`, `still`, `new`, `check`, `build`, `doctor`, `skills add`, `browser ensure`, `upgrade` | MIT |
-| `create-caju-motion` | novo | Scaffolder + templates (blank, reel legendado, explainer 16:9, audiograma, data-video) e oferta de instalar as skills | MIT |
+| `create-caju` | novo | Scaffolder + templates (blank, reel legendado, explainer 16:9, audiograma, data-video) e oferta de instalar as skills | MIT |
 | `@caju-motion/skills` | `packages/skills` (**criado agora**) | Skills de agente | MIT |
 | `@caju-motion/player` | futuro | `<Player>` embutível em apps React | MIT |
 | `@caju-motion/cloud` | futuro | Render distribuído, fila, storage, templates premium, Studio colaborativo | **Comercial** |
@@ -49,31 +49,28 @@ Princípios que não mudam:
 - Tempo é sempre em **frames inteiros**.
 - O lint de determinismo (`scripts/lint-determinism.ts`) passa a valer também para componentes de usuário, via `caju check`.
 
-## 4. Projeto do usuário (gerado por `create-caju-motion`)
+## 4. Projeto do usuário (gerado por `npm create caju`)
 
 ```
 meu-video/
-  caju.config.ts            formato padrão, fps, pasta de vídeos, concorrência de render
-  package.json              "dev": "caju studio", "render": "caju render"
-  videos/
-    lancamento/
+  package.json              "dev": "caju studio --open", "build": "caju build", "render": "caju render", "doctor"…
+  tsconfig.json
+  AGENTS.md · CLAUDE.md     apontam os agentes para as skills (.claude/skills/)
+  projects/
+    <id>/
       video.ts              defineProject() — fonte em código (opcional)
       project.json          fonte da verdade (gerada pelo código e/ou editada no Studio)
       assets/
         images/  video/  fonts/  data/
         audio/vo/  audio/music/  audio/sfx/  audio/amb/
-  components/               defineComponent() — aparece na aba "Componentes" do Studio
-  public/                   assets compartilhados (marca, fontes) → asset('/brand/logo.svg')
-  .caju/                    cache, histórico, proxies (gitignored)
-  out/                      renders
+      .caju/                histórico (ignorado) + last-build.json (versionado: base do merge)
+      renders/              vídeos exportados (ignorado)
+  components/               defineComponent() — aba "Componentes" do Studio, recarga a quente
 ```
 
-- **Compatibilidade:** `projects/<id>/project.json + assets/` (layout atual) continua aceito; `.frame/` é lido como fallback de `.caju/`.
-- **Round-trip código ↔ Studio:**
-  - Clipes do `video.ts` levam `origin: 'code'`; os criados no Studio levam `origin: 'editor'`.
-  - `caju build` regenera só os de código, preserva os do editor e mostra um diff se um clipe de código foi editado à mão.
-  - Isso evolui o `guardOverwrite()` atual.
-
+- Templates: `blank`, `reel-legendado`, `explainer-16x9`, `data-video`, `audiograma`.
+- **Round-trip código ↔ Studio:** clipes do `video.ts` levam `origin: 'code'`, os do Studio `origin: 'editor'`. `caju build` regenera só os de código, preserva os do editor e, se um clipe de código foi editado no Studio, mostra o diff e não grava (`--force` para o código vencer).
+- `.frame/` (nome antigo) continua ignorado; o histórico novo vai para `.caju/`.
 ## 5. Pipeline de render (Fase 1)
 
 1. `RenderView` (`?render=`) passa a usar o gate de `@caju-motion/core`, exposto em `window.__caju`. Fontes, imagens e vídeo abrem/fecham handles.
@@ -104,7 +101,7 @@ O conteúdo é em inglês, porque os agentes rendem melhor assim. Cada skill tem
 
 Distribuição:
 - **Hoje:** `npm run skills:install` (copia para `.claude/skills/`).
-- **F3:** `caju skills add`, pergunta no `create-caju-motion`, repo espelho para `npx skills add`, plugin do Claude Code, `llms.txt` no site de docs.
+- **F3:** `caju skills add`, pergunta no `create-caju`, repo espelho para `npx skills add`, plugin do Claude Code, `llms.txt` no site de docs.
 
 Qualidade:
 - Todo JSON de projeto marcado nas skills é validado pelo schema em `npm run check`.
@@ -117,7 +114,7 @@ Qualidade:
 | **F0 Fundação pública** ✅ | Primeiro commit; LICENSE MIT; renomear `@frame` → `@caju-motion` (pacotes, headers `x-frame-*`, `.frame/`); remover o acoplamento AutoMind (`BRAND_COLORS`/preset "AutoChecker" em `commands.ts`, fonte padrão em `renderer/props.ts`); mover `projects/` e scripts AutoMind para repo privado; checar a licença da fonte Hando; build tsup (ESM + `.d.ts`), Studio buildado, changesets em lockstep, release com provenance | `npm pack` de cada pacote instala num diretório vazio e `npx caju studio` sobe sem `tsx` |
 | **F1 Render local** ✅ | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render`/`still`, Exportar do Studio ligado, golden + A/V no CI (Windows + Linux) | Fixtures e `exemplo` viram MP4 iguais à preview; A/V ≤ 1 frame |
 | **F2 Código** ✅ | `@caju-motion/sdk` (`defineProject`, `defineComponent`), clip `component` renderizando, aba Componentes com HMR, `caju build` com merge por `origin` | Template feito só em código + 1 componente abre no Studio, é editado, regenera sem perder edições e renderiza |
-| **F3 Distribuição** | `create-caju-motion` + templates, `caju doctor`, `caju skills add`, evals, docs EN + pt-BR com `llms.txt`, publicação no npm | Dev novo vai de zero a MP4 em < 5 min; agente com as skills gera vídeo válido a partir de um prompt |
+| **F3 Distribuição** ✅ (falta só publicar no npm) | `create-caju` + templates, `caju doctor`, `caju skills add`, evals, docs EN + pt-BR com `llms.txt`, publicação no npm | Dev novo vai de zero a MP4 em < 5 min; agente com as skills gera vídeo válido a partir de um prompt |
 | **F4 Ecossistema** | `@caju-motion/player`, `@caju-motion/media` (proxies/WebCodecs), legendas/TTS, `@caju-motion/cloud` (pago), marketplace de templates | — |
 
 Ao concluir cada fase, atualize a tabela **Availability** de cada `SKILL.md` e a versão das skills.

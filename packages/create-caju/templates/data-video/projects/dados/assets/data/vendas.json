@@ -1,0 +1,11 @@
+{
+  "titulo": "Vendas por trimestre",
+  "fonte": "Dados de exemplo — troque por assets/data/vendas.json",
+  "unidade": "mil",
+  "series": [
+    { "rotulo": "T1", "valor": 120 },
+    { "rotulo": "T2", "valor": 185 },
+    { "rotulo": "T3", "valor": 160 },
+    { "rotulo": "T4", "valor": 240 }
+  ]
+}

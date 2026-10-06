@@ -15,7 +15,20 @@ Coding agents get first-class support: [`packages/skills`](packages/skills) ship
 
 > **Status: v0.2** — render to MP4/MOV/WebM/GIF (`caju render`), video by code (`video.ts` + `caju build`) and custom React components with hot reload. Not on npm yet. See the [roadmap](docs/FRAMEWORK.md#7-roadmap).
 
-## Quick start (from source)
+📖 **Docs:** https://mardelaraujo.github.io/caju_motion (English · Português) · for AI tools: [`llms.txt`](https://mardelaraujo.github.io/caju_motion/llms.txt)
+
+## Quick start
+
+> Coming with the first npm release:
+
+```bash
+npm create caju@latest my-video     # templates: blank, reel-legendado, explainer-16x9, data-video, audiograma
+cd my-video && npm run dev          # Caju Studio
+npx caju render <id>                # export
+npx caju doctor                     # check Node, FFmpeg, browser, memory…
+```
+
+## From source
 
 Requirements: Node ≥ 20.11.
 
@@ -36,7 +49,7 @@ Custom animated components live in `components/` (`defineComponent` + a zod sche
 
 Formats: `reel-9x16`, `feed-4x5`, `square-1x1`, `landscape-16x9`. All commands accept `--dir <projectsFolder>`.
 
-After the first npm release: `npx @caju-motion/cli studio`, or add `@caju-motion/cli` to a project and run `npx caju studio`.
+Agents: `npm run caju -- skills add --target <your-project> --agents all` installs the skills in `.claude/skills/` and an `AGENTS.md` block.
 
 ## Packages
 

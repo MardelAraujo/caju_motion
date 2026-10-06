@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "id": "meu-video",
+  "name": "Meu vídeo",
+  "settings": {
+    "format": "reel-9x16",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "background": "#171512",
+    "duration": 90
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": []
+    },
+    {
+      "id": "texto-1",
+      "kind": "text",
+      "name": "Texto 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "titulo",
+          "type": "text",
+          "name": "Olá, Caju!",
+          "start": 0,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 960,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 80,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 89,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 1000,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 960,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Olá, Caju!",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 120,
+            "fontWeight": 800,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-2",
+      "kind": "text",
+      "name": "Texto 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "dica",
+          "type": "text",
+          "name": "edite projects/meu-video/video.ts",
+          "start": 12,
+          "duration": 78,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1080,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 68,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 77,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 1104,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1080,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "edite projects/meu-video/video.ts",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 44,
+            "fontWeight": 600,
+            "color": "#F6B73C",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "m-inicio",
+      "frame": 0,
+      "label": "Início",
+      "color": "#F6B73C"
+    }
+  ],
+  "meta": {
+    "generator": "caju-motion/sdk",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+}

@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 1,
+  "id": "audiograma",
+  "name": "Audiograma",
+  "settings": {
+    "format": "square-1x1",
+    "width": 1080,
+    "height": 1080,
+    "fps": 30,
+    "background": "#171512"
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": []
+    },
+    {
+      "id": "t00-0",
+      "kind": "overlay",
+      "name": "Fundo",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "fundo",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 0,
+          "duration": 240,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 540,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1080,
+            "fill": "#171512",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": true,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-1",
+      "kind": "overlay",
+      "name": "Camada 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "selo",
+          "type": "shape",
+          "name": "Círculo",
+          "start": 0,
+          "duration": 240,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 150,
+            "y": 150,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 230,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 239,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.scale": [
+              {
+                "frame": 0,
+                "value": 0.6,
+                "easing": "backOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "shape": "ellipse",
+            "width": 120,
+            "height": 120,
+            "fill": "#F6B73C",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-2",
+      "kind": "overlay",
+      "name": "Camada 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "onda",
+          "type": "component",
+          "name": "Waveform",
+          "start": 12,
+          "duration": 228,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 700,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "seed": "episodio-1",
+            "component": "Waveform"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-1",
+      "kind": "text",
+      "name": "Texto 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "selo-texto",
+          "type": "text",
+          "name": "EP 01",
+          "start": 4,
+          "duration": 236,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 150,
+            "y": 150,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 226,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 235,
+                "value": 0,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "EP 01",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 30,
+            "fontWeight": 800,
+            "color": "#171512",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-2",
+      "kind": "text",
+      "name": "Texto 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "programa",
+          "type": "text",
+          "name": "PODCAST CAJU",
+          "start": 6,
+          "duration": 234,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 240,
+            "y": 150,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 224,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 233,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.x": [
+              {
+                "frame": 0,
+                "value": 210,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 240,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "PODCAST CAJU",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 34,
+            "fontWeight": 800,
+            "color": "#F6B73C",
+            "align": "left",
+            "lineHeight": 1.15,
+            "letterSpacing": 4,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-3",
+      "kind": "text",
+      "name": "Texto 3",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "titulo",
+          "type": "text",
+          "name": "Como fazer vídeo",
+          "start": 8,
+          "duration": 232,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 340,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 222,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 231,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 370,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 340,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Como fazer vídeo\ncom código",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 76,
+            "fontWeight": 800,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.05,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-4",
+      "kind": "text",
+      "name": "Texto 4",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "convidado",
+          "type": "text",
+          "name": "com Seu Convidado",
+          "start": 18,
+          "duration": 222,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 960,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 212,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 221,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 980,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 960,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "com Seu Convidado",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 40,
+            "fontWeight": 600,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "m-audiograma",
+      "frame": 0,
+      "label": "Audiograma",
+      "color": "#F6B73C"
+    }
+  ],
+  "meta": {
+    "generator": "caju-motion/sdk"
+  }
+}

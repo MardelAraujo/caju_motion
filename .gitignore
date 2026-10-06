@@ -22,3 +22,9 @@ packages/skills/.check/
 
 # vídeos exportados (caju render / botão Exportar)
 renders/
+
+# site de docs (VitePress): build + llms gerados no CI
+docs-site/.vitepress/dist/
+docs-site/.vitepress/cache/
+docs-site/public/llms.txt
+docs-site/public/llms-full.txt

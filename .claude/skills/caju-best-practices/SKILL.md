@@ -49,7 +49,10 @@ Packages are named `@caju-motion/*` and the CLI is `caju`, but nothing is publis
 | Capability | Today (inside the repo checkout) | Planned |
 |---|---|---|
 | Open the Studio | `npm run studio` → http://localhost:3700 | `npx caju studio` (after the first npm release) |
-| New empty project | `npm run caju -- new <id> --format reel-9x16 [--dir <projectsFolder>]` | — |
+| New Caju project folder | (repo checkout already is one) | `npm create caju@latest` with 5 templates (after release) |
+| New empty project in a folder | `npm run caju -- new <id> --format reel-9x16 [--dir <projectsFolder>]` | — |
+| Diagnose environment | `npm run caju -- doctor` | — |
+| Install these skills elsewhere | `npm run caju -- skills add --target <dir> [--agents all]` | — |
 | Generate by code | `projects/<id>/video.ts` (`defineProject` from `@caju-motion/sdk`) + `npm run caju -- build <id>` | — |
 | Custom React components | `components/*.tsx` with `defineComponent` (`@caju-motion/renderer`); hot reload in the Studio | — |
 | Validate | `npm run caju -- check [<id>] [--dir <projectsFolder>]` (schema, assets, components, determinism) | — |

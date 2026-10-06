@@ -28,15 +28,20 @@ jobs:
         run: |
           # o render usa o ffmpeg-static; o ffprobe do sistema só verifica os arquivos gerados
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
-          npx vitest run packages/renderer-node --maxWorkers=1
-      # os pacotes publicados precisam funcionar sem o monorepo: empacota e confere o CLI instalado
-      - name: smoke test (npm pack + install)
+          npx vitest run packages/renderer-node packages/create-caju --maxWorkers=1
+      # o fluxo do usuário com os pacotes publicáveis, sem o monorepo:
+      # npm create caju → instalar os tarballs → check/build/still → skills add
+      - name: smoke test (create-caju + npm pack + install)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p /tmp/pack && for p in schema core renderer audio server studio sdk renderer-node cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
-          cd /tmp/pack && npm init -y >/dev/null
-          for p in schema core audio server studio sdk renderer-node; do npm pkg set "overrides.@caju-motion/$p=file:./$(ls caju-motion-$p-[0-9]*.tgz)"; done
-          npm install --no-audit --no-fund ./caju-motion-cli-[0-9]*.tgz ./caju-motion-renderer-[0-9]*.tgz
+          mkdir -p /tmp/pack && for p in schema core renderer audio server studio sdk renderer-node skills cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
+          tgz() { echo "file:/tmp/pack/$(cd /tmp/pack && ls caju-motion-$1-[0-9]*.tgz)"; }
+          node packages/create-caju/dist/index.js /tmp/app --template blank --yes --no-install
+          cd /tmp/app
+          for p in cli sdk renderer core; do npm pkg set "dependencies.@caju-motion/$p=$(tgz $p)"; done
+          for p in schema audio server studio renderer-node skills; do npm pkg set "overrides.@caju-motion/$p=$(tgz $p)"; done
+          npm install --no-audit --no-fund
           npx caju --version
-          npx caju new smoke --format square-1x1 && npx caju check smoke
-          npx caju still smoke --frame 0 --out smoke.png && test -s smoke.png
+          npx caju check && npx caju build
+          npx caju still meu-video --frame 45 --out still.png && test -s still.png
+          npx caju skills add --agents all && test -f .claude/skills/caju-best-practices/SKILL.md && grep -q caju-skills AGENTS.md
