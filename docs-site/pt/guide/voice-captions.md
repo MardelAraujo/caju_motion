@@ -38,7 +38,7 @@ Ele também põe o áudio como clipe numa trilha "Locução" (`--start <s>` para
 | `openai` | `OPENAI_API_KEY` | exato (o áudio é transcrito com o Whisper por palavra e alinhado ao seu roteiro) | `--voice alloy\|nova\|…`, `--model gpt-4o-mini-tts`; uma chamada extra de transcrição |
 | `elevenlabs` | `ELEVENLABS_API_KEY` | exato (alinhamento por caractere do `/with-timestamps`) | `--voice <voice_id>`, `--model eleven_multilingual_v2` |
 
-As chaves de API são suas, e os custos também. O Caju só chama o provedor quando você roda `caju tts`, nunca no `caju build`, `check` ou `render`.
+Coloque as chaves num arquivo `.env` na pasta onde você roda o `caju` (`OPENAI_API_KEY=sk-...`, uma por linha). A CLI lê esse arquivo a cada comando, uma variável definida no terminal tem prioridade, e o `caju doctor` mostra quais provedores estão configurados sem exibir a chave. Projetos criados pelo `create-caju` já ignoram o `.env` no git. As chaves de API são suas, e os custos também. O Caju só chama o provedor quando você roda `caju tts`, nunca no `caju build`, `check` ou `render`.
 
 ### Importar legendas
 

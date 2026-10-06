@@ -38,7 +38,7 @@ It also adds the audio as a clip on a "Locução" track (`--start <s>` to begin 
 | `openai` | `OPENAI_API_KEY` | exact (the audio is transcribed with Whisper word timestamps and aligned to your script) | `--voice alloy\|nova\|…`, `--model gpt-4o-mini-tts`; one extra transcription call |
 | `elevenlabs` | `ELEVENLABS_API_KEY` | exact (character alignment from `/with-timestamps`) | `--voice <voice_id>`, `--model eleven_multilingual_v2` |
 
-The API keys are yours, and so are the costs. Caju only calls the provider when you run `caju tts`, never during `caju build`, `check` or `render`.
+Put the keys in a `.env` file in the folder where you run `caju` (`OPENAI_API_KEY=sk-...`, one per line); the CLI reads it on every command, a variable set in the terminal takes priority, and `caju doctor` shows which providers are configured without printing the key. Projects created by `create-caju` already git-ignore `.env`. The API keys are yours, and so are the costs. Caju only calls the provider when you run `caju tts`, never during `caju build`, `check` or `render`.
 
 ### Importing captions
 

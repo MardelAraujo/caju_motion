@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
+import { loadDotEnv } from './env';
 import { buildCommand } from './commands/build';
 import { mediaCommand, parseProxyMode } from './commands/media';
 import { captionsCommand, ttsCommand } from './commands/voice';
@@ -53,6 +54,8 @@ Formatos de projeto: reel-9x16, feed-4x5, square-1x1, landscape-16x9
 `;
 
 async function main(argv: string[]): Promise<number> {
+  // chaves (OPENAI_API_KEY, ELEVENLABS_API_KEY…) do .env da pasta atual; o terminal tem prioridade
+  loadDotEnv();
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,

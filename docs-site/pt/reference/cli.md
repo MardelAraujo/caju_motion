@@ -165,5 +165,5 @@ npm create caju@latest [pasta] [-- opções]
 |---|---|
 | `CAJU_BROWSER_PATH` | executável do Chromium/Chrome/Edge usado no render |
 | `CAJU_FFMPEG_PATH` | executável do FFmpeg usado no render (padrão: embutido) |
-| `OPENAI_API_KEY` | chave do `caju tts --provider openai` |
+| `OPENAI_API_KEY` | chave do `caju tts --provider openai` (também pode ficar num `.env` na pasta atual) |
 | `ELEVENLABS_API_KEY` | chave do `caju tts --provider elevenlabs` |

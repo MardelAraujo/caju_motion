@@ -105,6 +105,11 @@ renders/
 *.log
 .DS_Store
 
+# chaves de API (caju tts): nunca versionar
+.env
+.env.*
+!.env.example
+
 # cache e histórico locais do Caju (exceto a base do último build,
 # que permite detectar edições do Studio em clones novos)
 **/.caju/*

@@ -5,6 +5,11 @@ out/
 *.tgz
 .DS_Store
 
+# chaves de API (caju tts)
+.env
+.env.*
+!.env.example
+
 # cache e histórico locais de cada projeto (.frame/ = nome antigo)
 # exceto a base do último caju build, que permite detectar edições do Studio em clones novos
 **/.caju/*
@@ -28,3 +33,8 @@ docs-site/.vitepress/dist/
 docs-site/.vitepress/cache/
 docs-site/public/llms.txt
 docs-site/public/llms-full.txt
+
+# projetos privados da AutoMind (cópias de ../caju-automind-private): nunca no repositório público
+projects/autochecker-papel/
+projects/autochecker-papel-v2/
+projects/jornada-documento/

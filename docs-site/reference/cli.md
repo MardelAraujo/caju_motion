@@ -165,5 +165,5 @@ npm create caju@latest [folder] [-- options]
 |---|---|
 | `CAJU_BROWSER_PATH` | Chromium/Chrome/Edge executable used for rendering |
 | `CAJU_FFMPEG_PATH` | FFmpeg executable used for rendering (default: bundled) |
-| `OPENAI_API_KEY` | key for `caju tts --provider openai` |
+| `OPENAI_API_KEY` | key for `caju tts --provider openai` (can also go in a `.env` file in the current folder) |
 | `ELEVENLABS_API_KEY` | key for `caju tts --provider elevenlabs` |

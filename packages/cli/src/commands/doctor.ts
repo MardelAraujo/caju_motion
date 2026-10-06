@@ -98,6 +98,22 @@ export function checkMemory(freeBytes: number, totalBytes: number): DoctorCheck 
     : { label: 'Memória', status: 'ok', detail };
 }
 
+/** Provedores de voz (caju tts) com chave configurada (no ambiente ou no .env). Nunca mostra a chave. */
+export function checkVoiceKeys(env: NodeJS.ProcessEnv): DoctorCheck {
+  const providers = [
+    ['openai', 'OPENAI_API_KEY'],
+    ['elevenlabs', 'ELEVENLABS_API_KEY'],
+  ].filter(([, key]) => !!env[key!]?.trim()).map(([name]) => name!);
+  return providers.length
+    ? { label: 'Voz (caju tts)', status: 'ok', detail: `placeholder + ${providers.join(', ')}` }
+    : {
+        label: 'Voz (caju tts)',
+        status: 'ok',
+        detail: 'só a voz provisória (placeholder)',
+        hint: 'para vozes reais, ponha OPENAI_API_KEY ou ELEVENLABS_API_KEY no .env do projeto',
+      };
+}
+
 const ICON: Record<CheckStatus, string> = { ok: '✓', warn: '!', fail: '✗' };
 
 export function formatCheck(c: DoctorCheck): string {
@@ -233,6 +249,7 @@ export async function runDoctor({ dir, componentsDir }: { dir: string; component
     checkDisk(await freeDisk(projectsDir)),
     checkMemory(os.freemem(), os.totalmem()),
     await checkWritable(projectsDir),
+    checkVoiceKeys(process.env),
   ];
 }
 
