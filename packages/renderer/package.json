@@ -1,23 +1,38 @@
 {
   "name": "@caju-motion/renderer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Caju Motion renderer: draws a project.json at any frame as React DOM (same code for preview and export).",
   "license": "MIT",
   "type": "module",
-  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/renderer" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MardelAraujo/caju_motion.git",
+    "directory": "packages/renderer"
+  },
   "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
   "sideEffects": false,
   "exports": {
-    ".": { "source": "./src/index.ts", "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
-  "files": ["dist"],
-  "scripts": { "build": "tsup --config ../../tsup.config.ts" },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.ts"
+  },
   "dependencies": {
-    "@caju-motion/core": "0.1.0",
-    "@caju-motion/schema": "0.1.0"
+    "@caju-motion/core": "0.2.0",
+    "@caju-motion/schema": "0.2.0"
   },
   "peerDependencies": {
     "react": "^19.0.0"
   },
-  "publishConfig": { "access": "public", "provenance": true }
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

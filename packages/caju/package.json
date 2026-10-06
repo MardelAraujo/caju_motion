@@ -1,0 +1,15 @@
+{
+  "name": "caju",
+  "version": "0.2.0",
+  "description": "Caju Motion — code it, then move it. Short name for the CLI: `npx caju studio`.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "caju": "./bin/caju.js" },
+  "files": ["bin", "README.md"],
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/caju" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "keywords": ["video", "motion-graphics", "react", "timeline", "editor", "ffmpeg", "remotion-alternative"],
+  "engines": { "node": ">=20.11" },
+  "dependencies": { "@caju-motion/cli": "0.2.0" },
+  "publishConfig": { "access": "public", "provenance": true }
+}

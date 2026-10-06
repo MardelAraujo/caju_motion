@@ -1,0 +1,16 @@
+{
+  "name": "create-caju",
+  "version": "0.2.0",
+  "description": "Create a Caju Motion video project: `npm create caju@latest`.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "create-caju": "./dist/index.js" },
+  "exports": { ".": { "source": "./src/index.ts", "default": "./dist/index.js" } },
+  "files": ["dist", "templates"],
+  "scripts": { "build": "tsup --config ../../tsup.config.ts" },
+  "repository": { "type": "git", "url": "git+https://github.com/MardelAraujo/caju_motion.git", "directory": "packages/create-caju" },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "engines": { "node": ">=20.11" },
+  "dependencies": {},
+  "publishConfig": { "access": "public", "provenance": true }
+}

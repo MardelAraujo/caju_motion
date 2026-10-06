@@ -1,6 +1,6 @@
 {
   "name": "@caju-motion/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Caju Motion SDK: defineProject (video by code) and `caju build` with merge of Studio edits.",
   "license": "MIT",
   "type": "module",
@@ -24,7 +24,7 @@
     "build": "tsup --config ../../tsup.config.ts"
   },
   "dependencies": {
-    "@caju-motion/schema": "0.1.0",
+    "@caju-motion/schema": "0.2.0",
     "tsx": "^4.23.15"
   },
   "publishConfig": {

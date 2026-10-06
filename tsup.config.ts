@@ -7,10 +7,10 @@ import { defineConfig } from 'tsup';
  * `tsup --config ../../tsup.config.ts`). Saída: dist/index.js (ESM) + dist/index.d.ts.
  */
 const pkg = JSON.parse(readFileSync(path.resolve('package.json'), 'utf8')) as { name: string };
-const isCli = pkg.name === '@caju-motion/cli';
+const isCli = pkg.name === '@caju-motion/cli' || pkg.name === 'create-caju';
 /** Pacotes que rodam só no Node (usam node:fs etc.); os demais também rodam no navegador. */
 const isNode =
-  isCli || ['@caju-motion/server', '@caju-motion/studio', '@caju-motion/sdk', '@caju-motion/renderer-node'].includes(pkg.name);
+  isCli || ['@caju-motion/server', '@caju-motion/studio', '@caju-motion/sdk', '@caju-motion/renderer-node', 'create-caju'].includes(pkg.name);
 
 export default defineConfig({
   entry: ['src/index.ts'],
