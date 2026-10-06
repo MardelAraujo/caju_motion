@@ -1695,6 +1695,9 @@ input[type='range'].cp-alpha::-webkit-slider-thumb {
 .tl-clip.type-shape {
   background-color: #6a2c1f;
 }
+.tl-clip.type-component {
+  background-color: #4a3a5e;
+}
 .tl-clip.type-audio {
   background-color: #2e3a2a;
 }
@@ -1951,4 +1954,163 @@ html.render-mode #root {
   overflow: visible;
   background: transparent;
   height: auto;
+}
+
+/* ------------------------------------------------------------------ andamento do export */
+.export-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  filter: none;
+  box-shadow: none;
+}
+.export-job {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.export-job-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.export-job-head span {
+  font-family: var(--font-code);
+  color: var(--faint);
+}
+.export-job-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.export-job-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gradient);
+  transition: width 0.3s ease;
+}
+.export-job.is-error .export-job-bar span,
+.export-job.is-canceled .export-job-bar span {
+  background: var(--faint);
+}
+.export-job-detail {
+  color: var(--faint);
+  font-family: var(--font-code);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.export-job.is-error .export-job-detail {
+  color: var(--danger);
+  white-space: normal;
+}
+.export-job-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.export-job-actions .link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.export-download {
+  text-decoration: none;
+}
+
+/* ------------------------------------------------------------------ componentes do usuário */
+.components-dir {
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.components-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #e94b35;
+  border-radius: var(--radius-md);
+  background: rgba(233, 75, 53, 0.12);
+  color: #ffb4a6;
+  font-size: 12px;
+}
+.components-errors strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.components-errors pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: 11px/1.4 'JetBrains Mono', monospace;
+  max-height: 180px;
+  overflow: auto;
+}
+.component-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.component-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: inherit;
+  text-align: left;
+  cursor: grab;
+}
+.component-card:hover {
+  border-color: var(--accent);
+}
+.component-thumb {
+  flex: none;
+  width: 112px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #0d0c0a;
+  pointer-events: none;
+}
+.component-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+.component-meta small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.component-meta code {
+  color: var(--faint);
+  font-size: 10px;
+}
+.component-add {
+  color: var(--muted);
+}
+.prop-json {
+  width: 100%;
+  min-height: 64px;
+  font: 11px/1.4 'JetBrains Mono', monospace;
+}
+.prop-json.is-invalid {
+  border-color: #e94b35;
 }

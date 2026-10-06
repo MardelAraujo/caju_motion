@@ -1,7 +1,7 @@
 ---
 name: caju-audio
 description: Voice-over, music, sound effects and ambience in Caju Motion projects. Covers file preparation, loudness targets, audio track layout, fades, ducking and syncing visuals to narration. Use whenever a Caju video has any sound, TTS/locução, soundtrack, SFX, or A/V sync problems.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Caju audio

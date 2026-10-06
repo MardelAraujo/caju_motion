@@ -12,21 +12,28 @@ jobs:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      # render de verdade (Chrome do runner + ffmpeg-static): MP4 com áudio, still, WebM, PNG, cancelamento, A/V sync
+      - name: render integration tests
+        if: runner.os == 'Linux'
+        env:
+          CAJU_RENDER_IT: '1'
+        run: npx vitest run packages/renderer-node --maxWorkers=1
       # os pacotes publicados precisam funcionar sem o monorepo: empacota e confere o CLI instalado
       - name: smoke test (npm pack + install)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p /tmp/pack && for p in schema core renderer server studio cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
+          mkdir -p /tmp/pack && for p in schema core renderer audio server studio sdk renderer-node cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
           cd /tmp/pack && npm init -y >/dev/null
-          for p in schema core server studio; do npm pkg set "overrides.@caju-motion/$p=file:./$(ls caju-motion-$p-*.tgz)"; done
+          for p in schema core renderer audio server studio sdk renderer-node; do npm pkg set "overrides.@caju-motion/$p=file:./$(ls caju-motion-$p-*.tgz)"; done
           npm install --no-audit --no-fund ./caju-motion-cli-*.tgz ./caju-motion-renderer-*.tgz
           npx caju --version
           npx caju new smoke --format square-1x1 && npx caju check smoke
+          npx caju still smoke --frame 0 --out smoke.png && test -s smoke.png

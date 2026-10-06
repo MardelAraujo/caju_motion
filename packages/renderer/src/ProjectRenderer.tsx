@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { clipValue, Fill, FrameProvider, isClipActive, Sequence } from '@caju-motion/core';
 import { projectDuration, type Asset, type Clip, type Project } from '@caju-motion/schema';
-import { TextElement, VideoElement } from './elements';
+import { ImageElement, TextElement, VideoElement } from './elements';
+import { ComponentElement } from './components';
 import { clipVolumeAt, intrinsicSize, resolvedProps, shapeProps, sourceTimeAt, textProps } from './props';
 
 export type AssetResolver = (asset: Asset) => string;
@@ -83,15 +84,7 @@ export function ProjectRenderer({
         break;
       }
       case 'image':
-        if (asset && size)
-          content = (
-            <img
-              src={resolveAsset(asset)}
-              draggable={false}
-              alt=""
-              style={{ display: 'block', width: size.width, height: size.height }}
-            />
-          );
+        if (asset && size) content = <ImageElement src={resolveAsset(asset)} width={size.width} height={size.height} />;
         break;
       case 'video':
         if (asset && size)
@@ -109,6 +102,11 @@ export function ProjectRenderer({
             />
           );
         break;
+      case 'component': {
+        const name = typeof live.props.component === 'string' ? live.props.component : '';
+        content = <ComponentElement name={name} props={live.props} frameSize={{ width, height }} />;
+        break;
+      }
       default:
         content = null;
     }

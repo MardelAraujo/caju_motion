@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Share } from 'lucide-react';
-import { projectDuration } from '@caju-motion/schema';
+import { Download, Share, X } from 'lucide-react';
 import {
+  crfFor,
+  projectDuration,
   defaultExportSettings,
   estimateBytes,
   EXPORT_FORMATS,
@@ -11,7 +12,8 @@ import {
   formatBytes,
   outputSize,
   type ExportSettings,
-} from '../exportSettings';
+} from '@caju-motion/schema';
+import { isActive, jobFileUrl, jobFraction, useRenderJobs, type RenderJob } from '../renderJobs';
 import { useEditor } from '../store';
 import { Dropdown, Segmented } from '../ui';
 
@@ -27,6 +29,8 @@ function loadSaved(): Partial<ExportSettings> {
 
 /** Botão "Exportar" + balão com formato, resolução, fps e qualidade. */
 export function ExportPopover() {
+  const job = useRenderJobs((j) => j.job);
+  const active = isActive(job);
   return (
     <Dropdown
       align="right"
@@ -34,7 +38,7 @@ export function ExportPopover() {
       trigger={(open, toggle) => (
         <button type="button" className={`export-btn ${open ? 'is-open' : ''}`} onClick={toggle} aria-expanded={open}>
           <Share size={16} strokeWidth={2} />
-          Exportar
+          {active ? `Exportando ${Math.round(jobFraction(job!) * 100)}%` : 'Exportar'}
         </button>
       )}
     >
@@ -46,6 +50,11 @@ export function ExportPopover() {
 function ExportForm({ onDone }: { onDone: () => void }) {
   const project = useEditor((s) => s.project);
   const showToast = useEditor((s) => s.showToast);
+  const saveState = useEditor((s) => s.saveState);
+  const save = useEditor((s) => s.save);
+  const job = useRenderJobs((j) => j.job);
+  const startJob = useRenderJobs((j) => j.start);
+  const [starting, setStarting] = useState(false);
   const settings = project?.settings ?? { width: 1920, height: 1080, fps: 30 };
   const [s, setS] = useState<ExportSettings>(() => ({ ...defaultExportSettings(settings), ...loadSaved() }));
 
@@ -61,7 +70,6 @@ function ExportForm({ onDone }: { onDone: () => void }) {
   const fmt = EXPORT_FORMATS.find((f) => f.id === s.format)!;
   const size = outputSize(settings, s.resolution);
   const seconds = project ? projectDuration(project) / project.settings.fps : 0;
-  const qualityLabel = EXPORT_QUALITIES.find((q) => q.id === s.quality)!.label;
   const fpsOptions = [...new Set([...EXPORT_FPS, settings.fps])].sort((a, b) => a - b);
 
   return (
@@ -116,7 +124,10 @@ function ExportForm({ onDone }: { onDone: () => void }) {
           <Segmented
             value={s.quality}
             onChange={(v) => patch({ quality: v })}
-            options={EXPORT_QUALITIES.map((q) => ({ value: q.id, label: q.label, title: `CRF ${q.crf}` }))}
+            options={EXPORT_QUALITIES.map((q) => {
+              const crf = crfFor(s.format, q.id);
+              return { value: q.id, label: q.label, ...(crf !== null ? { title: `CRF ${crf}` } : {}) };
+            })}
           />
         </div>
       )}
@@ -136,17 +147,86 @@ function ExportForm({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           className="export-btn"
-          onClick={() => {
-            onDone();
-            showToast(
-              `Renderização chega na Fase 1 (Chromium + FFmpeg). Configuração salva: ${fmt.label} · ${size.width}×${size.height} · ${s.fps} fps${fmt.video ? ` · ${qualityLabel}` : ''}.`,
-            );
+          disabled={!project || starting || isActive(job)}
+          onClick={async () => {
+            if (!project) return;
+            setStarting(true);
+            try {
+              if (saveState === 'dirty' || saveState === 'error') await save();
+              await startJob(project.id, s);
+            } catch (e) {
+              showToast(`Não foi possível exportar: ${(e as Error).message}`);
+            } finally {
+              setStarting(false);
+            }
           }}
         >
           <Share size={16} strokeWidth={2} />
-          Exportar
+          {saveState === 'dirty' ? 'Salvar e exportar' : 'Exportar'}
         </button>
       </footer>
+
+      {job && job.projectId === project?.id && <JobPanel job={job} onDone={onDone} />}
+    </div>
+  );
+}
+
+const STATUS_LABEL: Record<RenderJob['status'], string> = {
+  queued: 'Na fila…',
+  running: 'Renderizando…',
+  done: 'Pronto',
+  error: 'Falhou',
+  canceled: 'Cancelado',
+};
+
+/** Andamento do export atual: barra, velocidade, cancelar e baixar. */
+function JobPanel({ job, onDone }: { job: RenderJob; onDone: () => void }) {
+  const cancel = useRenderJobs((j) => j.cancel);
+  const clear = useRenderJobs((j) => j.clear);
+  const active = isActive(job);
+  const pct = Math.round(jobFraction(job) * 100);
+  const { frame, total, speed, etaSec, stage } = job.progress;
+  const detail =
+    job.status === 'running'
+      ? stage === 'preparing'
+        ? 'abrindo o navegador…'
+        : stage === 'encoding'
+          ? 'finalizando o arquivo…'
+          : `quadro ${frame}/${total} · ${speed.toFixed(1)} q/s${etaSec !== null ? ` · ~${Math.ceil(etaSec)} s` : ''}`
+      : job.status === 'done'
+        ? `${job.fileName ?? ''}${job.sizeBytes ? ` · ${formatBytes(job.sizeBytes)}` : ''}`
+        : (job.error ?? '');
+
+  return (
+    <div className={`export-job is-${job.status}`} role="status" aria-live="polite">
+      <div className="export-job-head">
+        <strong>{STATUS_LABEL[job.status]}</strong>
+        <span>{active || job.status === 'done' ? `${pct}%` : ''}</span>
+      </div>
+      <div className="export-job-bar" aria-hidden>
+        <span style={{ width: `${pct}%` }} />
+      </div>
+      <small className="export-job-detail" title={detail}>
+        {detail}
+      </small>
+      <div className="export-job-actions">
+        {active && (
+          <button type="button" className="link-btn" onClick={() => void cancel()}>
+            <X size={14} /> Cancelar
+          </button>
+        )}
+        {job.status === 'done' && job.fileName && (
+          <a className="export-btn export-download" href={jobFileUrl(job)} download={job.fileName} onClick={onDone}>
+            <Download size={16} strokeWidth={2} />
+            Baixar
+          </a>
+        )}
+        {!active && (
+          <button type="button" className="link-btn" onClick={clear}>
+            Fechar
+          </button>
+        )}
+      </div>
     </div>
   );
 }

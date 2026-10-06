@@ -13,7 +13,7 @@ Motion graphics by code <em>and</em> by a visual timeline, on the same source of
 
 Coding agents get first-class support: [`packages/skills`](packages/skills) ships Agent Skills that teach them to structure assets and audio and to generate valid projects.
 
-> **Status: v0.1 — foundations (F0).** Full video export (MP4) arrives in F1. See the [roadmap](docs/FRAMEWORK.md#7-roadmap).
+> **Status: v0.2** — render to MP4/MOV/WebM/GIF (`caju render`), video by code (`video.ts` + `caju build`) and custom React components with hot reload. Not on npm yet. See the [roadmap](docs/FRAMEWORK.md#7-roadmap).
 
 ## Quick start (from source)
 
@@ -25,9 +25,14 @@ cd caju_motion
 npm install
 npm run studio                              # Caju Studio at http://localhost:3700 (projects in ./projects)
 npm run caju -- new my-video --format reel-9x16
-npm run caju -- check                       # validate projects (schema + assets on disk)
+npm run caju -- check                       # validate projects (schema, assets, components, determinism)
+npm run caju -- build exemplo-codigo        # projects/<id>/video.ts → project.json (keeps Studio edits)
+npm run build -w @caju-motion/studio        # once, before rendering
+npm run caju -- render exemplo-codigo       # → projects/exemplo-codigo/renders/*.mp4
 npm run check                               # typecheck + determinism lint + tests + fixtures
 ```
+
+Custom animated components live in `components/` (`defineComponent` + a zod schema of props). They show up in the Studio's **Componentes** tab and hot-reload on save.
 
 Formats: `reel-9x16`, `feed-4x5`, `square-1x1`, `landscape-16x9`. All commands accept `--dir <projectsFolder>`.
 

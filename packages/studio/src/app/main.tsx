@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { installRuntime, loadComponents, useComponentsStatus, watchComponents } from './components-runtime';
 import { RenderView } from './RenderView';
 import { useEditor } from './store';
 import './styles.css';
@@ -32,7 +33,14 @@ async function loadLocalFonts(): Promise<void> {
   }
 }
 
-void loadLocalFonts().then(() =>
+// componentes do usuário (pasta components/): o render espera carregar; o editor recarrega a quente
+installRuntime();
+const componentsReady = loadComponents();
+if (!renderId) watchComponents();
+// gancho para automação/testes: recarregar e ler o estado dos componentes
+(window as unknown as { __cajuComponents: unknown }).__cajuComponents = { reload: loadComponents, status: useComponentsStatus };
+
+void Promise.all([loadLocalFonts(), renderId ? componentsReady : null]).then(() =>
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       {renderId ? <RenderView projectId={renderId} frame={Number(params.get('frame') ?? 0)} /> : <App />}

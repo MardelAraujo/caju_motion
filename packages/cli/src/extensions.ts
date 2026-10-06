@@ -1,5 +1,6 @@
 import path from 'node:path';
-import type { ApiExtension } from '@caju-motion/server';
+import { renderRoutes } from '@caju-motion/renderer-node';
+import { componentsRoutes, type ApiExtension } from '@caju-motion/server';
 
 export type ExtensionContext = {
   /** Pasta de projetos (`--dir`). */
@@ -16,6 +17,11 @@ export function componentsDirFor(projectsDir: string, explicit?: string): string
  * Extensões da API montadas pelo `caju studio` (dev e produção) e pelo render.
  * Cada recurso (render, componentes) registra suas rotas aqui, sem acoplar o servidor a eles.
  */
-export async function studioExtensions(_ctx: ExtensionContext): Promise<ApiExtension[]> {
-  return [];
+export async function studioExtensions(ctx: ExtensionContext): Promise<ApiExtension[]> {
+  return [
+    // componentes React do usuário (bundle esbuild + versão para recarga a quente)
+    componentsRoutes({ componentsDir: ctx.componentsDir }),
+    // render: usa a origem da própria requisição como servidor das páginas (componentes inclusos)
+    renderRoutes(),
+  ];
 }

@@ -1,7 +1,7 @@
 ---
 name: caju-setup
 description: Install and set up Caju Motion (formerly "frame") and diagnose environment problems. Use when the user wants to install Caju, start a new video project, open Caju Studio, or hits errors with Node, npm, ffmpeg, ports, Chrome or Windows/macOS/Linux paths.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Caju setup
@@ -15,7 +15,7 @@ version: 0.1.0
 | FFmpeg + ffprobe | ≥ 6 (on PATH) | preparing assets (convert, loudness, durations) | `ffmpeg -version` |
 | Chrome / Edge | recent | Studio, single-frame capture, eyedropper | — |
 
-Today FFmpeg is only needed for **asset preparation**. Once `@caju-motion/renderer-node` ships (F1), the render bundles its own FFmpeg.
+Rendering uses the bundled FFmpeg (`ffmpeg-static`, or `CAJU_FFMPEG_PATH`) and an installed Chrome or Edge (or `CAJU_BROWSER_PATH`); no browser download is needed. A system FFmpeg/ffprobe is still useful for **asset preparation**. Before the first render from a repo checkout, run `npm run build -w @caju-motion/studio` (and again after Studio changes).
 
 ## Install (today: from source)
 ```bash

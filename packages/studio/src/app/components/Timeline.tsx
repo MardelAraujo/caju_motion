@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
-import { Eye, EyeOff, Lock, LockOpen, Plus, Shapes, Type, Volume2, VolumeX } from 'lucide-react';
+import { Eye, EyeOff, Lock, LockOpen, Plus, Puzzle, Shapes, Type, Volume2, VolumeX } from 'lucide-react';
 import { shapeProps, textProps } from '@caju-motion/renderer';
 import { projectDuration, type Asset, type Clip, type Project, type Track } from '@caju-motion/schema';
 import { assetUrl } from '../api';
@@ -402,6 +402,7 @@ function ClipBlock({
       <span className="tl-clip-label">
         {clip.type === 'text' && <Type size={11} />}
         {clip.type === 'shape' && <Shapes size={11} />}
+        {clip.type === 'component' && <Puzzle size={11} />}
         {width > 50 && <span className="tl-clip-name">{label}</span>}
         {width > 110 && <span className="tl-clip-dur">{formatClock(clip.duration, fps)}</span>}
         {clip.speed !== 1 && width > 150 && <span className="tl-clip-dur">{clip.speed}x</span>}

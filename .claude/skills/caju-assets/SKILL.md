@@ -1,7 +1,7 @@
 ---
 name: caju-assets
 description: How to structure, prepare and register assets (images, SVG, video, fonts, data) in a Caju Motion project. Use whenever a Caju video needs files: logos, photos, screenshots, illustrations, b-roll, backgrounds, icons, brand kits, JSON data, or when check reports missing assets.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Caju assets
@@ -53,11 +53,11 @@ ffprobe -v error -show_entries stream=width,height,r_frame_rate:format=duration 
 ```
 For images, read the size with a library such as `sharp` (`(await sharp(file).metadata()).width`), or from the SVG `viewBox`.
 
-## Availability (v0.1.0)
+## Availability (v0.2.0)
 | Asset | Preview (Studio) | Export |
 |---|---|---|
-| image (png/jpg/webp/svg) | ✓ | F1 (render) |
-| video (mp4 H.264) | ✓ native `<video>`, may be off by ±1 frame when seeking | F1, frame-exact |
-| audio | ✓ | F1 (mixed by ffmpeg) |
-| font / lottie | ✗ (reserved kinds) | F2 |
+| image (png/jpg/webp/svg) | ✓ | ✓ |
+| video (mp4 H.264) | ✓ native `<video>` | ✓ exact seek per frame (convert VFR sources to CFR first) |
+| audio | ✓ | ✓ mixed by ffmpeg (volume, fades, trim, speed, pan) |
+| font / lottie | ✗ (reserved kinds) | planned |
 | remote URLs | ✗ never | ✗ never |

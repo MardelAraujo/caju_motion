@@ -1,0 +1,545 @@
+{
+  "schemaVersion": 1,
+  "id": "exemplo-codigo",
+  "name": "Exemplo por código",
+  "settings": {
+    "format": "reel-9x16",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "background": "#171512",
+    "duration": 180
+  },
+  "assets": [],
+  "tracks": [
+    {
+      "id": "main",
+      "kind": "main",
+      "name": "Principal",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": []
+    },
+    {
+      "id": "t00-0",
+      "kind": "overlay",
+      "name": "Fundo",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "fundo",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 0,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 960,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1920,
+            "fill": "#171512",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": true,
+          "hidden": false
+        },
+        {
+          "id": "fundo-2",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 90,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 960,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {},
+          "props": {
+            "shape": "rect",
+            "width": 1080,
+            "height": 1920,
+            "fill": "#171512",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": true,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-1",
+      "kind": "overlay",
+      "name": "Camada 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "traco",
+          "type": "shape",
+          "name": "Retângulo",
+          "start": 4,
+          "duration": 86,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 640,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 76,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 85,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.x": [
+              {
+                "frame": 0,
+                "value": 460,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 540,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "shape": "rect",
+            "width": 220,
+            "height": 12,
+            "fill": "#F6B73C",
+            "stroke": "",
+            "strokeWidth": 0
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "contador",
+          "type": "component",
+          "name": "CountUp",
+          "start": 90,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 820,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 80,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 89,
+                "value": 0,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "from": 0,
+            "to": 87,
+            "suffix": "%",
+            "seconds": 1.6,
+            "component": "CountUp"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "camada-2",
+      "kind": "overlay",
+      "name": "Camada 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "tarja",
+          "type": "component",
+          "name": "LowerThird",
+          "start": 120,
+          "duration": 60,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1560,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 50,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 59,
+                "value": 0,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "title": "Caju Motion",
+            "subtitle": "code it, then move it",
+            "component": "LowerThird"
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-1",
+      "kind": "text",
+      "name": "Texto 1",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "titulo",
+          "type": "text",
+          "name": "Vídeo por código",
+          "start": 0,
+          "duration": 90,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 760,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 80,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 89,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 800,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 760,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "Vídeo por código",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 104,
+            "fontWeight": 800,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        },
+        {
+          "id": "legenda",
+          "type": "text",
+          "name": "menos tempo no editor",
+          "start": 110,
+          "duration": 70,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 1040,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 60,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 69,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 1064,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1040,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "menos tempo no editor",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 60,
+            "fontWeight": 700,
+            "color": "#FFF8E9",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    },
+    {
+      "id": "texto-2",
+      "kind": "text",
+      "name": "Texto 2",
+      "locked": false,
+      "hidden": false,
+      "muted": false,
+      "clips": [
+        {
+          "id": "subtitulo",
+          "type": "text",
+          "name": "e editável no Studio",
+          "start": 10,
+          "duration": 80,
+          "trimIn": 0,
+          "speed": 1,
+          "transform": {
+            "x": 540,
+            "y": 880,
+            "scale": 1,
+            "rotation": 0,
+            "anchorX": 0.5,
+            "anchorY": 0.5,
+            "flipX": false,
+            "flipY": false
+          },
+          "opacity": 1,
+          "blendMode": "normal",
+          "keyframes": {
+            "opacity": [
+              {
+                "frame": 0,
+                "value": 0,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 1,
+                "easing": "linear"
+              },
+              {
+                "frame": 70,
+                "value": 1,
+                "easing": "easeIn"
+              },
+              {
+                "frame": 79,
+                "value": 0,
+                "easing": "linear"
+              }
+            ],
+            "transform.y": [
+              {
+                "frame": 0,
+                "value": 910,
+                "easing": "softOut"
+              },
+              {
+                "frame": 18,
+                "value": 880,
+                "easing": "linear"
+              }
+            ]
+          },
+          "props": {
+            "text": "e editável no Studio",
+            "fontFamily": "Plus Jakarta Sans",
+            "fontSize": 56,
+            "fontWeight": 600,
+            "color": "#F6B73C",
+            "align": "center",
+            "lineHeight": 1.15,
+            "letterSpacing": 0,
+            "background": ""
+          },
+          "effects": [],
+          "origin": "code",
+          "locked": false,
+          "hidden": false
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "m-abertura",
+      "frame": 0,
+      "label": "Abertura",
+      "color": "#F6B73C"
+    },
+    {
+      "id": "m-numero",
+      "frame": 90,
+      "label": "Número",
+      "color": "#F6B73C"
+    }
+  ],
+  "meta": {
+    "generator": "caju-motion/sdk"
+  }
+}

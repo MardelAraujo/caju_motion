@@ -1,11 +1,12 @@
 import type { DragEvent } from 'react';
-import { addAssetClip, addShape, addText, SHAPE_PRESETS, TEXT_PRESETS } from './commands';
+import { addAssetClip, addComponent, addShape, addText, SHAPE_PRESETS, TEXT_PRESETS } from './commands';
 
 /** Carga arrastada da biblioteca para a timeline/canvas. */
 export type DragPayload =
   | { kind: 'asset'; assetId: string }
   | { kind: 'text'; presetId: string }
-  | { kind: 'shape'; shapeId: string; fill: string };
+  | { kind: 'shape'; shapeId: string; fill: string }
+  | { kind: 'component'; name: string };
 
 const MIME = 'application/x-frame';
 
@@ -37,4 +38,5 @@ export function dropPayload(payload: DragPayload, opts: { at?: number; trackId?:
     const shape = SHAPE_PRESETS.find((s) => s.id === payload.shapeId);
     if (shape) addShape(shape, payload.fill, opts);
   }
+  if (payload.kind === 'component') addComponent(payload.name, opts);
 }

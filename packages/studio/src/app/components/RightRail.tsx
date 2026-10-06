@@ -17,7 +17,16 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-react';
-import { shapeProps, textProps, type TextAlign } from '@caju-motion/renderer';
+import {
+  componentBox,
+  describeProps,
+  resolveComponentProps,
+  shapeProps,
+  textProps,
+  useComponents,
+  type PropField,
+  type TextAlign,
+} from '@caju-motion/renderer';
 import { FORMATS, projectDuration, type Clip, type Track } from '@caju-motion/schema';
 import { BRAND_COLORS } from '../commands';
 import { setSpeed, updateClip } from '../ops';
@@ -121,6 +130,7 @@ function BasicPanel({ clip }: { clip: Clip }) {
     <>
       {clip.type === 'text' && <TextSection clip={clip} />}
       {clip.type === 'shape' && <ShapeSection clip={clip} />}
+      {clip.type === 'component' && <ComponentSection clip={clip} />}
 
       <Section
         title="Transformar"
@@ -289,6 +299,171 @@ function TextSection({ clip }: { clip: Clip }) {
         />
       </div>
     </Section>
+  );
+}
+
+/** Props de um componente do usuário, a partir do schema (`describeProps`). */
+function ComponentSection({ clip }: { clip: Clip }) {
+  const edit = useClipEdit(clip);
+  const settings = useEditor((s) => s.project!.settings);
+  const defs = useComponents();
+  const name = typeof clip.props.component === 'string' ? clip.props.component : '';
+  const defn = defs.find((d) => d.name === name);
+  const box = componentBox(clip.props, defn, settings);
+  const maxSize = Math.max(settings.width, settings.height) * 2;
+
+  if (!defn) {
+    return (
+      <Section title={name || 'Componente'}>
+        <p className="prop-note">
+          Componente "{name}" não encontrado em <code>components/</code>. As props ficam guardadas no clipe.
+        </p>
+      </Section>
+    );
+  }
+  const fields = describeProps(defn);
+  const { props, invalid } = resolveComponentProps(defn, clip.props);
+  const set = (key: string, value: unknown) => edit(`prop:${key}`, (c) => void (c.props[key] = value));
+  const animated = (key: string) => (clip.keyframes[`props.${key}`]?.length ?? 0) > 0;
+
+  return (
+    <>
+      <Section
+        title={defn.label ?? defn.name}
+        aside={
+          <button
+            type="button"
+            className="link-btn"
+            title="Voltar todas as props para o padrão do componente"
+            onClick={() =>
+              edit('reset-props', (c) => {
+                for (const k of Object.keys(c.props)) if (k !== 'component' && k !== 'width' && k !== 'height') delete c.props[k];
+              })
+            }
+          >
+            <RotateCcw size={13} /> Padrão
+          </button>
+        }
+      >
+        {defn.description && <p className="prop-note">{defn.description}</p>}
+        {fields.length === 0 && <p className="prop-note">Este componente não tem props editáveis.</p>}
+        {fields.map((f) => (
+          <PropFieldRow key={f.key} field={f} value={props[f.key]} onChange={(v) => set(f.key, v)} />
+        ))}
+        {invalid.length > 0 && <p className="prop-note">Props inválidas usando o padrão: {invalid.join(', ')}.</p>}
+        {fields.some((f) => animated(f.key)) && <p className="prop-note">Algumas props têm keyframes; os valores acima são a base.</p>}
+      </Section>
+      <Section title="Caixa">
+        <Row label="Tamanho">
+          <NumberField
+            prefix="L"
+            value={box.width}
+            min={1}
+            max={maxSize}
+            onChange={(v) => edit('box', (c) => void (c.props.width = Math.max(1, Math.round(v))))}
+          />
+          <NumberField
+            prefix="A"
+            value={box.height}
+            min={1}
+            max={maxSize}
+            onChange={(v) => edit('box', (c) => void (c.props.height = Math.max(1, Math.round(v))))}
+          />
+        </Row>
+      </Section>
+    </>
+  );
+}
+
+function PropFieldRow({ field, value, onChange }: { field: PropField; value: unknown; onChange: (v: unknown) => void }) {
+  const label = field.label ?? field.key;
+  switch (field.kind) {
+    case 'string':
+      return (
+        <div className="prop-stack">
+          <span className="prop-label">{label}</span>
+          <textarea
+            className="text-input"
+            rows={String(value ?? '').includes('\n') ? 3 : 1}
+            value={String(value ?? '')}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        </div>
+      );
+    case 'color':
+      return (
+        <div className="prop-stack">
+          <span className="prop-label">{label}</span>
+          <Swatches colors={BRAND_COLORS} value={String(value ?? '')} onChange={onChange} />
+        </div>
+      );
+    case 'number': {
+      const n = typeof value === 'number' ? value : field.default;
+      if (field.min !== undefined && field.max !== undefined) {
+        return <SliderRow label={label} value={n} min={field.min} max={field.max} step={field.step ?? 1} onChange={onChange} />;
+      }
+      return (
+        <Row label={label}>
+          <NumberField
+            value={n}
+            min={field.min}
+            max={field.max}
+            step={field.step ?? 1}
+            format={(v) => String(Math.round(v * 1000) / 1000)}
+            onChange={onChange}
+          />
+        </Row>
+      );
+    }
+    case 'boolean':
+      return (
+        <Row label={label}>
+          <button type="button" className={`chip-btn ${value ? 'is-active' : ''}`} onClick={() => onChange(!value)}>
+            {value ? 'Sim' : 'Não'}
+          </button>
+        </Row>
+      );
+    case 'enum':
+      return (
+        <Row label={label}>
+          <select value={String(value ?? field.default)} onChange={(e) => onChange(e.target.value)}>
+            {field.options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </Row>
+      );
+    case 'json':
+      return <JsonField label={label} value={value} onChange={onChange} />;
+  }
+}
+
+/** Valores compostos (listas, objetos): edita o JSON; só confirma se for válido. */
+function JsonField({ label, value, onChange }: { label: string; value: unknown; onChange: (v: unknown) => void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  let valid = true;
+  if (draft !== null) {
+    try {
+      JSON.parse(draft);
+    } catch {
+      valid = false;
+    }
+  }
+  return (
+    <div className="prop-stack">
+      <span className="prop-label">{label}</span>
+      <textarea
+        className={`text-input prop-json ${valid ? '' : 'is-invalid'}`}
+        value={draft ?? JSON.stringify(value ?? null, null, 2)}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          if (draft !== null && valid) onChange(JSON.parse(draft));
+          setDraft(null);
+        }}
+      />
+    </div>
   );
 }
 

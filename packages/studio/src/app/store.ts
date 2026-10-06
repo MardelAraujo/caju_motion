@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { projectDuration, type Project } from '@caju-motion/schema';
 import { api, ConflictError, type ProjectSummary } from './api';
 
-export type LeftTab = 'media' | 'text' | 'audio' | 'elements';
+export type LeftTab = 'media' | 'text' | 'audio' | 'elements' | 'components';
 export type RightTab = 'basic' | 'audio' | 'speed' | 'project';
 export type Tool = 'select' | 'hand';
 export type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';

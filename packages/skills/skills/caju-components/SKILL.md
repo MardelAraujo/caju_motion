@@ -1,56 +1,96 @@
 ---
 name: caju-components
-description: Write deterministic, frame-driven React code for Caju Motion with the core runtime (useFrame, useVideoConfig, Sequence, Fill, interpolate, spring, Easing, random, delayRender). Use when building custom animated components, contributing to the Caju renderer, or when the user asks for effects that keyframes cannot express.
-version: 0.1.0
+description: Create custom animated React components for Caju Motion (defineComponent in components/, zod props that become Studio controls, frame-driven animation with useFrame/interpolate/spring) and use them in videos. Use when keyframes are not enough — counters, charts, lower thirds, kinetic text, data-driven graphics — or when contributing to the Caju renderer.
+version: 0.2.0
 ---
 
-# Caju components (frame-driven React)
+# Caju components
 
-## Availability (v0.1.0): read first
-- **Custom component clips are not rendered yet.** A clip with `type: "component"` draws nothing today; `defineComponent` and the Studio "Componentes" tab arrive in F2.
-- Today, this skill applies to:
-  1. contributing to `packages/renderer` / `packages/core`;
-  2. prototyping components to ship in F2.
-- For user videos **today**, express the effect with keyframes (caju-authoring → animation.md) or pre-render it as SVG/PNG/video assets (caju-assets).
-- Import from `@caju-motion/core`.
+A component is a React function, driven only by the current frame, that appears in Caju Studio's **Componentes** tab and can be used from `video.ts`.
+- Its props are a zod schema, and the Studio's inspector edits them automatically.
+- The same code renders in preview and in `caju render`.
 
-## Runtime API (`@caju-motion/core`)
+## Where they live
+- One file per component (or `<Folder>/index.tsx`) in **`components/`** next to the projects folder. In the repo checkout that is `components/` at the root; otherwise it is `--components <dir>`.
+- The Studio compiles the folder with esbuild and **hot-reloads on save**. A compile error shows in the Studio and the last good version keeps working.
+- `caju check` compiles it, runs the determinism lint on it, and reports clips that reference a missing component.
+
+## Anatomy
 ```tsx caju-check
-import { Fill, Sequence, interpolate, spring, springPresets, Easing, random, useFrame, useVideoConfig } from '@caju-motion/core';
+// components/Badge.tsx
+import { Easing, interpolate, spring, useFrame, useVideoConfig } from '@caju-motion/core';
+import { defineComponent } from '@caju-motion/renderer';
+import { z } from 'zod';
 
-export function Title({ text }: { text: string }) {
-  const frame = useFrame();                  // frame relative to the enclosing <Sequence>
-  const { fps, width } = useVideoConfig();   // width, height, fps, durationInFrames
-  const enter = spring({ frame, fps, config: springPresets.settle });
-  const y = interpolate(frame, [0, 20], [40, 0], { easing: Easing.softOut }); // clamps by default
-  const jitter = (random(`${text}-x`) - 0.5) * 4;                             // deterministic "random"
+const schema = z.object({
+  text: z.string().default('Novo').describe('Texto'),
+  color: z.string().describe('color').default('#F6B73C'), // .describe('color') → color picker in the Studio
+  size: z.number().min(24).max(400).default(96).describe('Tamanho'), // min/max → slider
+  rounded: z.boolean().default(true).describe('Arredondado'),
+  align: z.enum(['left', 'center', 'right']).default('center').describe('Alinhamento'),
+});
+type Props = z.infer<typeof schema>;
+
+function Badge({ text, color, size, rounded, align }: Props) {
+  const frame = useFrame(); // frame relative to the clip start
+  const { fps } = useVideoConfig();
+  const enter = spring({ frame, fps, config: { damping: 14 } });
+  const y = interpolate(frame, [0, 12], [30, 0], { easing: Easing.softOut });
   return (
-    <Fill style={{ display: 'grid', placeItems: 'center' }}>
-      <h1 style={{ opacity: enter, transform: `translate(${jitter}px, ${y}px)`, maxWidth: width * 0.8 }}>{text}</h1>
-      {/* children of a Sequence see frame 0 at absolute frame 30 */}
-      <Sequence from={30} duration={60}>
-        <Fill style={{ borderBottom: '4px solid #F6B73C' }} />
-      </Sequence>
-    </Fill>
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center',
+                  justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center' }}>
+      <span style={{ background: color, color: '#171512', fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800,
+                     fontSize: size, padding: '0.2em 0.6em', borderRadius: rounded ? '999px' : 0,
+                     opacity: enter, transform: `translateY(${y}px) scale(${0.8 + 0.2 * enter})` }}>
+        {text}
+      </span>
+    </div>
   );
 }
+
+export default defineComponent({
+  name: 'Badge', // unique id used in project.json (props.component)
+  label: 'Selo', // shown in the Studio
+  description: 'Selo com entrada em mola.',
+  schema,
+  width: 800, // default box when added (px of the project)
+  height: 240,
+  durationInFrames: 90, // default clip length when added in the Studio
+  component: Badge,
+});
 ```
+- The component fills its clip box (`width`/`height`). Lay it out with `width: '100%'; height: '100%'`.
+- Position, scale, rotation, opacity and keyframes come from the clip, as with any other element.
+- Invalid or missing props fall back to the schema defaults. An unknown component name renders a visible placeholder, never a crash.
+- Inspector mapping:
+  - `z.string()` → text field;
+  - `.describe('color')` → color picker;
+  - `z.number().min().max()` → slider; plain number → number field;
+  - boolean → toggle;
+  - enum → choices;
+  - other types → JSON field.
+  - Other `.describe('…')` texts become the field label.
+
+## Using a component
+- **In the Studio:** Componentes tab → click or drag the card onto the timeline. Edit props in the right panel.
+- **In code:** `s.component('Badge', { text: 'Novo' }, { id: 'selo', y: 400, at: [0, 60] })` inside a scene (caju-authoring → generator-script.md).
+- **In JSON:** `{ "type": "component", "props": { "component": "Badge", "text": "Novo" }, … }` on an `overlay` or `text` track.
+
+## Runtime API (`@caju-motion/core`)
 | API | Notes |
 |---|---|
-| `useFrame()` / `useAbsoluteFrame()` | Relative to the current `<Sequence>` / absolute in the project |
-| `useVideoConfig()` | `{ width, height, fps, durationInFrames }` (the duration is the sequence's when one is set) |
-| `<Sequence from duration?>` | Mounts children only within the window; nested sequences compose |
-| `<Fill style>` | Absolute full-frame layer |
-| `interpolate(x, inRange, outRange, { easing, extrapolateLeft/Right })` | Ranges must be ascending and the same length; default extrapolation is `clamp` |
-| `spring({ frame, fps, config, from, to, delay })` | Analytic, so it is seekable; presets `ui`, `settle`, `bouncy`, `heavy`; `springDuration()` |
-| `Easing.*`, `cubicBezier()` | Same presets as keyframes |
-| `random(seed)`, `randomRange(seed, min, max)` | Deterministic, from a string or number seed |
-| `mixColors(a, b, t)` | Hex color blend |
-| `delayRender(label)` / `continueRender(handle)` | Hold the frame capture until async data, fonts or images are ready (wired into export in F1) |
+| `useFrame()` / `useAbsoluteFrame()` | relative to the clip/`<Sequence>` / absolute in the project |
+| `useVideoConfig()` | `{ width, height, fps, durationInFrames }` |
+| `<Sequence from duration?>`, `<Fill>` | time windows inside a component; full-box layer |
+| `interpolate(x, inRange, outRange, { easing, extrapolateLeft/Right })` | clamps by default |
+| `spring({ frame, fps, config, from, to, delay })` | analytic, seekable; presets `springPresets.ui/settle/bouncy/heavy` |
+| `Easing.*`, `cubicBezier()` | same presets as keyframes |
+| `random(seed)`, `randomRange(seed, min, max)` | deterministic randomness |
+| `delayRender(label)` / `continueRender(handle)` | hold the render until async data/images are ready |
 
 ## Rules
 See [determinism.md](determinism.md).
-- The render is a pure function of the frame: no clock, no randomness, no timers, no CSS animations, no state that accumulates across frames.
-- Size everything from `useVideoConfig()`. Never assume 1920×1080.
-- Every async resource must be wrapped in `delayRender`/`continueRender`, and load it once (module cache), not per frame.
-- Run `npm run lint` (determinism) and `npm run test` before handing over.
+- Pixels depend only on `(props, frame)`: no `Math.random`, `Date`, timers, CSS transitions or animations, or `Intl`. The lint enforces this in `components/`.
+- Fonts: use the families the Studio loads (`'Plus Jakarta Sans'`, `'Red Hat Display'`).
+- Bundled into the component: `zod` and your own helpers. Provided by the Studio, a single shared copy: `react`, `@caju-motion/core` and `@caju-motion/renderer`. Don't import other UI libraries that bring their own React.
+- `component` names are global. Renaming one breaks existing clips; `caju check` will report them.

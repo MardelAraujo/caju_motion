@@ -1,4 +1,4 @@
-import { intrinsicSize, TEXT_DEFAULTS, type TextProps } from '@caju-motion/renderer';
+import { componentDefaults, getComponent, intrinsicSize, TEXT_DEFAULTS, type TextProps } from '@caju-motion/renderer';
 import { secondsToFrames, type Asset, type Project } from '@caju-motion/schema';
 import { api } from './api';
 import { kindOfFile, probeMedia } from './media';
@@ -147,6 +147,35 @@ export function addShape(
     ),
   );
   st().select(id);
+}
+
+/**
+ * Componente do usuário (aba Componentes): clipe `component` com as props padrão do componente,
+ * centralizado, na duração padrão dele (ou 3 s).
+ */
+export function addComponent(name: string, opts: { at?: number; trackId?: string } = {}) {
+  const { project, frame } = st();
+  const defn = getComponent(name);
+  if (!project || !defn) return;
+  const id = newId('component');
+  const fps = project.settings.fps;
+  st().apply((d) =>
+    insertClip(
+      d,
+      makeClip({
+        id,
+        type: 'component',
+        name: defn.label ?? defn.name,
+        start: opts.at ?? frame,
+        duration: Math.max(1, Math.round(defn.durationInFrames ?? secondsToFrames(3, fps))),
+        transform: center(d),
+        props: { ...componentDefaults(defn), component: defn.name },
+      }),
+      opts.trackId,
+    ),
+  );
+  st().select(id);
+  st().set({ rightTab: 'basic' });
 }
 
 // ---------------------------------------------------------------- upload

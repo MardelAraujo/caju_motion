@@ -115,8 +115,8 @@ Qualidade:
 | Fase | Entrega | Pronto quando |
 |---|---|---|
 | **F0 Fundação pública** ✅ | Primeiro commit; LICENSE MIT; renomear `@frame` → `@caju-motion` (pacotes, headers `x-frame-*`, `.frame/`); remover o acoplamento AutoMind (`BRAND_COLORS`/preset "AutoChecker" em `commands.ts`, fonte padrão em `renderer/props.ts`); mover `projects/` e scripts AutoMind para repo privado; checar a licença da fonte Hando; build tsup (ESM + `.d.ts`), Studio buildado, changesets em lockstep, release com provenance | `npm pack` de cada pacote instala num diretório vazio e `npx caju studio` sobe sem `tsx` |
-| **F1 Render local** | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render`/`still`, Exportar do Studio ligado, golden + A/V no CI (Windows + Linux) | Fixtures e `exemplo` viram MP4 iguais à preview; A/V ≤ 1 frame |
-| **F2 Código** | `@caju-motion/sdk` (`defineProject`, `defineComponent`), clip `component` renderizando, aba Componentes com HMR, `caju build` com merge por `origin` | Template feito só em código + 1 componente abre no Studio, é editado, regenera sem perder edições e renderiza |
+| **F1 Render local** ✅ | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render`/`still`, Exportar do Studio ligado, golden + A/V no CI (Windows + Linux) | Fixtures e `exemplo` viram MP4 iguais à preview; A/V ≤ 1 frame |
+| **F2 Código** ✅ | `@caju-motion/sdk` (`defineProject`, `defineComponent`), clip `component` renderizando, aba Componentes com HMR, `caju build` com merge por `origin` | Template feito só em código + 1 componente abre no Studio, é editado, regenera sem perder edições e renderiza |
 | **F3 Distribuição** | `create-caju-motion` + templates, `caju doctor`, `caju skills add`, evals, docs EN + pt-BR com `llms.txt`, publicação no npm | Dev novo vai de zero a MP4 em < 5 min; agente com as skills gera vídeo válido a partir de um prompt |
 | **F4 Ecossistema** | `@caju-motion/player`, `@caju-motion/media` (proxies/WebCodecs), legendas/TTS, `@caju-motion/cloud` (pago), marketplace de templates | — |
 

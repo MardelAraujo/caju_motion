@@ -6,7 +6,9 @@ out/
 .DS_Store
 
 # cache e histórico locais de cada projeto (.frame/ = nome antigo)
-.caju/
+# exceto a base do último caju build, que permite detectar edições do Studio em clones novos
+**/.caju/*
+!**/.caju/last-build.json
 .frame/
 
 # cache dos geradores (narração etc.)
@@ -17,3 +19,6 @@ packages/studio/public/fonts/local/
 
 # arquivos temporários do teste das skills
 packages/skills/.check/
+
+# vídeos exportados (caju render / botão Exportar)
+renders/

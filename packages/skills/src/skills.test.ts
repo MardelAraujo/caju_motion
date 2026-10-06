@@ -74,8 +74,9 @@ describe('skills: exemplos', () => {
     mkdirSync(tmp, { recursive: true });
     const files: string[] = [];
     mdFiles.forEach((f) => {
+      const tsxBlocks = new Set(blocks(f, /^tsx caju-check$/));
       blocks(f, /^tsx? caju-check$/).forEach((code, i) => {
-        const tsx = /<[A-Z]/.test(code);
+        const tsx = tsxBlocks.has(code);
         const file = path.join(tmp, `${path.basename(path.dirname(f))}-${path.basename(f, '.md')}-${i}.${tsx ? 'tsx' : 'ts'}`);
         // exemplos de gerador importam o builder relativo a scripts/<pasta>/
         const fixed = code.replace(/'\.\.\/examples\/builder'/g, JSON.stringify(path.join(ROOT, 'scripts', 'examples', 'builder').replace(/\\/g, '/')));

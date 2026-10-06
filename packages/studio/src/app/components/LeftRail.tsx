@@ -13,12 +13,16 @@ import {
   Shapes,
   Type,
   Clapperboard,
+  Puzzle,
+  TriangleAlert,
 } from 'lucide-react';
-import { TEXT_DEFAULTS } from '@caju-motion/renderer';
+import { FrameProvider } from '@caju-motion/core';
+import { ComponentElement, componentBox, TEXT_DEFAULTS, useComponents, type ComponentDefinition } from '@caju-motion/renderer';
 import type { Asset } from '@caju-motion/schema';
 import { assetUrl } from '../api';
 import {
   addAssetClip,
+  addComponent,
   addShape,
   addText,
   BRAND_COLORS,
@@ -28,6 +32,7 @@ import {
 } from '../commands';
 import { setDragPayload } from '../dnd';
 import { useThumbnail } from '../media';
+import { useComponentsStatus } from '../components-runtime';
 import { useEditor, type LeftTab } from '../store';
 import { formatSeconds } from '../time';
 
@@ -36,6 +41,7 @@ const TABS: { id: LeftTab; label: string; icon: typeof Music }[] = [
   { id: 'audio', label: 'Áudio', icon: Music },
   { id: 'text', label: 'Texto', icon: Type },
   { id: 'elements', label: 'Elementos', icon: Shapes },
+  { id: 'components', label: 'Componentes', icon: Puzzle },
 ];
 
 export function LeftRail({ onShowShortcuts }: { onShowShortcuts: () => void }) {
@@ -72,6 +78,7 @@ export function LeftRail({ onShowShortcuts }: { onShowShortcuts: () => void }) {
           {leftTab === 'audio' && <MediaPanel kinds={['audio']} accept="audio/*" />}
           {leftTab === 'text' && <TextPanel />}
           {leftTab === 'elements' && <ElementsPanel />}
+          {leftTab === 'components' && <ComponentsPanel />}
         </aside>
       )}
       <button
@@ -290,5 +297,87 @@ function ElementsPanel() {
         ))}
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------- componentes (código do usuário)
+
+function ComponentsPanel() {
+  const defs = useComponents();
+  const status = useComponentsStatus();
+  const project = useEditor((s) => s.project);
+  if (!project) return null;
+
+  return (
+    <div className="panel-body">
+      <p className="panel-hint">
+        Componentes React da pasta <code>components/</code> ({'defineComponent'}). Clique ou arraste para a timeline; ao salvar o
+        arquivo, o Studio recarrega sozinho.
+      </p>
+      {status.dir && (
+        <p className="panel-hint components-dir" title={status.dir}>
+          {status.dir}
+        </p>
+      )}
+      {status.state === 'unavailable' && <p className="panel-hint">Este servidor não carrega componentes.</p>}
+      {status.state === 'loading' && (
+        <div className="upload-row">
+          <LoaderCircle size={14} className="spin" /> Carregando componentes…
+        </div>
+      )}
+      {status.errors.length > 0 && (
+        <div className="components-errors" role="alert">
+          <strong>
+            <TriangleAlert size={14} /> {status.state === 'error' ? 'Erro ao compilar componentes' : 'Aviso'}
+          </strong>
+          <pre>{status.errors.join('\n')}</pre>
+          {status.state === 'error' && defs.length > 0 && <small>Mostrando a última versão que compilou.</small>}
+        </div>
+      )}
+      {defs.length === 0 && status.state !== 'loading' && (
+        <div className="empty-state">
+          <Puzzle size={28} />
+          <span>Nenhum componente ainda</span>
+        </div>
+      )}
+      <div className="component-list">
+        {defs.map((d) => (
+          <ComponentCard key={d.name} defn={d} frameSize={project.settings} fps={project.settings.fps} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const THUMB_W = 112;
+
+function ComponentCard({ defn, frameSize, fps }: { defn: ComponentDefinition; frameSize: { width: number; height: number }; fps: number }) {
+  const box = componentBox({}, defn, frameSize);
+  const scale = Math.min(THUMB_W / Math.max(1, box.width), 72 / Math.max(1, box.height));
+  const duration = defn.durationInFrames ?? fps * 3;
+  const frame = Math.floor(duration / 2);
+  return (
+    <button
+      type="button"
+      className="component-card"
+      draggable
+      onDragStart={(e) => setDragPayload(e, { kind: 'component', name: defn.name })}
+      onClick={() => addComponent(defn.name)}
+      title={`Adicionar ${defn.label ?? defn.name}`}
+    >
+      <span className="component-thumb">
+        <span style={{ width: box.width, height: box.height, transform: `scale(${scale})`, transformOrigin: 'center', flex: 'none' }}>
+          <FrameProvider frame={frame} config={{ width: frameSize.width, height: frameSize.height, fps, durationInFrames: duration }}>
+            <ComponentElement name={defn.name} props={{}} frameSize={frameSize} />
+          </FrameProvider>
+        </span>
+      </span>
+      <span className="component-meta">
+        <strong>{defn.label ?? defn.name}</strong>
+        {defn.description && <small>{defn.description}</small>}
+        {defn.label && defn.label !== defn.name && <code>{defn.name}</code>}
+      </span>
+      <Plus size={16} className="component-add" />
+    </button>
   );
 }
