@@ -13,7 +13,7 @@ Caju Motion ships in phases. Each phase has a "done when" test, and the [agent s
 | **F1 Local render** | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render` / `still`, Studio Export button, golden + A/V tests in CI (Windows + Linux) | fixtures render to MP4 identical to the preview; A/V ≤ 1 frame | done |
 | **F2 Code** | `@caju-motion/sdk` (`defineProject`), `defineComponent`, component clips, Componentes tab with hot reload, `caju build` merging by `origin` | a code-only template + a component opens in the Studio, is edited, rebuilds without losing edits, and renders | done |
 | **F3 Distribution** | `create-caju` + templates, `caju doctor`, `caju skills add`, skill evals, docs in English and Portuguese with `llms.txt`, npm release | a new developer goes from zero to MP4 in under 5 minutes; an agent with the skills makes a valid video from a prompt | in progress |
-| **F4 Ecosystem** | `@caju-motion/player` (embeddable `<Player>`), `@caju-motion/media` (proxies, frame-exact WebCodecs decode), captions/TTS, `@caju-motion/cloud` (commercial), template marketplace | — | planned |
+| **F4 Ecosystem** | [`@caju-motion/player`](./reference/player) (embeddable `<Player>`) ✓, `@caju-motion/media` (proxies, frame-exact WebCodecs decode), captions/TTS, `@caju-motion/cloud` (commercial), template marketplace | — | in progress |
 
 ## Also planned
 

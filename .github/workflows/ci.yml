@@ -28,13 +28,13 @@ jobs:
         run: |
           # o render usa o ffmpeg-static; o ffprobe do sistema só verifica os arquivos gerados
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
-          npx vitest run packages/renderer-node packages/create-caju --maxWorkers=1
+          npx vitest run packages/renderer-node packages/create-caju packages/player --maxWorkers=1
       # o fluxo do usuário com os pacotes publicáveis, sem o monorepo:
       # npm create caju → instalar os tarballs → check/build/still → skills add
       - name: smoke test (create-caju + npm pack + install)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p /tmp/pack && for p in schema core renderer audio server studio sdk renderer-node skills cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
+          mkdir -p /tmp/pack && for p in schema core renderer player audio server studio sdk renderer-node skills cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
           tgz() { echo "file:/tmp/pack/$(cd /tmp/pack && ls caju-motion-$1-[0-9]*.tgz)"; }
           node packages/create-caju/dist/index.js /tmp/app --template blank --yes --no-install
           cd /tmp/app
@@ -45,3 +45,6 @@ jobs:
           npx caju check && npx caju build
           npx caju still meu-video --frame 45 --out still.png && test -s still.png
           npx caju skills add --agents all && test -f .claude/skills/caju-best-practices/SKILL.md && grep -q caju-skills AGENTS.md
+          # o player empacotado: instala e desenha um quadro no Node (SSR)
+          npm install --no-audit --no-fund "$(tgz player)"
+          node --input-type=module -e "import { createElement as h } from 'react'; import { renderToStaticMarkup } from 'react-dom/server'; import { Player } from '@caju-motion/player'; import { readFileSync } from 'node:fs'; const html = renderToStaticMarkup(h(Player, { project: JSON.parse(readFileSync('projects/meu-video/project.json', 'utf8')), controls: true })); if (!html.includes('data-caju-player') || html.includes('role=\"alert\"')) { console.error(html); process.exit(1); }"

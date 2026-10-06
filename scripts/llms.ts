@@ -40,7 +40,7 @@ export const SECTIONS: { title: string; pages: string[] }[] = [
       'guide/ai-agents',
     ],
   },
-  { title: 'Reference', pages: ['reference/cli', 'reference/core', 'reference/project-json', 'reference/formats'] },
+  { title: 'Reference', pages: ['reference/cli', 'reference/core', 'reference/player', 'reference/project-json', 'reference/formats'] },
   { title: 'Project', pages: ['roadmap', 'license', 'contributing'] },
 ];
 

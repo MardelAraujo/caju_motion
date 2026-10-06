@@ -17,5 +17,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["packages/*/src", "packages/*/vite.config.ts", "scripts", "components", "projects/*/video.ts", "vitest.config.ts", "tsup.config.ts"]
+  "include": ["packages/*/src", "packages/*/vite.config.ts", "packages/player/demo", "scripts", "components", "projects/*/video.ts", "vitest.config.ts", "tsup.config.ts"]
 }

@@ -13,6 +13,10 @@ export type ProjectRendererProps = {
   resolveAsset: AssetResolver;
   /** Preview tocando (vídeos rodam soltos em vez de seek por frame). */
   playing?: boolean;
+  /** Silencia tudo (ex.: botão de mudo de um player). */
+  muted?: boolean;
+  /** Volume geral, multiplicado pelo volume de cada clipe (padrão 1). */
+  volume?: number;
   /** Clipe de texto em edição inline no canvas. */
   editingClipId?: string | null;
   onTextCommit?: (clipId: string, text: string) => void;
@@ -44,6 +48,8 @@ export function ProjectRenderer({
   frame,
   resolveAsset,
   playing = false,
+  muted = false,
+  volume = 1,
   editingClipId,
   onTextCommit,
 }: ProjectRendererProps) {
@@ -95,8 +101,8 @@ export function ProjectRenderer({
               height={size.height}
               time={sourceTimeAt(clip, frame, fps)}
               playing={playing}
-              volume={clipVolumeAt(clip, frame)}
-              muted={trackMuted}
+              volume={clipVolumeAt(clip, frame) * volume}
+              muted={trackMuted || muted}
               rate={clip.speed}
               fps={fps}
             />

@@ -41,7 +41,7 @@
 | `@caju-motion/cli` (`caju`) | `packages/cli` | `studio`, `render`, `still`, `new`, `check`, `build`, `doctor`, `skills add`, `browser ensure`, `upgrade` | MIT |
 | `create-caju` | novo | Scaffolder + templates (blank, reel legendado, explainer 16:9, audiograma, data-video) e oferta de instalar as skills | MIT |
 | `@caju-motion/skills` | `packages/skills` (**criado agora**) | Skills de agente | MIT |
-| `@caju-motion/player` | futuro | `<Player>` embutível em apps React | MIT |
+| `@caju-motion/player` | novo (F4) ✅ | `<Player>` embutível em apps React: controles, áudio, componentes por instância, faixa/loop, API via ref | MIT |
 | `@caju-motion/cloud` | futuro | Render distribuído, fila, storage, templates premium, Studio colaborativo | **Comercial** |
 
 Princípios que não mudam:
@@ -115,6 +115,6 @@ Qualidade:
 | **F1 Render local** ✅ | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render`/`still`, Exportar do Studio ligado, golden + A/V no CI (Windows + Linux) | Fixtures e `exemplo` viram MP4 iguais à preview; A/V ≤ 1 frame |
 | **F2 Código** ✅ | `@caju-motion/sdk` (`defineProject`, `defineComponent`), clip `component` renderizando, aba Componentes com HMR, `caju build` com merge por `origin` | Template feito só em código + 1 componente abre no Studio, é editado, regenera sem perder edições e renderiza |
 | **F3 Distribuição** ✅ (falta só publicar no npm) | `create-caju` + templates, `caju doctor`, `caju skills add`, evals, docs EN + pt-BR com `llms.txt`, publicação no npm | Dev novo vai de zero a MP4 em < 5 min; agente com as skills gera vídeo válido a partir de um prompt |
-| **F4 Ecossistema** | `@caju-motion/player`, `@caju-motion/media` (proxies/WebCodecs), legendas/TTS, `@caju-motion/cloud` (pago), marketplace de templates | — |
+| **F4 Ecossistema** (em andamento) | `@caju-motion/player` ✅, `@caju-motion/media` (proxies/WebCodecs), legendas/TTS, `@caju-motion/cloud` (pago), marketplace de templates | — |
 
 Ao concluir cada fase, atualize a tabela **Availability** de cada `SKILL.md` e a versão das skills.

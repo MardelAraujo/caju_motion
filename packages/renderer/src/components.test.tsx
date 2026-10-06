@@ -6,6 +6,7 @@ import { createEmptyProject, ProjectSchema } from '@caju-motion/schema';
 import {
   componentDefaults,
   componentsFromModule,
+  ComponentsProvider,
   defineComponent,
   describeProps,
   getComponent,
@@ -121,5 +122,18 @@ describe('clipe component no ProjectRenderer', () => {
   it('placeholder quando o componente não existe', () => {
     expect(html(project('Nada'), 20)).toContain('não encontrado');
     expect(html(project(''), 20)).toContain('sem props.component');
+  });
+
+  it('ComponentsProvider vale só para a árvore e vence o registro global', () => {
+    registerComponent(defineComponent({ name: 'Local', component: () => <i>global</i> }));
+    const local = defineComponent({ name: 'Local', component: () => <i>local</i> });
+    const proj = project('Local');
+    const scoped = renderToStaticMarkup(
+      <ComponentsProvider components={[local]}>
+        <ProjectRenderer project={proj} frame={20} resolveAsset={() => ''} />
+      </ComponentsProvider>,
+    );
+    expect(scoped).toContain('<i>local</i>');
+    expect(html(proj, 20)).toContain('<i>global</i>');
   });
 });

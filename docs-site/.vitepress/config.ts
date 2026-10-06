@@ -36,6 +36,7 @@ function sidebarEn(): DefaultTheme.Sidebar {
       items: [
         { text: 'CLI', link: '/reference/cli' },
         { text: '@caju-motion/core', link: '/reference/core' },
+        { text: '@caju-motion/player', link: '/reference/player' },
         { text: 'project.json schema', link: '/reference/project-json' },
         { text: 'Formats & safe areas', link: '/reference/formats' },
       ],
@@ -80,6 +81,7 @@ function sidebarPt(): DefaultTheme.Sidebar {
       items: [
         { text: 'CLI', link: '/pt/reference/cli' },
         { text: '@caju-motion/core', link: '/pt/reference/core' },
+        { text: '@caju-motion/player', link: '/pt/reference/player' },
         { text: 'Schema do project.json', link: '/pt/reference/project-json' },
         { text: 'Formatos e safe areas', link: '/pt/reference/formats' },
       ],

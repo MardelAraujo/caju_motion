@@ -1,5 +1,13 @@
 import { useAbsoluteFrame } from '@caju-motion/core';
-import { Component as ReactComponent, useSyncExternalStore, type ComponentType, type ErrorInfo, type ReactNode } from 'react';
+import {
+  Component as ReactComponent,
+  createContext,
+  useContext,
+  useSyncExternalStore,
+  type ComponentType,
+  type ErrorInfo,
+  type ReactNode,
+} from 'react';
 
 /**
  * Componentes de usuário (clip `type: 'component'`).
@@ -342,7 +350,17 @@ function Placeholder({ width, height, tone, children }: { width: number; height:
   );
 }
 
-/** Desenha um clipe `component`: procura no registro, valida props e isola erros. */
+const LocalComponents = createContext<readonly ComponentDefinition[] | null>(null);
+
+/**
+ * Componentes só para esta árvore (ex.: um `<Player components={...}>`), sem tocar no registro global.
+ * Têm prioridade sobre o registro; nomes que não estão aqui ainda caem no registro.
+ */
+export function ComponentsProvider({ components, children }: { components: readonly ComponentDefinition[]; children: ReactNode }) {
+  return <LocalComponents.Provider value={components}>{children}</LocalComponents.Provider>;
+}
+
+/** Desenha um clipe `component`: procura nos componentes locais e no registro, valida props e isola erros. */
 export function ComponentElement({
   name,
   props,
@@ -354,9 +372,10 @@ export function ComponentElement({
   /** Tamanho do quadro do projeto (caixa padrão). */
   frameSize: { width: number; height: number };
 }) {
+  const local = useContext(LocalComponents);
   const defs = useComponents();
   const frame = useAbsoluteFrame();
-  const defn = defs.find((d) => d.name === name);
+  const defn = local?.find((d) => d.name === name) ?? defs.find((d) => d.name === name);
   const { width, height } = componentBox(props, defn, frameSize);
   if (!defn) {
     return (

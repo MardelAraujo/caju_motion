@@ -1,0 +1,46 @@
+{
+  "name": "@caju-motion/player",
+  "version": "0.2.0",
+  "description": "Caju Motion player: embed a project.json video in any React app, with controls, audio and an imperative API.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MardelAraujo/caju_motion.git",
+    "directory": "packages/player"
+  },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.ts",
+    "demo": "vite"
+  },
+  "dependencies": {
+    "@caju-motion/core": "0.2.0",
+    "@caju-motion/renderer": "0.2.0",
+    "@caju-motion/schema": "0.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "playwright-core": "^1.63.0",
+    "vite": "^8.3.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
