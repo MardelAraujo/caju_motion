@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p /tmp/pack && for p in schema core renderer audio server studio sdk renderer-node cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
           cd /tmp/pack && npm init -y >/dev/null
-          for p in schema core renderer audio server studio sdk renderer-node; do npm pkg set "overrides.@caju-motion/$p=file:./$(ls caju-motion-$p-[0-9]*.tgz)"; done
+          for p in schema core audio server studio sdk renderer-node; do npm pkg set "overrides.@caju-motion/$p=file:./$(ls caju-motion-$p-[0-9]*.tgz)"; done
           npm install --no-audit --no-fund ./caju-motion-cli-[0-9]*.tgz ./caju-motion-renderer-[0-9]*.tgz
           npx caju --version
           npx caju new smoke --format square-1x1 && npx caju check smoke
