@@ -32,7 +32,7 @@ npm run caju -- tts <id> --text "Script here." --name vo-01                     
 npm run caju -- tts <id> --script script.txt --name vo-01 --provider openai --voice nova --language pt
 npm run caju -- tts <id> --script script.txt --name vo-01 --provider elevenlabs --voice <voice_id>
 ```
-- Writes `assets/audio/vo/<name>.mp3|wav`, `assets/data/<name>.words.json` (exact word timings from the provider) and `assets/data/<name>.srt`; adds the audio clip on a "Locução" track (`--start <s>`) and caption text clips on a "Legendas" track (`--no-captions` to skip).
+- Writes `assets/audio/vo/<name>.mp3|wav`, `assets/data/<name>.words.json` (exact word timings from the provider) and `assets/data/<name>.srt`; adds the audio clip on a "Locução" track (`--start <s>`) and caption text clips on a "Legendas" track (`--no-captions` to skip). Re-running keeps the user's Studio edits to the voice-over clip (track, position, volume, fades); only its length follows the new audio, and the captions follow the clip's real position.
 - **Real voices cost the user money and need their key** (`OPENAI_API_KEY`, `ELEVENLABS_API_KEY`). Lay the video out with the default `placeholder` provider, and ask before switching to a paid one.
 - Cached by `(provider, voice, speed, instructions, text)`: re-running with the same values does not call the provider again. Change one sentence → use one `--name` per sentence (`vo-01`…`vo-06`) so only that file is regenerated. `--force` always regenerates.
 - In a project with `video.ts`, `caju tts` only writes the files (never edits `project.json`, which would duplicate clips on the next build); wire them in code (below). `--files-only` does the same anywhere.

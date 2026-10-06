@@ -253,6 +253,23 @@ export type BuilderOptions = {
   duration?: number;
 };
 
+/**
+ * Ids são globais no projeto (assets, trilhas, clipes, marcadores). Os ids de trilha gerados aqui
+ * (`locucao`, `texto-1`, `audio-sfx-0`…) ganham o sufixo `-trilha` (`-trilha-2`…) só quando colidem
+ * com algum outro id; sem colisão ficam iguais, então projetos existentes não mudam.
+ */
+function uniqueTrackIds<T extends { id: string; clips: { id: string }[] }>(tracks: T[], otherIds: string[]): T[] {
+  const taken = new Set([...otherIds, ...tracks.flatMap((t) => t.clips.map((c) => c.id))]);
+  const out: T[] = [];
+  for (const t of tracks) {
+    let id = t.id;
+    for (let n = 1; taken.has(id); n++) id = n === 1 ? `${t.id}-trilha` : `${t.id}-trilha-${n}`;
+    taken.add(id);
+    out.push(id === t.id ? t : { ...t, id });
+  }
+  return out;
+}
+
 export class ProjectBuilder {
   readonly pending: Pending[] = [];
   private assets: Asset[] = [];
@@ -372,8 +389,6 @@ export class ProjectBuilder {
       (groups[key] ??= { name: label[key] ?? 'Áudio', clips: [] }).clips.push(c);
     }
     const out: { id: string; kind: 'audio'; name: string; clips: ClipInput[] }[] = [];
-    // ids são globais no projeto: a trilha da locução não pode ter o id de um asset (ex.: asset "locucao")
-    const voTrack = this.assets.some((a) => a.id === 'locucao') ? 'trilha-locucao' : 'locucao';
     for (const [key, g] of Object.entries(groups)) {
       const lanes: ClipInput[][] = [];
       for (const c of g.clips.sort((a, b) => a.start - b.start)) {
@@ -381,7 +396,7 @@ export class ProjectBuilder {
         if (lane) lane.push(c);
         else lanes.push([c]);
       }
-      lanes.forEach((l, j) => out.push({ id: key === 'vo' && j === 0 ? voTrack : `audio-${key}-${j}`, kind: 'audio', name: j ? `${g.name} ${j + 1}` : g.name, clips: l }));
+      lanes.forEach((l, j) => out.push({ id: key === 'vo' && j === 0 ? 'locucao' : `audio-${key}-${j}`, kind: 'audio', name: j ? `${g.name} ${j + 1}` : g.name, clips: l }));
     }
     return out;
   }
@@ -415,6 +430,16 @@ export class ProjectBuilder {
     }));
 
     const f = FORMATS[this.opts.format];
+    const tracks = uniqueTrackIds(
+      [
+        { id: 'main', kind: 'main' as const, name: 'Principal', clips: [] as ClipInput[] },
+        ...this.namedTracks(),
+        ...visualTracks,
+        ...textTracks,
+        ...this.audioTracks(),
+      ],
+      [...this.assets.map((a) => a.id), ...this.markers.map((m) => m.id)],
+    );
     return ProjectSchema.parse({
       schemaVersion: CURRENT_SCHEMA_VERSION,
       id: this.opts.id,
@@ -428,13 +453,7 @@ export class ProjectBuilder {
         ...(this.opts.duration !== undefined ? { duration: this.opts.duration } : {}),
       },
       assets: this.assets,
-      tracks: [
-        { id: 'main', kind: 'main', name: 'Principal', clips: [] },
-        ...this.namedTracks(),
-        ...visualTracks,
-        ...textTracks,
-        ...this.audioTracks(),
-      ],
+      tracks,
       markers: this.markers,
       meta: { generator: 'caju-motion/sdk' },
     });

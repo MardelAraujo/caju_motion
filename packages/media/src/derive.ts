@@ -3,7 +3,7 @@ import { createReadStream } from 'node:fs';
 import { mkdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { execFfmpeg, runFfmpegOk } from './ffmpeg';
-import { probeMedia } from './probe';
+import { probeMedia, type MediaInfo } from './probe';
 
 /** SHA-256 do conteúdo (hex), lido em streaming. */
 export function hashFile(file: string): Promise<string> {
@@ -37,15 +37,17 @@ export type ThumbnailOptions = {
   atSec?: number;
   /** Largura (px); a altura segue a proporção. Padrão 320. */
   width?: number;
+  /** `probeMedia(file)` já lido (evita rodar o FFmpeg de novo). */
+  info?: MediaInfo;
   signal?: AbortSignal;
 };
 
 /** Miniatura de um vídeo ou imagem. */
-export async function thumbnail(file: string, { out, atSec, width = 320, signal }: ThumbnailOptions): Promise<string> {
+export async function thumbnail(file: string, { out, atSec, width = 320, info, signal }: ThumbnailOptions): Promise<string> {
   let at = atSec;
   if (at === undefined) {
-    const info = await probeMedia(file);
-    at = info.durationSec ? Math.min(0.5, info.durationSec / 2) : 0;
+    const { durationSec } = info ?? (await probeMedia(file));
+    at = durationSec ? Math.min(0.5, durationSec / 2) : 0;
   }
   return atomicOutput(out, async (tmp) => {
     await runFfmpegOk(
@@ -96,6 +98,8 @@ export type ProxyOptions = {
   height?: number;
   /** Distância entre quadros-chave (quadros). Pequena = busca rápida na timeline. Padrão 15. */
   keyint?: number;
+  /** `probeMedia(file)` já lido (evita rodar o FFmpeg de novo). */
+  info?: MediaInfo;
   signal?: AbortSignal;
 };
 
@@ -103,8 +107,8 @@ export type ProxyOptions = {
  * Proxy de edição: H.264 leve, com quadros-chave frequentes e `faststart`, para o Studio tocar e
  * buscar sem engasgar em vídeos 4K/HEVC. O export sempre usa o original.
  */
-export async function createProxy(file: string, { out, height = 540, keyint = 15, signal }: ProxyOptions): Promise<string> {
-  const info = await probeMedia(file);
+export async function createProxy(file: string, { out, height = 540, keyint = 15, info: known, signal }: ProxyOptions): Promise<string> {
+  const info = known ?? (await probeMedia(file));
   if (!info.hasVideo) throw new Error(`${path.basename(file)} não tem vídeo`);
   const h = Math.min(height, info.height ?? height);
   const audio = info.hasAudio ? ['-c:a', 'aac', '-b:a', '96k', '-ac', '2'] : ['-an'];

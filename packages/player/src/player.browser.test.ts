@@ -111,6 +111,18 @@ describe.runIf(process.env.CAJU_RENDER_IT === '1')('<Player> no navegador', () =
     await page.close();
   });
 
+  it('playbackRate vale também para o áudio', async () => {
+    const page = await open('&rate=2');
+    await page.evaluate(() => {
+      window.__player!.seekTo(28);
+      window.__player!.play();
+    });
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => document.querySelector('audio')!.playbackRate)).toBe(2);
+    expect(await frame(page)).toBeGreaterThan(40); // 300 ms a 2x ≈ 18 quadros
+    await page.close();
+  });
+
   it('para no fim com onEnded; com loop, dá a volta', async () => {
     const page = await open();
     await page.evaluate(() => {

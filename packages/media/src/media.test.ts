@@ -9,6 +9,7 @@ import {
   findDerived,
   hashFile,
   needsProxy,
+  isStillImage,
   parseFfmpegHeader,
   peaksOf,
   probeMedia,
@@ -74,6 +75,19 @@ describe('probeMedia', () => {
     ].join('\n');
     expect(parseFfmpegHeader(mp3)).toMatchObject({ kind: 'audio', hasVideo: false, durationSec: 180 });
     expect(parseFfmpegHeader('lixo')).toBeNull();
+    // WebM do MediaRecorder: sem duração no cabeçalho, mas é vídeo
+    const rec = parseFfmpegHeader(
+      [
+        "Input #0, matroska,webm, from 'rec.webm':",
+        '  Duration: N/A, start: 0.000000, bitrate: N/A',
+        '  Stream #0:0: Video: vp8, yuv420p(progressive), 1280x720, SAR 1:1 DAR 16:9, 30 fps, 30 tbr, 1k tbn (default)',
+      ].join('\n'),
+    )!;
+    expect(rec).toMatchObject({ kind: 'video', hasVideo: true, fps: 30, width: 1280 });
+    expect(rec.durationSec).toBeUndefined();
+    expect(isStillImage(rec, 'video')).toBe(false);
+    expect(isStillImage(rec, null)).toBe(false);
+    expect(isStillImage({ kind: 'video', hasAudio: false, hasVideo: true, videoCodec: 'png' }, null)).toBe(true);
     expect(svgSize('<svg width="300px" height="150" viewBox="0 0 10 10">')).toEqual({ width: 300, height: 150 });
   });
 });
@@ -156,6 +170,15 @@ describe('analyzeProject', () => {
     const again = await analyzeProject(root, out, { proxies: 'all', proxyHeight: 180 });
     expect(again.reports.flatMap((r) => r.changed)).toEqual([]);
     expect(statSync(byId.v!.derived.proxy!).mtimeMs).toBe(mtime);
+
+    // simulação (caju media --dry-run): relata, mas não gera nem grava nada
+    const fresh = f('proj-dry');
+    mkdirSync(path.join(fresh, 'assets'), { recursive: true });
+    copyFileSync(f('clip.mp4'), path.join(fresh, 'assets', 'clip.mp4'));
+    const dry = await analyzeProject(fresh, project(), { proxies: 'all', write: false });
+    expect(dry.reports.find((r) => r.id === 'v')!.changed).toEqual(expect.arrayContaining(['width', 'hash']));
+    expect(dry.reports.find((r) => r.id === 'v')!.derived).toEqual({});
+    expect(existsSync(path.join(fresh, '.caju'))).toBe(false);
 
     // arquivo alterado: o derivado antigo deixa de valer
     const clip = path.join(root, 'assets', 'clip.mp4');

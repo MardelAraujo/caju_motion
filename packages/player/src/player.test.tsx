@@ -101,6 +101,16 @@ describe('<Player>', () => {
     expect(html).toContain('src="https://cdn.example/a1"');
   });
 
+  it('URLs absolutas não recebem o assetBase; trilha de áudio oculta não toca (como no export)', () => {
+    const raw = rawProject() as ReturnType<typeof rawProject> & { tracks: unknown[]; assets: unknown[] };
+    raw.assets.push({ id: 'a2', kind: 'audio', src: 'https://cdn.example/musica.mp3', name: 'm' });
+    raw.tracks.push({ id: 't4', kind: 'audio', clips: [{ id: 'c4', type: 'audio', assetId: 'a2', start: 0, duration: 90 }] });
+    raw.tracks.push({ id: 't5', kind: 'audio', hidden: true, clips: [{ id: 'c5', type: 'audio', assetId: 'a1', start: 0, duration: 90 }] });
+    const html = renderToStaticMarkup(<Player project={raw} assetBase="/media/p/" />);
+    expect(html).toContain('src="https://cdn.example/musica.mp3"');
+    expect(html.match(/<audio /g)).toHaveLength(2); // t3 e t4; a t5 está oculta
+  });
+
   it('sem controles por padrão', () => {
     const html = renderToStaticMarkup(<Player project={rawProject()} components={[FrameNumber]} />);
     expect(html).not.toContain('aria-label="Play"');

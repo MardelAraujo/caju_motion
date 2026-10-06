@@ -78,6 +78,8 @@ export type PlayerProps = {
 const NO_COMPONENTS: readonly ComponentDefinition[] = [];
 
 const encodePath = (src: string) => src.split('/').map(encodeURIComponent).join('/');
+/** `https://…`, `data:`, `blob:` ou `/caminho`: já é uma URL, usada como está. */
+const isUrl = (src: string) => /^[a-z][\w+.-]*:/i.test(src) || src.startsWith('/');
 
 export function Player(props: PlayerProps) {
   const parsed = useMemo(() => safeParseProject(props.project), [props.project]);
@@ -251,7 +253,8 @@ function PlayerView({
   }, []);
 
   const resolve = useCallback<AssetResolver>(
-    (asset: Asset) => (resolveAsset ? resolveAsset(asset) : assetBase ? assetBase + encodePath(asset.src) : asset.src),
+    (asset: Asset) =>
+      resolveAsset ? resolveAsset(asset) : assetBase && !isUrl(asset.src) ? assetBase + encodePath(asset.src) : asset.src,
     [resolveAsset, assetBase],
   );
 
@@ -292,10 +295,18 @@ function PlayerView({
         }}
       >
         <ComponentsProvider components={components ?? NO_COMPONENTS}>
-          <ProjectRenderer project={project} frame={frame} resolveAsset={resolve} playing={playing} muted={muted} volume={volume} />
+          <ProjectRenderer
+            project={project}
+            frame={frame}
+            resolveAsset={resolve}
+            playing={playing}
+            muted={muted}
+            volume={volume}
+            playbackRate={playbackRate}
+          />
         </ComponentsProvider>
       </div>
-      <AudioLayer project={project} frame={frame} playing={playing} muted={muted} volume={volume} resolve={resolve} />
+      <AudioLayer project={project} frame={frame} playing={playing} muted={muted} volume={volume} rate={playbackRate} resolve={resolve} />
       {controls && (
         <Controls
           frame={frame}
@@ -322,6 +333,7 @@ function AudioLayer({
   playing,
   muted,
   volume,
+  rate,
   resolve,
 }: {
   project: Project;
@@ -329,13 +341,14 @@ function AudioLayer({
   playing: boolean;
   muted: boolean;
   volume: number;
+  rate: number;
   resolve: AssetResolver;
 }) {
   const assets = new Map(project.assets.map((a) => [a.id, a]));
   return (
     <>
       {project.tracks
-        .filter((t) => t.kind === 'audio')
+        .filter((t) => t.kind === 'audio' && !t.hidden) // como no export (buildAudioMix)
         .flatMap((t) =>
           t.clips.map((clip) => {
             const asset = clip.assetId ? assets.get(clip.assetId) : undefined;
@@ -350,6 +363,7 @@ function AudioLayer({
                 playing={playing}
                 muted={muted || t.muted}
                 volume={volume}
+                rate={rate}
               />
             );
           }),
@@ -366,6 +380,7 @@ function AudioClip({
   playing,
   muted,
   volume,
+  rate,
 }: {
   clip: Clip;
   src: string;
@@ -374,6 +389,7 @@ function AudioClip({
   playing: boolean;
   muted: boolean;
   volume: number;
+  rate: number;
 }) {
   const ref = useRef<HTMLAudioElement>(null);
   const active = frame >= clip.start && frame < clip.start + clip.duration;
@@ -381,7 +397,7 @@ function AudioClip({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.playbackRate = clip.speed;
+    el.playbackRate = clip.speed * rate;
     el.muted = muted;
     el.volume = clamp(clipVolumeAt(clip, frame) * volume, 0, 1);
     if (!playing || !active) {
@@ -396,7 +412,7 @@ function AudioClip({
     } else if (Math.abs(el.currentTime - t) > 0.25) {
       el.currentTime = t;
     }
-  }, [frame, playing, active, clip, muted, volume, fps]);
+  }, [frame, playing, active, clip, muted, volume, rate, fps]);
 
   return <audio ref={ref} src={src} preload="auto" />;
 }

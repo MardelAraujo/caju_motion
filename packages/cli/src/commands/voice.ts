@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { findVideoFile } from '@caju-motion/sdk';
 import { assertProjectId, createProjectStore } from '@caju-motion/server';
-import { addCaptions, addVoiceover, providerByName, readCaptions, voiceover } from '@caju-motion/voice';
+import { addCaptions, addVoiceover, providerByName, readCaptions, voiceover, voiceoverStartSec } from '@caju-motion/voice';
 
 type TtsOpts = {
   dir: string;
@@ -23,10 +23,12 @@ type TtsOpts = {
   force: boolean;
 };
 
-const num = (v: string | undefined, flag: string): number | undefined => {
+const num = (v: string | undefined, flag: string, { positive = false } = {}): number | undefined => {
   if (v === undefined) return undefined;
   const n = Number(v);
-  if (!Number.isFinite(n) || n < 0) throw new Error(`${flag} precisa ser um número ≥ 0 (recebido: ${v})`);
+  if (!Number.isFinite(n) || n < 0 || (positive && n === 0)) {
+    throw new Error(`${flag} precisa ser um número ${positive ? '> 0' : '≥ 0'} (recebido: ${v})`);
+  }
   return n;
 };
 
@@ -46,7 +48,8 @@ export async function ttsCommand(o: TtsOpts): Promise<number> {
   const projectDir = path.join(store.root, o.id);
   if (!existsSync(projectDir)) throw new Error(`projeto "${o.id}" não encontrado em ${path.resolve(o.dir)}`);
   const name = o.name ?? 'locucao';
-  const startSec = num(o.start, '--start') ?? 0;
+  const startSec = num(o.start, '--start');
+  const speed = num(o.speed, '--speed', { positive: true });
   // projeto por código: o video.ts decide onde a locução e as legendas entram (readCaptions + s.captions);
   // mexer no project.json aqui duplicaria tudo no próximo `caju build`
   const codeFile = findVideoFile(projectDir);
@@ -61,7 +64,7 @@ export async function ttsCommand(o: TtsOpts): Promise<number> {
     text,
     provider,
     voice: o.voice,
-    speed: num(o.speed, '--speed'),
+    speed,
     language: o.language,
     force: o.force,
   });
@@ -81,7 +84,9 @@ export async function ttsCommand(o: TtsOpts): Promise<number> {
   const version = await store.version(o.id);
   let project = await store.read(o.id);
   project = addVoiceover(project, vo, { assetId: name, startSec });
-  if (o.captions) project = addCaptions(project, vo.cues, { prefix: `${name}-legenda`, offsetSec: startSec });
+  // legendas acompanham onde a locução está de fato (inclusive se foi movida no Studio)
+  const offsetSec = voiceoverStartSec(project, name) ?? 0;
+  if (o.captions) project = addCaptions(project, vo.cues, { prefix: `${name}-legenda`, offsetSec });
   await store.write(o.id, project, new Date(), version);
   console.log(`${summary}${o.captions ? `, ${vo.cues.length} legenda(s)` : ''}`);
   console.log(`  ${vo.srtSrc} · ${vo.wordsSrc}`);

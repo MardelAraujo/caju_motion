@@ -112,8 +112,17 @@ describe('trilhas de áudio', () => {
         }),
       );
     const colliding = await make('locucao');
-    expect(colliding.tracks.find((t) => t.kind === 'audio')!.id).toBe('trilha-locucao');
+    expect(colliding.tracks.find((t) => t.kind === 'audio')!.id).toBe('locucao-trilha');
     expect(ProjectSchema.safeParse(colliding).success).toBe(true);
+    // qualquer id gerado, não só "locucao": um asset chamado como uma trilha de texto
+    const p = await buildProject(
+      defineProject({ id: 'b', format: 'reel-9x16', duration: 60 }, (b) => {
+        b.asset({ id: 'texto-1', kind: 'image', src: 'assets/x.png', meta: { width: 10, height: 10 } });
+        b.scene('s', 'Cena', 0, 60, (s) => void s.text('Oi', { size: 40 }, { x: 10, y: 10 }));
+      }),
+    );
+    expect(p.tracks.map((t) => t.id)).toContain('texto-1-trilha');
+    expect(ProjectSchema.safeParse(p).success).toBe(true);
     // sem colisão o id antigo continua (projetos existentes não mudam)
     expect((await make('vo-01')).tracks.find((t) => t.kind === 'audio')!.id).toBe('locucao');
   });

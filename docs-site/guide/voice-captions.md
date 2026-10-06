@@ -26,7 +26,7 @@ ELEVENLABS_API_KEY=... npx caju tts meu-video --script roteiro.txt --provider el
 | `assets/data/<name>.words.json` | the script, the provider, and the start/end of every word |
 | `assets/data/<name>.srt` | the captions, for YouTube, Instagram or any editor |
 
-It also adds the audio as a clip on a "Locução" track (`--start <s>` to begin later) and one text clip per caption line on a "Legendas" track (`--no-captions` to skip). Running it again replaces those clips.
+It also adds the audio as a clip on a "Locução" track (`--start <s>` to begin later) and one text clip per caption line on a "Legendas" track (`--no-captions` to skip). Running it again (say, to fix a word) updates the voice-over clip without undoing your Studio edits: its track, position, volume and fades stay, and only the length follows the new audio. The captions are regenerated where the voice-over actually is. Several voice-overs (`--name vo-01`, `--name vo-02`…) that overlap in time go on separate "Locução" tracks.
 
 **You never pay twice for the same line.** The cache key is provider + voice + speed + style + text. Re-running with the same values reuses the file. Changing the text or the voice generates a new one, and `--force` always generates.
 

@@ -31,9 +31,18 @@ export function mediaCacheDir(projectDir: string, hash: string): string {
   return path.join(projectDir, MEDIA_CACHE_DIR, short(hash));
 }
 
+/** Índices já lidos, revalidados pelo mtime (o servidor consulta a cada Range de vídeo). */
+const indexCache = new Map<string, { mtimeMs: number; index: Index }>();
+
 async function readIndex(projectDir: string): Promise<Index> {
+  const file = indexFile(projectDir);
   try {
-    return JSON.parse(await readFile(indexFile(projectDir), 'utf8')) as Index;
+    const { mtimeMs } = await stat(file);
+    const hit = indexCache.get(file);
+    if (hit && hit.mtimeMs === mtimeMs) return structuredClone(hit.index);
+    const index = JSON.parse(await readFile(file, 'utf8')) as Index;
+    indexCache.set(file, { mtimeMs, index });
+    return structuredClone(index);
   } catch {
     return {};
   }
@@ -89,6 +98,11 @@ export type AnalyzeOptions = {
   proxyHeight?: number;
   /** Refaz os derivados mesmo se já existirem. */
   force?: boolean;
+  /**
+   * `false`: só lê (simulação, `caju media --dry-run`). Não gera derivados nem grava nada no cache;
+   * o relatório diz o que mudaria no `meta`. Padrão true.
+   */
+  write?: boolean;
   signal?: AbortSignal;
   onProgress?: (asset: Asset, step: string) => void;
 };
@@ -119,7 +133,7 @@ export function needsProxy(info: MediaInfo, mode: ProxyMode, proxyHeight = 540):
  * quem chama decide se grava.
  */
 export async function analyzeProject(projectDir: string, project: Project, opts: AnalyzeOptions = {}): Promise<AnalyzeResult> {
-  const { thumbnails = true, peaks = true, proxies = false, proxyHeight = 540, force = false, signal, onProgress } = opts;
+  const { thumbnails = true, peaks = true, proxies = false, proxyHeight = 540, force = false, write = true, signal, onProgress } = opts;
   const index = await readIndex(projectDir);
   const reports: AssetReport[] = [];
   const assets: Asset[] = [];
@@ -148,7 +162,7 @@ export async function analyzeProject(projectDir: string, project: Project, opts:
       if (!force && existsSync(infoFile)) info = JSON.parse(await readFile(infoFile, 'utf8')) as MediaInfo;
       else {
         info = await probeMedia(file);
-        await writeJson(infoFile, info);
+        if (write) await writeJson(infoFile, info);
       }
       report.info = info;
 
@@ -176,6 +190,10 @@ export async function analyzeProject(projectDir: string, project: Project, opts:
 
       const derive = async (kind: DerivedKind, make: (out: string) => Promise<unknown>) => {
         const out = path.join(dir, DERIVED_FILE[kind]);
+        if (!write) {
+          if (existsSync(out)) report.derived[kind] = out;
+          return;
+        }
         if (force || !existsSync(out)) {
           onProgress?.(asset, kind);
           await make(out);
@@ -183,13 +201,13 @@ export async function analyzeProject(projectDir: string, project: Project, opts:
         report.derived[kind] = out;
       };
       if (thumbnails && (info.kind === 'video' || (info.kind === 'image' && path.extname(file).toLowerCase() !== '.svg'))) {
-        await derive('thumb', (out) => thumbnail(file, { out, signal }));
+        await derive('thumb', (out) => thumbnail(file, { out, info, signal }));
       }
       if (peaks && info.hasAudio) {
         await derive('peaks', async (out) => writeJson(out, await waveform(file, { signal })));
       }
       if (info.kind === 'video' && needsProxy(info, proxies, proxyHeight)) {
-        await derive('proxy', (out) => createProxy(file, { out, height: proxyHeight, signal }));
+        await derive('proxy', (out) => createProxy(file, { out, height: proxyHeight, info, signal }));
       }
     } catch (err) {
       report.status = 'error';
@@ -197,6 +215,6 @@ export async function analyzeProject(projectDir: string, project: Project, opts:
       if (assets.length < reports.length) assets.push(asset);
     }
   }
-  await writeJson(indexFile(projectDir), index);
+  if (write) await writeJson(indexFile(projectDir), index);
   return { project: { ...project, assets }, reports };
 }

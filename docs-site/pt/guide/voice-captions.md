@@ -26,7 +26,7 @@ O `caju tts` grava no projeto:
 | `assets/data/<nome>.words.json` | o roteiro, o provedor e o início/fim de cada palavra |
 | `assets/data/<nome>.srt` | as legendas, para YouTube, Instagram ou qualquer editor |
 
-Ele também põe o áudio como clipe numa trilha "Locução" (`--start <s>` para começar depois) e um clipe de texto por linha de legenda numa trilha "Legendas" (`--no-captions` para pular). Rodar de novo substitui esses clipes.
+Ele também põe o áudio como clipe numa trilha "Locução" (`--start <s>` para começar depois) e um clipe de texto por linha de legenda numa trilha "Legendas" (`--no-captions` para pular). Rodar de novo (por exemplo, para corrigir uma palavra) atualiza o clipe da locução sem desfazer o que você editou no Studio: trilha, posição, volume e fades ficam, e só a duração acompanha o áudio novo. As legendas são refeitas onde a locução está de fato. Várias locuções (`--name vo-01`, `--name vo-02`…) que se sobrepõem no tempo vão para trilhas "Locução" separadas.
 
 **Você nunca paga duas vezes pela mesma fala.** A chave do cache é provedor + voz + velocidade + estilo + texto. Rodar de novo com os mesmos valores reaproveita o arquivo. Mudar o texto ou a voz gera outro, e `--force` sempre gera.
 

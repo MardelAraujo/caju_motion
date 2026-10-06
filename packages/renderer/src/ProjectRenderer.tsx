@@ -17,6 +17,8 @@ export type ProjectRendererProps = {
   muted?: boolean;
   /** Volume geral, multiplicado pelo volume de cada clipe (padrão 1). */
   volume?: number;
+  /** Velocidade da reprodução (preview), multiplicada pela velocidade de cada clipe (padrão 1). */
+  playbackRate?: number;
   /** Clipe de texto em edição inline no canvas. */
   editingClipId?: string | null;
   onTextCommit?: (clipId: string, text: string) => void;
@@ -50,6 +52,7 @@ export function ProjectRenderer({
   playing = false,
   muted = false,
   volume = 1,
+  playbackRate = 1,
   editingClipId,
   onTextCommit,
 }: ProjectRendererProps) {
@@ -103,7 +106,7 @@ export function ProjectRenderer({
               playing={playing}
               volume={clipVolumeAt(clip, frame) * volume}
               muted={trackMuted || muted}
-              rate={clip.speed}
+              rate={clip.speed * playbackRate}
               fps={fps}
             />
           );

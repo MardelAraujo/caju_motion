@@ -123,14 +123,24 @@ function ensureTrack(project: Project, id: string, kind: Track['kind'], name: st
 export type AddVoiceoverOptions = {
   /** id do asset e do clipe (padrão: o nome do arquivo sem extensão). */
   assetId?: string;
-  /** Início no vídeo (s). */
+  /** Início no vídeo (s). Padrão: onde o clipe já está (se existir) ou 0. */
   startSec?: number;
   trackId?: string;
   trackName?: string;
   volume?: number;
 };
 
-/** Registra o áudio da locução (asset + clipe numa trilha de áudio). Substitui um clipe anterior do mesmo asset. */
+const overlaps = (clips: Clip[], start: number, duration: number, except?: Clip) =>
+  clips.some((c) => c !== except && start < c.start + c.duration && start + duration > c.start);
+
+/**
+ * Registra o áudio da locução (asset + clipe numa trilha de áudio).
+ *
+ * Rodar de novo (texto corrigido) atualiza o clipe que já existe sem desfazer o que foi editado no
+ * Studio: trilha, posição, volume, fades e corte ficam; só a duração acompanha o áudio novo. Um
+ * clipe novo vai para a primeira trilha "Locução" livre naquele trecho (os clipes de uma trilha
+ * não podem se sobrepor).
+ */
 export function addVoiceover(project: Project, vo: Pick<VoiceoverResult, 'audioSrc' | 'durationSec'>, opts: AddVoiceoverOptions = {}): Project {
   const next: Project = structuredClone(project);
   const assetId = opts.assetId ?? path.basename(vo.audioSrc).replace(/\.[^.]+$/, '');
@@ -139,21 +149,46 @@ export function addVoiceover(project: Project, vo: Pick<VoiceoverResult, 'audioS
   if (i >= 0) next.assets[i] = { ...next.assets[i]!, ...asset };
   else next.assets.push(asset);
 
-  for (const t of next.tracks) t.clips = t.clips.filter((c) => c.id !== `${assetId}-clip`);
-  // ids são globais no projeto (assets, trilhas e clipes): a trilha não pode se chamar como o asset
-  const track = ensureTrack(next, opts.trackId ?? 'trilha-locucao', 'audio', opts.trackName ?? 'Locução', 'bottom');
+  const clipId = `${assetId}-clip`;
+  const sourceFrames = Math.max(1, sec(next, vo.durationSec));
+  const prevTrack = next.tracks.find((t) => t.clips.some((c) => c.id === clipId));
+  const prev = prevTrack?.clips.find((c) => c.id === clipId);
+  const start = opts.startSec !== undefined ? sec(next, opts.startSec) : (prev?.start ?? 0);
+  const duration = prev ? Math.max(1, Math.floor((sourceFrames - prev.trimIn) / prev.speed)) : sourceFrames;
+
+  if (prevTrack && prev && !overlaps(prevTrack.clips, start, duration, prev)) {
+    Object.assign(prev, { start, duration, ...(opts.volume !== undefined ? { audio: { ...prev.audio, volume: opts.volume } } : {}) });
+    prevTrack.clips.sort((a, b) => a.start - b.start);
+    return next;
+  }
+  if (prevTrack && prev) prevTrack.clips = prevTrack.clips.filter((c) => c !== prev);
+
   const clip: Clip = ClipSchema.parse({
-    id: `${assetId}-clip`,
+    ...(prev ?? {}),
+    id: clipId,
     type: 'audio',
-    name: assetId,
+    name: prev?.name ?? assetId,
     assetId,
-    start: sec(next, opts.startSec ?? 0),
-    duration: Math.max(1, sec(next, vo.durationSec)),
-    ...(opts.volume !== undefined ? { audio: { volume: opts.volume } } : {}),
+    start,
+    duration,
+    ...(opts.volume !== undefined ? { audio: { ...prev?.audio, volume: opts.volume } } : {}),
   });
-  track.clips.push(clip);
-  track.clips.sort((a, b) => a.start - b.start);
-  return next;
+  // ids são globais no projeto (assets, trilhas e clipes): a trilha não pode se chamar como o asset
+  const base = opts.trackId ?? 'trilha-locucao';
+  const name = opts.trackName ?? 'Locução';
+  for (let n = 1; ; n++) {
+    const track = ensureTrack(next, n === 1 ? base : `${base}-${n}`, 'audio', n === 1 ? name : `${name} ${n}`, 'bottom');
+    if (overlaps(track.clips, clip.start, clip.duration)) continue;
+    track.clips.push(clip);
+    track.clips.sort((a, b) => a.start - b.start);
+    return next;
+  }
+}
+
+/** Início (s) do clipe da locução `assetId`, onde quer que esteja (ex.: movido no Studio). */
+export function voiceoverStartSec(project: Project, assetId: string): number | undefined {
+  const clip = project.tracks.flatMap((t) => t.clips).find((c) => c.id === `${assetId}-clip`);
+  return clip ? clip.start / project.settings.fps : undefined;
 }
 
 export type CaptionStyle = {

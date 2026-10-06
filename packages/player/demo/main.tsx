@@ -30,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
     assetBase={base}
     controls={q.get('controls') !== '0'}
     loop={q.get('loop') === '1'}
+    playbackRate={Number(q.get('rate') ?? 1)}
     onPlay={() => log('play')}
     onPause={() => log('pause')}
     onEnded={() => log('ended')}

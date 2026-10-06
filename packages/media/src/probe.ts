@@ -21,6 +21,8 @@ export type MediaInfo = {
   rotation?: number;
 };
 
+const IMAGE_CODECS = new Set(['png', 'mjpeg', 'jpegls', 'webp', 'bmp', 'tiff', 'gif', 'av1_image', 'jpeg2000', 'qoi', 'pam', 'ppm']);
+
 const EXT: Record<string, MediaKind> = {
   mp4: 'video', mov: 'video', webm: 'video', m4v: 'video', mkv: 'video', avi: 'video',
   png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', svg: 'image', avif: 'image', bmp: 'image',
@@ -46,11 +48,17 @@ export async function probeMedia(file: string): Promise<MediaInfo> {
   if (/No such file or directory|does not exist/i.test(stderr)) throw new Error(`arquivo não encontrado: ${file}`);
   const info = parseFfmpegHeader(stderr);
   if (!info) throw new Error(`não foi possível ler a mídia ${path.basename(file)} (formato desconhecido ou arquivo corrompido)`);
-  // imagem estática: o FFmpeg a vê como um "vídeo" de um quadro
-  if (ext === 'image' || (!info.hasAudio && info.hasVideo && info.durationSec === undefined)) {
-    return { kind: 'image', hasAudio: false, hasVideo: false, width: info.width, height: info.height };
-  }
-  return info;
+  return isStillImage(info, ext) ? { kind: 'image', hasAudio: false, hasVideo: false, width: info.width, height: info.height } : info;
+}
+
+/**
+ * Imagem estática? O FFmpeg vê uma imagem como "vídeo" de um quadro. Decide pela extensão ou por um
+ * codec de imagem, nunca só pela falta de duração: WebM do MediaRecorder vem sem duração e é vídeo.
+ */
+export function isStillImage(info: MediaInfo, extKind: MediaKind | null): boolean {
+  if (extKind === 'image') return true;
+  if (extKind === 'video' || extKind === 'audio') return false;
+  return !info.hasAudio && info.durationSec === undefined && IMAGE_CODECS.has(info.videoCodec ?? '');
 }
 
 /** Interpreta o cabeçalho que o `ffmpeg -i <arquivo>` escreve no stderr. */

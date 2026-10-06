@@ -45,6 +45,7 @@ export async function mediaCommand({ dir, ids, proxies, force, dryRun }: Opts): 
     const { project: next, reports } = await analyzeProject(projectDir, project, {
       proxies,
       force,
+      write: !dryRun,
       onProgress: process.stdout.isTTY ? (asset, step) => process.stdout.write(`\r  ${id}: ${asset.id} (${step})`.padEnd(60)) : undefined,
     });
     if (process.stdout.isTTY) process.stdout.write(`\r${' '.repeat(60)}\r`);

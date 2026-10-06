@@ -17,6 +17,7 @@ import {
   toSrt,
   toVtt,
   voiceover,
+  voiceoverStartSec,
   wordsFromCharacters,
   wordsToCues,
   type TtsProvider,
@@ -203,8 +204,38 @@ describe('locução no projeto', () => {
     // de novo: substitui em vez de duplicar
     const again = addCaptions(addVoiceover(p, { audioSrc: 'assets/audio/vo/locucao.mp3', durationSec: 4 }, { assetId: 'locucao' }), cues.slice(0, 1), { prefix: 'locucao-legenda' });
     expect(again.assets).toHaveLength(1);
-    expect(again.tracks.find((t) => t.id === 'trilha-locucao')!.clips).toMatchObject([{ start: 0, duration: 120 }]);
+    expect(again.tracks.find((t) => t.id === 'trilha-locucao')!.clips).toMatchObject([{ start: 15, duration: 120 }]); // mantém a posição; só a duração muda
     expect(again.tracks.find((t) => t.id === 'trilha-legendas')!.clips).toHaveLength(1);
     expect(ProjectSchema.safeParse(again).success).toBe(true);
+  });
+
+  it('duas locuções no mesmo trecho vão para trilhas diferentes (o schema não aceita sobreposição)', () => {
+    let p = addVoiceover(project(), { audioSrc: 'assets/audio/vo/vo-01.wav', durationSec: 2 });
+    p = addVoiceover(p, { audioSrc: 'assets/audio/vo/vo-02.wav', durationSec: 2 });
+    p = addVoiceover(p, { audioSrc: 'assets/audio/vo/vo-03.wav', durationSec: 1 }, { startSec: 2 }); // cabe na 1ª
+    expect(ProjectSchema.safeParse(p).success).toBe(true);
+    const where = (id: string) => p.tracks.find((t) => t.clips.some((c) => c.id === id))!.id;
+    expect([where('vo-01-clip'), where('vo-02-clip'), where('vo-03-clip')]).toEqual(['trilha-locucao', 'trilha-locucao-2', 'trilha-locucao']);
+  });
+
+  it('rodar de novo mantém o que foi editado no Studio (trilha, posição, volume)', () => {
+    let p = addVoiceover(project(), { audioSrc: 'assets/audio/vo/locucao.wav', durationSec: 2 });
+    // no Studio: move para 3 s numa trilha própria e baixa o volume
+    const clip = p.tracks.flatMap((t) => t.clips).find((c) => c.id === 'locucao-clip')!;
+    p.tracks = p.tracks.map((t) => ({ ...t, clips: t.clips.filter((c) => c.id !== 'locucao-clip') }));
+    p.tracks.push({
+      ...p.tracks[0]!,
+      id: 'minha-trilha',
+      kind: 'audio',
+      name: 'Minha',
+      clips: [{ ...clip, start: 90, audio: { volume: 0.4, fadeIn: 3, fadeOut: 0, pan: 0 } }],
+    });
+    // texto corrigido: áudio novo com 2,5 s
+    p = addVoiceover(p, { audioSrc: 'assets/audio/vo/locucao.wav', durationSec: 2.5 });
+    const after = p.tracks.find((t) => t.id === 'minha-trilha')!.clips[0]!;
+    expect(after).toMatchObject({ id: 'locucao-clip', start: 90, duration: 75, audio: { volume: 0.4, fadeIn: 3 } });
+    expect(voiceoverStartSec(p, 'locucao')).toBe(3);
+    expect(p.tracks.flatMap((t) => t.clips).filter((c) => c.id === 'locucao-clip')).toHaveLength(1);
+    expect(ProjectSchema.safeParse(p).success).toBe(true);
   });
 });
