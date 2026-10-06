@@ -59,6 +59,8 @@ Agents: `npm run caju -- skills add --target <your-project> --agents all` instal
 | [`@caju-motion/core`](packages/core) | Runtime: `useFrame`, `Sequence`, `interpolate`, `spring`, easing, keyframes, `random(seed)`, `delayRender` |
 | [`@caju-motion/renderer`](packages/renderer) | Draws a project at any frame as React DOM |
 | [`@caju-motion/player`](packages/player) | `<Player>` to embed a video in any React app |
+| [`@caju-motion/media`](packages/media) | Probe, thumbnails, waveforms, editing proxies; frame-exact WebCodecs decoding |
+| [`@caju-motion/voice`](packages/voice) | Text-to-speech (OpenAI, ElevenLabs) with word timings, and captions |
 | [`@caju-motion/server`](packages/server) | Local project store (atomic saves + history), assets API, production Studio server |
 | [`@caju-motion/studio`](packages/studio) | Caju Studio, the visual editor (shipped prebuilt) |
 | [`@caju-motion/cli`](packages/cli) | The `caju` command |

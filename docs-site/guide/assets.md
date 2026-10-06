@@ -40,7 +40,7 @@ Names are lowercase kebab-case ASCII (`logo-acme.svg`, `vo-03-pricing.wav`). The
 ffprobe -v error -show_entries stream=width,height,r_frame_rate:format=duration -of json assets/video/broll-01.mp4
 ```
 
-For images, read the size with a library such as `sharp`, or from the SVG `viewBox`. In `video.ts`, `measureMedia(file)` wraps ffprobe.
+Or let Caju do it: `npx caju media <id>` fills `meta` for every asset (videos, audio, images and SVGs) and builds thumbnails, waveforms and editing proxies ([`@caju-motion/media`](../reference/media)). In `video.ts`, use `measureMedia(file)`; it needs no ffprobe.
 
 ## Images
 

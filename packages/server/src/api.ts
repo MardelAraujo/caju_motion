@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import { Hono } from 'hono';
+import { findDerived } from '@caju-motion/media';
 import { FORMAT_IDS, type FormatId } from '@caju-motion/schema';
 import { safeJoin, saveUpload, serveFile } from './files';
 import { createProjectStore, ProjectStoreError } from './projects';
@@ -80,13 +81,37 @@ export function createApi({ projectsDir, extensions = [] }: ApiOptions) {
     return c.json({ src: `assets/${saved}`, name }, 201);
   });
 
-  /** Arquivos do projeto (mídia), com Range para seek. */
+  /**
+   * Arquivos do projeto (mídia), com Range para seek. `?proxy=1`: o proxy de edição gerado por
+   * `caju media`, se existir e o original não tiver mudado (senão, o próprio arquivo).
+   */
   app.get('/projects/:id/files/*', async (c) => {
     const id = c.req.param('id');
     const dir = await store.dir(id);
     const prefix = `/api/projects/${id}/files/`;
     const rel = decodeURIComponent(new URL(c.req.url).pathname.slice(prefix.length));
-    return serveFile(safeJoin(dir, rel), c.req.header('range'));
+    const file = safeJoin(dir, rel);
+    if (c.req.query('proxy') === '1') {
+      const proxy = await findDerived(dir, path.relative(dir, file).split(path.sep).join('/'), 'proxy');
+      if (proxy) {
+        const res = await serveFile(proxy, c.req.header('range'));
+        res.headers.set('x-caju-proxy', '1');
+        return res;
+      }
+    }
+    return serveFile(file, c.req.header('range'));
+  });
+
+  /** Derivados do cache de mídia (`thumb` jpg, `peaks` json) de um asset; 404 se ainda não foram gerados. */
+  app.get('/projects/:id/media/:kind/*', async (c) => {
+    const { id, kind } = c.req.param();
+    if (kind !== 'thumb' && kind !== 'peaks') throw new ProjectStoreError(`derivado desconhecido: ${kind}`, 404);
+    const dir = await store.dir(id);
+    const prefix = `/api/projects/${id}/media/${kind}/`;
+    const file = safeJoin(dir, decodeURIComponent(new URL(c.req.url).pathname.slice(prefix.length)));
+    const derived = await findDerived(dir, path.relative(dir, file).split(path.sep).join('/'), kind);
+    if (!derived) throw new ProjectStoreError('ainda não gerado (rode caju media)', 404);
+    return serveFile(derived, undefined);
   });
 
   return app;

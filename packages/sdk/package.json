@@ -24,6 +24,7 @@
     "build": "tsup --config ../../tsup.config.ts"
   },
   "dependencies": {
+    "@caju-motion/media": "0.2.0",
     "@caju-motion/schema": "0.2.0",
     "tsx": "^4.23.15"
   },

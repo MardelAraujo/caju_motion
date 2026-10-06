@@ -26,7 +26,7 @@ export default defineProject(
   { id: 'promo', name: 'Promo', format: 'reel-9x16', background: '#171512', duration: 300 },
   (p) => {
     const { width, height } = p.settings;
-    const vo1 = { durationSec: 3.4 }; // medido com measureMedia() ou ffprobe
+    const vo1 = { durationSec: 3.4 }; // medido com measureMedia()
     p.asset({ id: 'vo-01', kind: 'audio', name: 'Locução 1', src: 'assets/audio/vo/vo-01.wav', meta: vo1 });
     p.asset({ id: 'mus-bed', kind: 'audio', name: 'Trilha', src: 'assets/audio/music/mus-bed.mp3', meta: { durationSec: 30 } });
     p.asset({ id: 'logo', kind: 'image', name: 'Logo', src: 'assets/images/logo.svg', meta: { width: 600, height: 180 } });
@@ -72,7 +72,7 @@ O `caju build` casa os clipes por id para saber o que mudou no Studio. Ids autom
 | `background` | `string?` | cor hex (padrão `#000000`) |
 | `duration` | `number?` | frames; omita para terminar no último clipe |
 
-`build(p)` pode ser `async`, por exemplo para medir mídias com `measureMedia(arquivo)` (usa ffprobe):
+`build(p)` pode ser `async`, por exemplo para medir mídias com `measureMedia(arquivo)`:
 
 ```ts
 import { defineProject, measureMedia } from '@caju-motion/sdk';
@@ -151,7 +151,8 @@ Use `--dry-run` para simular e `--force` para o código vencer (o arquivo anteri
 
 | Export | Uso |
 |---|---|
-| `measureMedia(arquivo)` | wrapper do ffprobe (duração, tamanho, fps, faixas de áudio/vídeo); respeita `FFPROBE_PATH` |
+| `measureMedia(arquivo)` | duração, tamanho, fps, faixas de áudio/vídeo (FFmpeg embutido, sem ffprobe) |
+| `s.captions(cues, estilo, el)` | um clipe de texto por linha de legenda; veja [Locução e legendas](./voice-captions) |
 | `buildProject(def)` | roda uma definição e devolve o `Project` validado |
 | `buildProjectDir(dir, opts)` | o que o `caju build` faz, por código |
 | `ProjectBuilder`, `guardOverwrite` | scripts avulsos legados (`scripts/examples/builder.ts`) que gravam o `project.json` sozinhos |

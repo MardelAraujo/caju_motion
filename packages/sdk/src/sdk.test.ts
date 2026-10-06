@@ -75,6 +75,50 @@ describe('defineProject / buildProject', () => {
   });
 });
 
+describe('s.captions', () => {
+  it('um clipe de texto por legenda, em segundos desde a cena, sem sobreposição', async () => {
+    const p = await buildProject(
+      defineProject({ id: 'cap', format: 'reel-9x16', duration: 150 }, (b) => {
+        b.tracks(['Legendas']);
+        b.scene('s', 'Cena', 30, 150, (s) => {
+          s.captions(
+            [
+              { text: 'Olá', start: 0, end: 1.5 },
+              { text: 'mundo', start: 1, end: 2 }, // começa antes da anterior acabar
+            ],
+            { size: 54, weight: 800, bg: '#000' },
+            { x: 540, y: 1500, track: 'Legendas', offsetSec: 0.5 },
+          );
+        });
+      }),
+    );
+    const clips = p.tracks.flatMap((t) => t.clips).filter((c) => c.type === 'text');
+    expect(clips.map((c) => [c.id, c.start, c.duration, c.props.text])).toEqual([
+      ['s-legenda-1', 45, 45 - 15, 'Olá'], // cena começa no 30; 0,5 s de offset → 45; cortada no início da próxima
+      ['s-legenda-2', 75, 30, 'mundo'],
+    ]);
+    expect(new Set(p.tracks.filter((t) => t.clips.some((c) => c.type === 'text')).map((t) => t.name))).toEqual(new Set(['Legendas']));
+    expect(clips[0]!.origin).toBe('code');
+  });
+});
+
+describe('trilhas de áudio', () => {
+  it('a trilha da locução não colide com um asset chamado "locucao" (ids são globais)', async () => {
+    const make = (assetId: string) =>
+      buildProject(
+        defineProject({ id: 'a', format: 'reel-9x16', duration: 60 }, (b) => {
+          b.asset({ id: assetId, kind: 'audio', src: `assets/audio/vo/${assetId}.wav`, meta: { durationSec: 1 } });
+          b.audioClip(assetId, 0, 30, 'Locução');
+        }),
+      );
+    const colliding = await make('locucao');
+    expect(colliding.tracks.find((t) => t.kind === 'audio')!.id).toBe('trilha-locucao');
+    expect(ProjectSchema.safeParse(colliding).success).toBe(true);
+    // sem colisão o id antigo continua (projetos existentes não mudam)
+    expect((await make('vo-01')).tracks.find((t) => t.kind === 'audio')!.id).toBe('locucao');
+  });
+});
+
 describe('mergeBuild', () => {
   it('preserva clipes do editor, troca os de código e detecta edições', async () => {
     const v1 = await buildProject(template('Olá'));

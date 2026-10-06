@@ -111,8 +111,10 @@ export function CanvasArea() {
     setBox((prev) => (prev?.w === next?.w && prev?.h === next?.h ? prev : next));
   });
 
+  // vídeos: o proxy de edição (`caju media --proxies`), se existir; o servidor cai no original se não
   const resolveAsset = useCallback(
-    (a: Parameters<typeof assetUrl>[1]) => (project ? assetUrl(project.id, a) : ''),
+    (a: Parameters<typeof assetUrl>[1] & { kind?: string }) =>
+      project ? assetUrl(project.id, a) + (a.kind === 'video' ? '?proxy=1' : '') : '',
     [project?.id],
   );
 

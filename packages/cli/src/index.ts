@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { buildCommand } from './commands/build';
+import { mediaCommand, parseProxyMode } from './commands/media';
+import { captionsCommand, ttsCommand } from './commands/voice';
 import { checkCommand } from './commands/check';
 import { doctorCommand } from './commands/doctor';
 import { newCommand } from './commands/new';
@@ -19,10 +21,18 @@ Uso:
   caju build [ids...] [--dir projects] [--force]         gera o project.json a partir do video.ts (defineProject),
                                                          preservando as edições feitas no Studio
   caju check [ids...] [--dir projects]                   valida projetos (schema, assets no disco, componentes)
+  caju media [ids...] [--proxies auto|all] [--force]     lê os assets (duração, tamanho, fps), atualiza o project.json e gera
+                                                         miniaturas, formas de onda e proxies de edição em .caju/media/
   caju render <id> [--out arquivo] [--format mp4-h264] [--resolution 1080] [--fps 30] [--quality high] [--no-audio]
                                                          exporta vídeo (Chromium + FFmpeg)
   caju still <id> --frame <n> [--out quadro.png] [--resolution 1080]
                                                          exporta um quadro como imagem
+  caju tts <id> --text "..." [--script roteiro.txt] [--provider placeholder|openai|elevenlabs] [--voice v]
+             [--name locucao] [--start s] [--speed 1] [--language pt] [--no-captions] [--files-only] [--force]
+                                                         gera a locução (OPENAI_API_KEY / ELEVENLABS_API_KEY), o áudio
+                                                         numa trilha e as legendas; mesmo texto+voz não gera de novo
+  caju captions <id> --from legenda.srt|.vtt|.words.json [--offset s]
+                                                         importa legendas como clipes de texto editáveis
   caju doctor [--dir projects]                           diagnostica o ambiente (Node, FFmpeg, navegador, Studio…)
   caju skills add [--target .] [--agents claude|all]     instala as skills de agente em .claude/skills/
                                                          (all: também o bloco do Caju no AGENTS.md)
@@ -64,6 +74,20 @@ async function main(argv: string[]): Promise<number> {
       force: { type: 'boolean', default: false },
       'dry-run': { type: 'boolean', default: false },
       target: { type: 'string' },
+      proxies: { type: 'string' },
+      text: { type: 'string' },
+      script: { type: 'string' },
+      name: { type: 'string' },
+      provider: { type: 'string' },
+      voice: { type: 'string' },
+      model: { type: 'string' },
+      speed: { type: 'string' },
+      language: { type: 'string' },
+      start: { type: 'string' },
+      'no-captions': { type: 'boolean', default: false },
+      'files-only': { type: 'boolean', default: false },
+      from: { type: 'string' },
+      offset: { type: 'string' },
       agents: { type: 'string' },
       version: { type: 'boolean', short: 'v', default: false },
       help: { type: 'boolean', short: 'h', default: false },
@@ -138,6 +162,27 @@ async function main(argv: string[]): Promise<number> {
       return buildCommand({ dir: values.dir, ids: rest, force: values.force, dryRun: values['dry-run'] });
     case 'check':
       return checkCommand({ dir: values.dir, ids: rest, componentsDir: componentsDirFor(values.dir, values.components) });
+    case 'media':
+      return mediaCommand({ dir: values.dir, ids: rest, proxies: parseProxyMode(values.proxies), force: values.force, dryRun: values['dry-run'] });
+    case 'tts':
+      return ttsCommand({
+        dir: values.dir,
+        id: rest[0],
+        text: values.text,
+        script: values.script,
+        name: values.name,
+        provider: values.provider,
+        voice: values.voice,
+        model: values.model,
+        speed: values.speed,
+        language: values.language,
+        start: values.start,
+        captions: !values['no-captions'],
+        filesOnly: values['files-only'],
+        force: values.force,
+      });
+    case 'captions':
+      return captionsCommand({ dir: values.dir, id: rest[0], from: values.from, offset: values.offset });
     case 'doctor':
       return doctorCommand({ dir: values.dir, componentsDir: componentsDirFor(values.dir, values.components) });
     case 'skills':

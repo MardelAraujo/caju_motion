@@ -53,7 +53,23 @@ function probe(url: string, kind: MediaKind): Promise<Asset['meta']> {
 
 const thumbCache = new Map<string, Promise<string>>();
 
-function captureVideoThumb(url: string): Promise<string> {
+/** Miniatura já gerada pelo `caju media` (`/media/thumb/…`): evita baixar o vídeo original. */
+async function cachedThumb(url: string): Promise<string | null> {
+  if (!url.includes('/files/')) return null;
+  const thumb = url.replace('/files/', '/media/thumb/');
+  try {
+    const res = await fetch(thumb, { method: 'HEAD' });
+    return res.ok ? thumb : null;
+  } catch {
+    return null;
+  }
+}
+
+async function captureVideoThumb(url: string): Promise<string> {
+  return (await cachedThumb(url)) ?? captureFrame(url);
+}
+
+function captureFrame(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const v = document.createElement('video');
     v.muted = true;
@@ -106,7 +122,22 @@ export function useThumbnail(url: string | null, kind: string): string | null {
 export const PEAKS_PER_SECOND = 100;
 const peaksCache = new Map<string, Promise<Float32Array>>();
 
+/** Forma de onda já calculada pelo `caju media` (`/media/peaks/…`), se houver. */
+async function cachedPeaks(url: string): Promise<Float32Array | null> {
+  if (!url.includes('/files/')) return null;
+  try {
+    const res = await fetch(url.replace('/files/', '/media/peaks/'));
+    if (!res.ok) return null;
+    const data = (await res.json()) as { perSecond?: number; peaks?: number[] };
+    return data.perSecond === PEAKS_PER_SECOND && Array.isArray(data.peaks) ? Float32Array.from(data.peaks) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function computePeaks(url: string): Promise<Float32Array> {
+  const cached = await cachedPeaks(url);
+  if (cached) return cached;
   const buf = await (await fetch(url)).arrayBuffer();
   const ctx = new OfflineAudioContext(1, 1, 44100);
   const audio = await ctx.decodeAudioData(buf);

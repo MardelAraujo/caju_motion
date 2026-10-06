@@ -21,7 +21,7 @@ export default defineProject(
   { id: 'promo', name: 'Promo', format: 'reel-9x16', background: '#171512', duration: 300 },
   (p) => {
     const { width, height } = p.settings;
-    const vo1 = { durationSec: 3.4 }; // measured with measureMedia() or ffprobe (caju-audio)
+    const vo1 = { durationSec: 3.4 }; // measured with measureMedia() (caju-audio)
     p.asset({ id: 'vo-01', kind: 'audio', name: 'Locução 1', src: 'assets/audio/vo/vo-01.wav', meta: vo1 });
     p.asset({ id: 'mus-bed', kind: 'audio', name: 'Trilha', src: 'assets/audio/music/mus-bed.mp3', meta: { durationSec: 30 } });
     p.asset({ id: 'logo', kind: 'image', name: 'Logo', src: 'assets/images/logo.svg', meta: { width: 600, height: 180 } });
@@ -59,7 +59,8 @@ export default defineProject(
 ### `defineProject({ id, name?, format, background?, duration? }, build)`
 - `format` is a `FormatId`: it sets size and fps.
 - `duration` is in frames; omit it to end at the last clip.
-- `build(p)` may be `async`, for example to measure media with `measureMedia(file)`, which uses ffprobe.
+- `build(p)` may be `async`, for example to measure media with `measureMedia(file)` (bundled FFmpeg, no ffprobe).
+- Captions: `s.captions(cues, style, { x, y, track: 'Legendas', offsetSec })` adds one text clip per line, with times in seconds from the scene start. Get cues with `readCaptions('…/locucao.words.json' | '.srt' | '.vtt')` from `@caju-motion/voice` (caju-audio → voiceover-timing).
 
 | Method | Effect |
 |---|---|

@@ -40,7 +40,7 @@ Nomes em kebab-case minúsculo ASCII (`logo-acme.svg`, `vo-03-precos.wav`). O id
 ffprobe -v error -show_entries stream=width,height,r_frame_rate:format=duration -of json assets/video/broll-01.mp4
 ```
 
-Em imagens, leia o tamanho com uma biblioteca como `sharp`, ou pelo `viewBox` do SVG. No `video.ts`, `measureMedia(arquivo)` usa o ffprobe.
+Ou deixe o Caju fazer isso: `npx caju media <id>` preenche o `meta` de todos os assets (vídeos, áudios, imagens e SVGs) e gera miniaturas, formas de onda e proxies de edição ([`@caju-motion/media`](../reference/media)). No `video.ts`, use `measureMedia(arquivo)`; não precisa de ffprobe.
 
 ## Imagens
 

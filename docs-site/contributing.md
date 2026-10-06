@@ -22,7 +22,7 @@ Node ≥ 20.11 (CI uses 22). CI runs on Windows and Linux.
 ## Monorepo
 
 ```text
-packages/   schema · core · renderer · player · sdk · audio · renderer-node · server · studio · cli · skills · caju · create-caju
+packages/   schema · core · renderer · player · sdk · audio · media · voice · renderer-node · server · studio · cli · skills · caju · create-caju
 fixtures/   minimal valid projects (CI validates and renders them)
 projects/   local example projects
 components/ example components (CountUp, LowerThird)
@@ -38,6 +38,8 @@ docs-site/  this website (VitePress)
 | `@caju-motion/player` | `<Player>` for React apps |
 | `@caju-motion/sdk` | `defineProject`, `caju build` merge |
 | `@caju-motion/audio` | audio mix (FFmpeg filtergraph) |
+| `@caju-motion/media` | probe, thumbnails, waveforms, proxies, WebCodecs frame decoder |
+| `@caju-motion/voice` | TTS providers, word timings, captions |
 | `@caju-motion/renderer-node` | headless Chromium → FFmpeg render |
 | `@caju-motion/server` | local project store, assets API, render API, production Studio server |
 | `@caju-motion/studio` | the editor, shipped prebuilt |
@@ -62,7 +64,7 @@ Packages export their TypeScript source under the `source` export condition, and
 | `npm run check` | all of the above |
 | `npm run build` | builds every package |
 
-Render integration tests need Chrome and FFmpeg and are opt-in: `CAJU_RENDER_IT=1 npx vitest run packages/renderer-node packages/player --maxWorkers=1`.
+Render integration tests need Chrome and FFmpeg and are opt-in: `CAJU_RENDER_IT=1 npx vitest run packages/renderer-node packages/player packages/media --maxWorkers=1`.
 
 ## Rules
 

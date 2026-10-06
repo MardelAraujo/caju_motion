@@ -26,7 +26,7 @@ export default defineProject(
   { id: 'promo', name: 'Promo', format: 'reel-9x16', background: '#171512', duration: 300 },
   (p) => {
     const { width, height } = p.settings;
-    const vo1 = { durationSec: 3.4 }; // measured with measureMedia() or ffprobe
+    const vo1 = { durationSec: 3.4 }; // measured with measureMedia()
     p.asset({ id: 'vo-01', kind: 'audio', name: 'Voice 1', src: 'assets/audio/vo/vo-01.wav', meta: vo1 });
     p.asset({ id: 'mus-bed', kind: 'audio', name: 'Music', src: 'assets/audio/music/mus-bed.mp3', meta: { durationSec: 30 } });
     p.asset({ id: 'logo', kind: 'image', name: 'Logo', src: 'assets/images/logo.svg', meta: { width: 600, height: 180 } });
@@ -72,7 +72,7 @@ export default defineProject(
 | `background` | `string?` | hex color (default `#000000`) |
 | `duration` | `number?` | frames; omit it to end at the last clip |
 
-`build(p)` may be `async`, for example to measure media with `measureMedia(file)` (uses ffprobe):
+`build(p)` may be `async`, for example to measure media with `measureMedia(file)`:
 
 ```ts
 import { defineProject, measureMedia } from '@caju-motion/sdk';
@@ -151,7 +151,8 @@ Use `--dry-run` to preview and `--force` to let the code win (the previous file 
 
 | Export | Use |
 |---|---|
-| `measureMedia(file)` | ffprobe wrapper (duration, size, fps, audio/video streams); honors `FFPROBE_PATH` |
+| `measureMedia(file)` | duration, size, fps, audio/video streams (bundled FFmpeg, no ffprobe needed) |
+| `s.captions(cues, style, el)` | one text clip per caption line; see [Voice-over and captions](./voice-captions) |
 | `buildProject(def)` | runs a definition and returns the validated `Project` |
 | `buildProjectDir(dir, opts)` | what `caju build` does, programmatically |
 | `ProjectBuilder`, `guardOverwrite` | legacy standalone scripts (`scripts/examples/builder.ts`) that write `project.json` themselves |

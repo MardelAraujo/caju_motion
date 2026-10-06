@@ -1,0 +1,40 @@
+{
+  "name": "@caju-motion/media",
+  "version": "0.2.0",
+  "description": "Caju Motion media tools: probe, hash, thumbnails, waveform peaks and editing proxies (FFmpeg), plus frame-exact video decoding in the browser (WebCodecs).",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MardelAraujo/caju_motion.git",
+    "directory": "packages/media"
+  },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./web": {
+      "source": "./src/web.ts",
+      "types": "./dist/web.d.ts",
+      "default": "./dist/web.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.ts"
+  },
+  "dependencies": {
+    "@caju-motion/schema": "0.2.0",
+    "ffmpeg-static": "^5.3.0",
+    "mp4box": "^2.4.1"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@caju-motion/voice",
+  "version": "0.2.0",
+  "description": "Caju Motion voice: text-to-speech with pluggable providers (OpenAI, ElevenLabs), word timings, and captions (SRT/VTT) as editable text clips.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MardelAraujo/caju_motion.git",
+    "directory": "packages/voice"
+  },
+  "homepage": "https://github.com/MardelAraujo/caju_motion#readme",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config ../../tsup.config.ts"
+  },
+  "dependencies": {
+    "@caju-motion/media": "0.2.0",
+    "@caju-motion/schema": "0.2.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

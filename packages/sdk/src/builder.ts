@@ -105,6 +105,34 @@ export class SceneCtx {
     }, el.name ?? text.split('\n')[0]!.slice(0, 40));
   }
 
+  /**
+   * Legendas: um clipe de texto por linha (cue), com tempos em SEGUNDOS desde o início da cena
+   * (`offsetSec` desloca todas). Cues vêm de `readCaptions()`/`voiceover()` do @caju-motion/voice,
+   * de um SRT, ou escritas à mão. Linhas seguidas nunca se sobrepõem.
+   */
+  captions(
+    cues: { text: string; start: number; end: number }[],
+    style: TextStyle,
+    el: Omit<ElOpts, 'at' | 'id' | 'enter' | 'name'> & { idPrefix?: string; offsetSec?: number; pop?: boolean },
+  ) {
+    const { idPrefix = `${this.id}-legenda`, offsetSec = 0, pop = true, ...rest } = el;
+    const spans = cues.map((c) => ({
+      c,
+      from: Math.max(0, this.b.sec(c.start + offsetSec)),
+      to: this.b.sec(c.end + offsetSec),
+    }));
+    return spans.map(({ c, from, to }, i) => {
+      const end = Math.max(from + 1, Math.min(to, spans[i + 1]?.from ?? Infinity));
+      return this.text(c.text, style, {
+        exit: false,
+        ...rest,
+        id: `${idPrefix}-${i + 1}`,
+        at: [from, end],
+        enter: pop ? { at: from, dur: Math.min(6, end - from), pop: true } : { at: from, dur: 1 },
+      });
+    });
+  }
+
   rect(w: number, h: number, look: { fill?: string; stroke?: string; sw?: number; ellipse?: boolean }, el: ElOpts) {
     return this.push('shape', 'visual', el, {
       shape: look.ellipse ? 'ellipse' : 'rect',
@@ -344,6 +372,8 @@ export class ProjectBuilder {
       (groups[key] ??= { name: label[key] ?? 'Áudio', clips: [] }).clips.push(c);
     }
     const out: { id: string; kind: 'audio'; name: string; clips: ClipInput[] }[] = [];
+    // ids são globais no projeto: a trilha da locução não pode ter o id de um asset (ex.: asset "locucao")
+    const voTrack = this.assets.some((a) => a.id === 'locucao') ? 'trilha-locucao' : 'locucao';
     for (const [key, g] of Object.entries(groups)) {
       const lanes: ClipInput[][] = [];
       for (const c of g.clips.sort((a, b) => a.start - b.start)) {
@@ -351,7 +381,7 @@ export class ProjectBuilder {
         if (lane) lane.push(c);
         else lanes.push([c]);
       }
-      lanes.forEach((l, j) => out.push({ id: key === 'vo' && j === 0 ? 'locucao' : `audio-${key}-${j}`, kind: 'audio', name: j ? `${g.name} ${j + 1}` : g.name, clips: l }));
+      lanes.forEach((l, j) => out.push({ id: key === 'vo' && j === 0 ? voTrack : `audio-${key}-${j}`, kind: 'audio', name: j ? `${g.name} ${j + 1}` : g.name, clips: l }));
     }
     return out;
   }

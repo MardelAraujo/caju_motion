@@ -33,7 +33,8 @@
 | `@caju-motion/core` | `packages/core` | Runtime de animação. Novo: `asset()`, `<Img>`, `<Audio>`, `<Video>` que registram `delayRender` | MIT |
 | `@caju-motion/renderer` | `packages/renderer` | `ProjectRenderer` (doc + frame → DOM). Novo: registro de componentes (clip `component`) | MIT |
 | `@caju-motion/sdk` | novo (de `scripts/examples/builder.ts`) | `defineProject` (cenas, elementos, enter/exit, keyframes, trilhas automáticas, timeline elástica por voz) e `defineComponent({ name, schema, render })` | MIT |
-| `@caju-motion/media` | novo | ffprobe, hash, thumbnails, waveform, proxies, decode frame-exato (WebCodecs) | MIT |
+| `@caju-motion/media` | novo (F4) ✅ | probe (FFmpeg, sem ffprobe), hash, thumbnails, waveform, proxies (`caju media`), decode frame-exato (WebCodecs, `/web`) | MIT |
+| `@caju-motion/voice` | novo (F4) ✅ | TTS plugável (OpenAI, ElevenLabs, placeholder), tempos por palavra, legendas SRT/VTT → clipes de texto (`caju tts`, `caju captions`, `s.captions`) | MIT |
 | `@caju-motion/audio` | novo | Mix por filtergraph (adelay/atrim/volume/afade/pan/amix), loudnorm, ducking; mix de preview via Web Audio | MIT |
 | `@caju-motion/renderer-node` | novo (era `export`) | `renderMedia`/`renderStill`: Chromium headless → screenshots → FFmpeg; chunks paralelos + concat; mux de áudio com offset explícito | MIT |
 | `@caju-motion/server` | `packages/server` | API Hono + store. Novo: `POST /render`, progresso via SSE/WebSocket, watcher | MIT |
@@ -115,6 +116,6 @@ Qualidade:
 | **F1 Render local** ✅ | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render`/`still`, Exportar do Studio ligado, golden + A/V no CI (Windows + Linux) | Fixtures e `exemplo` viram MP4 iguais à preview; A/V ≤ 1 frame |
 | **F2 Código** ✅ | `@caju-motion/sdk` (`defineProject`, `defineComponent`), clip `component` renderizando, aba Componentes com HMR, `caju build` com merge por `origin` | Template feito só em código + 1 componente abre no Studio, é editado, regenera sem perder edições e renderiza |
 | **F3 Distribuição** ✅ (falta só publicar no npm) | `create-caju` + templates, `caju doctor`, `caju skills add`, evals, docs EN + pt-BR com `llms.txt`, publicação no npm | Dev novo vai de zero a MP4 em < 5 min; agente com as skills gera vídeo válido a partir de um prompt |
-| **F4 Ecossistema** (em andamento) | `@caju-motion/player` ✅, `@caju-motion/media` (proxies/WebCodecs), legendas/TTS, `@caju-motion/cloud` (pago), marketplace de templates | — |
+| **F4 Ecossistema** (em andamento) | `@caju-motion/player` ✅, `@caju-motion/media` (proxies/WebCodecs) ✅, legendas/TTS (`@caju-motion/voice`) ✅; adiados por decisão de negócio: `@caju-motion/cloud` (pago), marketplace de templates | — |
 
 Ao concluir cada fase, atualize a tabela **Availability** de cada `SKILL.md` e a versão das skills.

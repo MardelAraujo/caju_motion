@@ -70,6 +70,7 @@ export function projectPackageJson(name: string, version: string): Record<string
       '@caju-motion/core': caju,
       '@caju-motion/renderer': caju,
       '@caju-motion/sdk': caju,
+      '@caju-motion/voice': caju,
       react: '^19.0.0',
       'react-dom': '^19.0.0',
       zod: '^4.0.0',

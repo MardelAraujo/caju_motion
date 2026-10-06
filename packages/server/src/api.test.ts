@@ -1,7 +1,8 @@
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { mediaCacheDir } from '@caju-motion/media';
 import { createApi } from './api';
 
 let dir: string;
@@ -86,6 +87,38 @@ describe('API de projetos', () => {
 
     expect((await api.request('/api/projects/a/files/assets/nada.mp4')).status).toBe(404);
     expect((await api.request('/api/projects/a/files/..%2F..%2Fsegredo.txt')).status).toBe(400);
+  });
+
+  it('?proxy=1 serve o proxy do cache de mídia enquanto o original não muda', async () => {
+    await req('POST', '/api/projects', { id: 'a' });
+    const proj = path.join(dir, 'a');
+    await mkdir(path.join(proj, 'assets'), { recursive: true });
+    const original = path.join(proj, 'assets', 'clip.mp4');
+    await writeFile(original, 'ORIGINAL');
+    const st = await stat(original);
+    const hash = 'ab'.repeat(32);
+    const cache = mediaCacheDir(proj, hash);
+    await mkdir(cache, { recursive: true });
+    await writeFile(path.join(cache, 'proxy.mp4'), 'PROXY');
+    await writeFile(path.join(cache, 'peaks.json'), '{"peaks":[0.5]}');
+    await writeFile(
+      path.join(proj, '.caju', 'media', 'index.json'),
+      JSON.stringify({ 'assets/clip.mp4': { hash, size: st.size, mtimeMs: st.mtimeMs } }),
+    );
+
+    const proxied = await api.request('/api/projects/a/files/assets/clip.mp4?proxy=1');
+    expect(await proxied.text()).toBe('PROXY');
+    expect(proxied.headers.get('x-caju-proxy')).toBe('1');
+    expect(await (await api.request('/api/projects/a/files/assets/clip.mp4')).text()).toBe('ORIGINAL');
+    expect(await (await api.request('/api/projects/a/media/peaks/assets/clip.mp4')).json()).toEqual({ peaks: [0.5] });
+    expect((await api.request('/api/projects/a/media/thumb/assets/clip.mp4')).status).toBe(404);
+    expect((await api.request('/api/projects/a/media/proxy/assets/clip.mp4')).status).toBe(404);
+
+    // original trocado: o proxy antigo deixa de valer
+    await writeFile(original, 'ORIGINAL v2');
+    const after = await api.request('/api/projects/a/files/assets/clip.mp4?proxy=1');
+    expect(await after.text()).toBe('ORIGINAL v2');
+    expect(after.headers.get('x-caju-proxy')).toBeNull();
   });
 
   it('detecta alteração no disco: versão muda e gravação com base antiga dá 409', async () => {

@@ -35,12 +35,13 @@ export const SECTIONS: { title: string; pages: string[] }[] = [
       'guide/animation',
       'guide/assets',
       'guide/audio',
+      'guide/voice-captions',
       'guide/studio',
       'guide/rendering',
       'guide/ai-agents',
     ],
   },
-  { title: 'Reference', pages: ['reference/cli', 'reference/core', 'reference/player', 'reference/project-json', 'reference/formats'] },
+  { title: 'Reference', pages: ['reference/cli', 'reference/core', 'reference/player', 'reference/media', 'reference/project-json', 'reference/formats'] },
   { title: 'Project', pages: ['roadmap', 'license', 'contributing'] },
 ];
 

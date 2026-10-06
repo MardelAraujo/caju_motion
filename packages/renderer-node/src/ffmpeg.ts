@@ -1,31 +1,14 @@
 import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import {
   crfFor,
   exportFormatInfo,
   type ExportSettings,
 } from '@caju-motion/schema';
 import type { AudioMix } from '@caju-motion/audio';
+import { ffmpegPath } from '@caju-motion/media';
 
-/**
- * Caminho do FFmpeg: `CAJU_FFMPEG_PATH` > binário do `ffmpeg-static` > `ffmpeg` do PATH.
- */
-export function ffmpegPath(): string {
-  const env = process.env.CAJU_FFMPEG_PATH;
-  if (env) {
-    if (!existsSync(env)) throw new Error(`CAJU_FFMPEG_PATH aponta para um arquivo que não existe: ${env}`);
-    return env;
-  }
-  try {
-    const req = createRequire(import.meta.url);
-    const p = req('ffmpeg-static') as string | null;
-    if (p && existsSync(p)) return p;
-  } catch {
-    // pacote opcional ausente: tenta o PATH
-  }
-  return 'ffmpeg';
-}
+/** O caminho do FFmpeg vem do @caju-motion/media (`CAJU_FFMPEG_PATH` > ffmpeg-static > PATH). */
+export { ffmpegPath };
 
 export type EncodeInput = {
   settings: ExportSettings;

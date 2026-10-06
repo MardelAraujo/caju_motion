@@ -17,7 +17,7 @@ Run everything from the repo root of the Caju/frame checkout.
    - copy files into `projects/<id>/assets/<kind>/`;
    - convert to supported formats;
    - normalize audio loudness;
-   - measure durations (ffprobe) and image sizes.
+   - fill durations and sizes with `npm run caju -- media <id>` (no ffprobe needed; also builds thumbnails, waveforms and, with `--proxies auto`, editing proxies).
 4. **Plan the timeline on paper:** a list of scenes with start/end frames. When there is a voice-over, scene lengths come from the voice-over durations (caju-audio → voiceover-timing).
 5. **Write `video.ts`** with `defineProject` (caju-authoring → generator-script.md), plus components in `components/` if needed (caju-components). Run `npm run caju -- build <id>`.
 6. **Validate:** `npm run caju -- check <id>`. Fix every error and re-run.

@@ -56,6 +56,8 @@ Packages are named `@caju-motion/*` and the CLI is `caju`, but nothing is publis
 | Generate by code | `projects/<id>/video.ts` (`defineProject` from `@caju-motion/sdk`) + `npm run caju -- build <id>` | — |
 | Custom React components | `components/*.tsx` with `defineComponent` (`@caju-motion/renderer`); hot reload in the Studio | — |
 | Embed a video in a React app | `<Player project={json} assetBase="/videos/<id>/" controls />` from `@caju-motion/player` (see the docs site, Reference → @caju-motion/player) | — |
+| Fill asset metadata, thumbnails, waveforms, editing proxies | `npm run caju -- media [<id>] [--proxies auto]` | — |
+| Voice-over (TTS) + captions | `npm run caju -- tts <id> --text "..." [--provider placeholder\|openai\|elevenlabs] [--voice v]` (default `placeholder` is free; real voices need `OPENAI_API_KEY`/`ELEVENLABS_API_KEY` and cost the user money: ask first). Import SRT/VTT: `npm run caju -- captions <id> --from file.srt`. In code: `s.captions(cues, style, el)` (caju-audio → voiceover-timing) | — |
 | Validate | `npm run caju -- check [<id>] [--dir <projectsFolder>]` (schema, assets, components, determinism) | — |
 | Render video / stills | `npm run caju -- render <id>` / `still <id> --frame N`, or the Studio's Exportar button. Requires a built Studio (`npm run build -w @caju-motion/studio`) | cloud render (F4) |
 | Custom fonts | **Not available.** Use `"Plus Jakarta Sans"` or `"Red Hat Display"` | font assets |

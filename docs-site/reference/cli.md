@@ -75,6 +75,31 @@ caju check [ids...] [--dir projects] [--components <dir>]
 
 Validates every project (or the given ids): the [schema rules](./project-json#validation-rules), assets on disk, components that exist and compile, and the determinism lint on `components/`. Exits non-zero on errors.
 
+### `caju media`
+
+```bash
+caju media [ids...] [--dir projects] [--proxies auto|all] [--force] [--dry-run]
+```
+
+Reads every asset (duration, size, fps, audio, content hash), writes what changed to `asset.meta` in `project.json` (with history), and builds thumbnails, waveforms and, with `--proxies`, editing proxies in `.caju/media/`. See [`@caju-motion/media`](./media).
+
+### `caju tts`
+
+```bash
+caju tts <id> --text "..." | --script roteiro.txt [--provider placeholder|openai|elevenlabs] [--voice v] [--model m]
+              [--name locucao] [--start s] [--speed 1] [--language pt] [--no-captions] [--files-only] [--force]
+```
+
+Generates the voice-over, puts it on a "Locução" track and adds the captions on a "Legendas" track. The default provider is `placeholder` (free, estimated timings). The same text and voice reuse the existing file. See [Voice-over and captions](../guide/voice-captions).
+
+### `caju captions`
+
+```bash
+caju captions <id> --from legenda.srt|.vtt|.words.json [--offset s]
+```
+
+Imports captions as editable text clips (replacing the ones previously imported from the same file).
+
 ### `caju render`
 
 ```bash
@@ -140,4 +165,5 @@ npm create caju@latest [folder] [-- options]
 |---|---|
 | `CAJU_BROWSER_PATH` | Chromium/Chrome/Edge executable used for rendering |
 | `CAJU_FFMPEG_PATH` | FFmpeg executable used for rendering (default: bundled) |
-| `FFPROBE_PATH` | ffprobe used by `measureMedia()` (default: on `PATH`) |
+| `OPENAI_API_KEY` | key for `caju tts --provider openai` |
+| `ELEVENLABS_API_KEY` | key for `caju tts --provider elevenlabs` |

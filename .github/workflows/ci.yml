@@ -28,22 +28,26 @@ jobs:
         run: |
           # o render usa o ffmpeg-static; o ffprobe do sistema só verifica os arquivos gerados
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
-          npx vitest run packages/renderer-node packages/create-caju packages/player --maxWorkers=1
+          npx vitest run packages/renderer-node packages/create-caju packages/player packages/media --maxWorkers=1
       # o fluxo do usuário com os pacotes publicáveis, sem o monorepo:
       # npm create caju → instalar os tarballs → check/build/still → skills add
       - name: smoke test (create-caju + npm pack + install)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p /tmp/pack && for p in schema core renderer player audio server studio sdk renderer-node skills cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
+          mkdir -p /tmp/pack && for p in schema core renderer player audio media voice server studio sdk renderer-node skills cli; do (cd packages/$p && npm pack --silent --pack-destination /tmp/pack); done
           tgz() { echo "file:/tmp/pack/$(cd /tmp/pack && ls caju-motion-$1-[0-9]*.tgz)"; }
           node packages/create-caju/dist/index.js /tmp/app --template blank --yes --no-install
           cd /tmp/app
-          for p in cli sdk renderer core; do npm pkg set "dependencies.@caju-motion/$p=$(tgz $p)"; done
-          for p in schema audio server studio renderer-node skills; do npm pkg set "overrides.@caju-motion/$p=$(tgz $p)"; done
+          for p in cli sdk renderer core voice; do npm pkg set "dependencies.@caju-motion/$p=$(tgz $p)"; done
+          for p in schema audio media server studio renderer-node skills; do npm pkg set "overrides.@caju-motion/$p=$(tgz $p)"; done
           npm install --no-audit --no-fund
           npx caju --version
           npx caju check && npx caju build
           npx caju still meu-video --frame 45 --out still.png && test -s still.png
+          # mídia e voz: metadados/derivados, locução provisória (sem API paga) + legendas, e o projeto continua válido
+          npx caju tts meu-video --text "Olá. Isto é um teste de locução." && test -s projects/meu-video/assets/audio/vo/locucao.wav
+          npx caju media && test -d projects/meu-video/.caju/media && npx caju check
+          npx caju still meu-video --frame 30 --out legenda.png && test -s legenda.png
           npx caju skills add --agents all && test -f .claude/skills/caju-best-practices/SKILL.md && grep -q caju-skills AGENTS.md
           # o player empacotado: instala e desenha um quadro no Node (SSR)
           npm install --no-audit --no-fund "$(tgz player)"

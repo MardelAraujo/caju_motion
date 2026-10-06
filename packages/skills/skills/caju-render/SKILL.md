@@ -45,4 +45,4 @@ Settings: [export-settings.md](export-settings.md). Verification: [verify-output
 | MP4 H.264/H.265, MOV ProRes, WebM VP9, GIF, PNG sequence | ✓ |
 | Stills (PNG) | ✓ |
 | Custom component clips in renders | ✓ (loaded from `components/`) |
-| Cloud / distributed render | `@caju-motion/cloud` (F4, commercial) |
+| Cloud / distributed render | **Not available** (`@caju-motion/cloud` is postponed) |

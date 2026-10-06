@@ -13,8 +13,7 @@ You can use it, modify it and ship videos made with it, commercially or not, at 
 
 | Part | License |
 |---|---|
-| `@caju-motion/schema`, `core`, `renderer`, `sdk`, `audio`, `renderer-node`, `player`, `server`, `studio`, `cli`, `skills`, `caju`, `create-caju` | MIT |
-| Future `@caju-motion/media` | MIT |
+| `@caju-motion/schema`, `core`, `renderer`, `sdk`, `audio`, `renderer-node`, `player`, `media`, `voice`, `server`, `studio`, `cli`, `skills`, `caju`, `create-caju` | MIT |
 | Future `@caju-motion/cloud`: distributed render, queues, storage, premium templates, hosted/collaborative Studio | **Commercial** (optional) |
 
 Everything you need to create, edit and render videos on your own machine stays MIT.
