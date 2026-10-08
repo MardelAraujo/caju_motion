@@ -94,9 +94,13 @@ function withTimeout<T>(p: Promise<T>, ms: number, onTimeout: () => Promise<Erro
 }
 
 async function pendingError(page: Page, what: string): Promise<Error> {
-  const pending = await page
-    .evaluate(() => (window as unknown as { __caju?: { pending(): string[] } }).__caju?.pending() ?? [])
-    .catch(() => [] as string[]);
+  // com a thread da página bloqueada o evaluate não volta: limita, senão o tempo esgotado nunca chega
+  const pending = await Promise.race([
+    page
+      .evaluate(() => (window as unknown as { __caju?: { pending(): string[] } }).__caju?.pending() ?? [])
+      .catch(() => [] as string[]),
+    new Promise<string[]>((r) => setTimeout(() => r(['(a página não responde)']), 5_000)),
+  ]);
   return new Error(
     `${what}: tempo esgotado (${FRAME_TIMEOUT_MS / 1000} s)` + (pending.length ? ` — aguardando: ${pending.join(', ')}` : ''),
   );
@@ -192,9 +196,14 @@ export async function renderMedia(o: RenderMediaOptions): Promise<RenderMediaRes
   let session: Session | null = null;
   let ffmpeg: ReturnType<typeof startFfmpeg> | null = null;
   let ok = false;
+  // cancelar (ou o watchdog do servidor) fecha o navegador: derruba qualquer espera da página
+  // (carregar, setFrame, screenshot) em vez de esperar o próximo lote
+  const onAbort = () => void session?.browser.close().catch(() => undefined);
+  o.signal?.addEventListener('abort', onAbort, { once: true });
   try {
     o.signal?.throwIfAborted();
     session = await openSession(o);
+    if (o.signal?.aborted) onAbort();
     const pages: Page[] = [];
     for (let k = 0; k < concurrency; k++) {
       pages.push(await openRenderPage(session, project, o.projectId, size.width, projectFrameFor(k, totalProject, project.settings.fps, settings.fps)));
@@ -236,9 +245,13 @@ export async function renderMedia(o: RenderMediaOptions): Promise<RenderMediaRes
       elapsedMs: Date.now() - t0,
     };
   } catch (e) {
-    if (o.signal?.aborted) throw new Error('renderização cancelada');
+    if (o.signal?.aborted) {
+      const reason: unknown = o.signal.reason;
+      throw reason instanceof Error && reason.name !== 'AbortError' ? reason : new Error('renderização cancelada');
+    }
     throw e;
   } finally {
+    o.signal?.removeEventListener('abort', onAbort);
     if (!ok) ffmpeg?.kill();
     await closeSession(session);
     if (!ok) await rm(output, { recursive: true, force: true }).catch(() => undefined);

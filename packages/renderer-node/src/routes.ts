@@ -14,9 +14,13 @@ export type RenderJob = {
   settings: ExportSettings;
   progress: RenderProgress;
   createdAt: string;
+  /** Quando saiu da fila e começou a renderizar. */
+  startedAt?: string;
   finishedAt?: string;
   /** Nome do arquivo gerado (download em `/api/render/jobs/:id/file`). */
   fileName?: string;
+  /** Caminho completo da saída no disco (arquivo, ou pasta na sequência PNG). */
+  outputPath?: string;
   sizeBytes?: number;
   error?: string;
 };
@@ -26,6 +30,15 @@ export type RenderRoutesOptions = {
   serveUrl?: string;
   /** Quantos jobs terminados manter na memória. */
   keepJobs?: number;
+  /** Sem nenhum progresso por este tempo, o job é interrompido com erro. Padrão: 3 min. */
+  stallMs?: number;
+};
+
+const STAGE_LABEL: Record<RenderProgress['stage'], string> = {
+  preparing: 'abrindo o navegador e carregando o projeto',
+  rendering: 'capturando quadros',
+  encoding: 'finalizando o arquivo',
+  done: 'concluído',
 };
 
 type Internal = { job: RenderJob; controller: AbortController; output?: string; projectsDir: string; serveUrl: string };
@@ -43,6 +56,7 @@ export function renderRoutes(opts: RenderRoutesOptions = {}): ApiExtension {
   const queue: Internal[] = [];
   let running: Internal | null = null;
   const keep = opts.keepJobs ?? 20;
+  const stallMs = opts.stallMs ?? 180_000;
 
   const prune = () => {
     const finished = [...jobs.values()].filter((j) => !['queued', 'running'].includes(j.job.status));
@@ -55,25 +69,41 @@ export function renderRoutes(opts: RenderRoutesOptions = {}): ApiExtension {
     if (!next) return;
     running = next;
     next.job.status = 'running';
+    next.job.startedAt = new Date().toISOString();
+    // watchdog: sem progresso por `stallMs` → aborta com erro (nunca deixa um job preso ocupando a fila)
+    let lastProgress = Date.now();
+    let stalled = false;
+    const watchdog = setInterval(() => {
+      if (Date.now() - lastProgress < stallMs) return;
+      stalled = true;
+      const where = STAGE_LABEL[next.job.progress.stage];
+      next.controller.abort(new Error(`o render parou de avançar há ${Math.round(stallMs / 1000)} s (${where}) e foi interrompido`));
+    }, Math.min(5_000, stallMs));
     void renderMedia({
       projectsDir: next.projectsDir,
       projectId: next.job.projectId,
       settings: next.job.settings,
       serveUrl: next.serveUrl,
       signal: next.controller.signal,
-      onProgress: (p) => (next.job.progress = p),
+      onProgress: (p) => {
+        lastProgress = Date.now();
+        next.job.progress = p;
+      },
     })
       .then(async (r) => {
         next.output = r.output;
         next.job.status = 'done';
         next.job.fileName = path.basename(r.output);
+        next.job.outputPath = r.output;
         next.job.sizeBytes = await stat(r.output).then((s) => (s.isFile() ? s.size : undefined), () => undefined);
       })
       .catch((e: Error) => {
-        next.job.status = next.controller.signal.aborted ? 'canceled' : 'error';
+        next.job.status = next.controller.signal.aborted && !stalled ? 'canceled' : 'error';
         next.job.error = e.message;
+        if (next.job.status === 'error') console.error(`[caju] export de "${next.job.projectId}" falhou: ${e.message}`);
       })
       .finally(() => {
+        clearInterval(watchdog);
         next.job.finishedAt = new Date().toISOString();
         running = null;
         prune();
