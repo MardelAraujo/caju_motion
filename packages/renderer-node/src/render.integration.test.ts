@@ -3,7 +3,7 @@
  * `CAJU_RENDER_IT=1` (ex.: `CAJU_RENDER_IT=1 npx vitest run packages/renderer-node --maxWorkers=1`).
  */
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -113,6 +113,42 @@ describe.runIf(run)('render real', () => {
     expect(files).toHaveLength(60);
     expect(files[0]).toBe('frame-00000.png');
   }, 300_000);
+
+  // regressão: a primeira busca de um <video> recém-montado não apresentava quadro no Chrome
+  // headless (requestVideoFrameCallback nunca disparava) e o export ficava preso em "carregar"
+  it('projeto com clipe de vídeo WebM não trava na primeira busca', async () => {
+    const projects = path.join(out, 'video-projects');
+    const dir = path.join(projects, 'com-video');
+    await mkdir(path.join(dir, 'assets'), { recursive: true });
+    const gen = spawnSync(
+      ffmpegPath(),
+      ['-hide_banner', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc2=size=320x180:rate=24:duration=2', '-c:v', 'libvpx-vp9', '-b:v', '200k', path.join(dir, 'assets', 'clip.webm')],
+      { encoding: 'utf8' },
+    );
+    expect(gen.status, gen.stderr).toBe(0);
+    const project = {
+      schemaVersion: 1,
+      id: 'com-video',
+      name: 'Com vídeo',
+      settings: { format: 'custom', width: 640, height: 360, fps: 30, background: '#000000' },
+      assets: [{ id: 'clip', kind: 'video', name: 'clip.webm', src: 'assets/clip.webm', meta: { durationSec: 2, width: 320, height: 180, hasAudio: false } }],
+      tracks: [
+        {
+          id: 'main',
+          kind: 'main',
+          name: 'Principal',
+          clips: [{ id: 'v1', type: 'video', assetId: 'clip', start: 0, duration: 45, transform: { x: 320, y: 180, scale: 2 } }],
+        },
+      ],
+      markers: [],
+    };
+    await writeFile(path.join(dir, 'project.json'), JSON.stringify(project));
+    const file = path.join(out, 'video.mp4');
+    const r = await renderMedia({ projectsDir: projects, projectId: 'com-video', settings: { resolution: 720, quality: 'draft' }, output: file });
+    expect(r.frames).toBe(45);
+    const v = probe(file).streams.find((s) => s.codec_type === 'video')!;
+    expect(Number(v.nb_read_frames)).toBe(45);
+  }, 180_000);
 
   it('cancelar aborta e não deixa arquivo', async () => {
     const file = path.join(out, 'cancel.mp4');

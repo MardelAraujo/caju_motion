@@ -150,11 +150,22 @@ async function seekExact(v: VideoWithFrameCallback, time: number, signal: AbortS
   // só espera apresentação se um quadro novo vai mesmo ser desenhado (senão o callback nunca dispara)
   if (newFrame && v.requestVideoFrameCallback) {
     await new Promise<void>((resolve, reject) => {
-      const id = v.requestVideoFrameCallback!(() => {
+      const done = () => {
+        clearTimeout(fallback);
         signal.removeEventListener('abort', onAbort);
         resolve();
-      });
+      };
+      const id = v.requestVideoFrameCallback!(done);
+      // na primeira busca de um <video> recém-montado o Chrome headless não apresenta quadro
+      // novo (o callback nunca dispara) e o render ficava preso para sempre. Depois de `seeked`
+      // com HAVE_CURRENT_DATA o quadro já está decodificado: o pixel continua dependendo só do
+      // tempo pedido; o timer apenas limita a espera pela apresentação (I/O, não animação).
+      const fallback = setTimeout(() => { // caju-lint-allow: limite de espera de I/O do decoder, não anima nada
+        v.cancelVideoFrameCallback?.(id);
+        done();
+      }, 250);
       const onAbort = () => {
+        clearTimeout(fallback);
         v.cancelVideoFrameCallback?.(id);
         reject(new Error('cancelado'));
       };
