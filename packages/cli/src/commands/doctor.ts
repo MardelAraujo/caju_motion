@@ -1,10 +1,10 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { rm, statfs, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { ffmpegPath } from '@caju-motion/renderer-node';
-import { STUDIO_APP_DIR } from '@caju-motion/studio';
+import { STUDIO_APP_DIR, STUDIO_ROOT } from '@caju-motion/studio';
 import { loadComponentsInNode } from '../components';
 
 /**
@@ -165,15 +165,51 @@ function checkFfmpeg(): DoctorCheck {
   return { label, status: 'ok', detail: `${v ?? 'versão desconhecida'} (${source}${source === 'PATH' ? '' : `: ${bin}`})` };
 }
 
+/**
+ * App buildado × código-fonte (só no repositório, onde há `src/`). O render pelo terminal e o
+ * `caju studio` sem --dev usam o build: se ele for mais velho, exportam código desatualizado.
+ */
+export function checkStudioBuild(builtMs: number | null, newestSourceMs: number | null): DoctorCheck {
+  if (builtMs === null) {
+    return {
+      label: 'Caju Studio',
+      status: 'fail',
+      detail: `app não buildado (${STUDIO_APP_DIR})`,
+      hint: 'no repositório: npm run build -w @caju-motion/studio; num projeto: reinstale @caju-motion/cli',
+    };
+  }
+  if (newestSourceMs !== null && newestSourceMs > builtMs + 1000) {
+    return {
+      label: 'Caju Studio',
+      status: 'warn',
+      detail: 'app buildado está mais velho que o código-fonte (o render usaria a versão antiga)',
+      hint: 'npm run build -w @caju-motion/studio',
+    };
+  }
+  return { label: 'Caju Studio', status: 'ok', detail: 'app buildado' };
+}
+
+/** Data de modificação mais recente entre os arquivos das pastas (null se nenhuma existir). */
+function newestMtime(dirs: string[]): number | null {
+  let newest: number | null = null;
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
+      if (!entry.isFile() || /\.test\.tsx?$/.test(entry.name)) continue;
+      const ms = statSync(path.join(entry.parentPath, entry.name)).mtimeMs;
+      if (newest === null || ms > newest) newest = ms;
+    }
+  }
+  return newest;
+}
+
 function checkStudio(): DoctorCheck {
-  return existsSync(path.join(STUDIO_APP_DIR, 'index.html'))
-    ? { label: 'Caju Studio', status: 'ok', detail: 'app buildado' }
-    : {
-        label: 'Caju Studio',
-        status: 'fail',
-        detail: `app não buildado (${STUDIO_APP_DIR})`,
-        hint: 'no repositório: npm run build -w @caju-motion/studio; num projeto: reinstale @caju-motion/cli',
-      };
+  const index = path.join(STUDIO_APP_DIR, 'index.html');
+  const built = existsSync(index) ? statSync(index).mtimeMs : null;
+  // o app embute o renderer, o core e o schema: qualquer um deles mais novo deixa o build velho
+  const packages = path.resolve(STUDIO_ROOT, '..');
+  const sources = ['studio', 'renderer', 'core', 'schema'].map((p) => path.join(packages, p, 'src'));
+  return checkStudioBuild(built, newestMtime(sources));
 }
 
 function checkProjects(dir: string): DoctorCheck {

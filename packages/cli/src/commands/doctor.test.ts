@@ -6,6 +6,7 @@ import {
   checkDisk,
   checkMemory,
   checkNodeVersion,
+  checkStudioBuild,
   doctorExitCode,
   formatCheck,
   parseFfmpegVersion,
@@ -14,6 +15,14 @@ import {
 const GB = 1024 ** 3;
 
 describe('caju doctor: verificações puras', () => {
+  it('app do Studio: ausente, desatualizado em relação ao código-fonte, ok', () => {
+    expect(checkStudioBuild(null, null).status).toBe('fail');
+    expect(checkStudioBuild(1_000_000, 1_000_000 + 60_000)).toMatchObject({ status: 'warn', hint: expect.stringContaining('npm run build') });
+    expect(checkStudioBuild(1_000_000, 900_000).status).toBe('ok');
+    // instalação publicada (sem src/): só confere que existe
+    expect(checkStudioBuild(1_000_000, null).status).toBe('ok');
+  });
+
   it('Node ≥ 20.11', () => {
     expect(checkNodeVersion('v20.11.0').status).toBe('ok');
     expect(checkNodeVersion('v22.3.1').status).toBe('ok');
