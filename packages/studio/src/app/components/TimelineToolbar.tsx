@@ -14,7 +14,15 @@ import {
   ZoomOut,
 } from 'lucide-react';
 import { projectDuration } from '@caju-motion/schema';
-import { deleteSelected, duplicateSelected, flipSelected, splitAtPlayhead, togglePlay } from '../commands';
+import {
+  deleteSelected,
+  duplicateSelected,
+  editTargets,
+  flipSelected,
+  openSoundPanel,
+  splitAtPlayhead,
+  togglePlay,
+} from '../commands';
 import { selectedClip, useEditor } from '../store';
 import { formatClock } from '../time';
 import { IconButton } from '../ui';
@@ -30,27 +38,56 @@ export function TimelineToolbar({ onFit }: { onFit: () => void }) {
   const playing = useEditor((s) => s.playing);
   const snapping = useEditor((s) => s.snapping);
   const ppf = useEditor((s) => s.pxPerFrame);
-  const sel = useEditor(useShallow(selectedClip));
+  const hasSelection = useEditor((s) => !!selectedClip(s));
+  const t = useEditor(useShallow((s) => editTargets(s.project, s.selectedClipId, s.frame)));
   const { set } = useEditor.getState();
   if (!project) return <div className="tl-toolbar" />;
 
   const fps = project.settings.fps;
-  const c = sel?.clip;
-  const isVisual = c && c.type !== 'audio';
-  const hasSound = c && (c.type === 'video' || c.type === 'audio');
-  const canSplit = !!c && frame > c.start && frame < c.start + c.duration;
   const zoomBy = (k: number) => set({ pxPerFrame: Math.min(MAX_PPF, Math.max(MIN_PPF, ppf * k)) });
+  // o título explica por que o botão está desabilitado
+  const tip = (label: string, enabled: unknown, why: string) => (enabled ? label : `${label} — ${why}`);
 
   return (
     <div className="tl-toolbar">
       <div className="tl-tools">
-        <IconButton icon={Scissors} label="Dividir (S)" disabled={!canSplit} onClick={splitAtPlayhead} />
-        <IconButton icon={Trash2} label="Excluir (Delete)" disabled={!c} onClick={deleteSelected} />
-        <IconButton icon={Copy} label="Duplicar (Ctrl+D)" disabled={!c} onClick={duplicateSelected} />
-        <IconButton icon={FlipHorizontal2} label="Espelhar" disabled={!isVisual} onClick={() => flipSelected('x')} />
+        <IconButton
+          icon={Scissors}
+          label={tip('Dividir (S)', t.split, 'posicione o playhead dentro de um clipe')}
+          disabled={!t.split}
+          onClick={splitAtPlayhead}
+        />
+        <IconButton
+          icon={Trash2}
+          label={tip('Excluir (Delete)', hasSelection, 'selecione um clipe')}
+          disabled={!hasSelection}
+          onClick={deleteSelected}
+        />
+        <IconButton
+          icon={Copy}
+          label={tip('Duplicar (Ctrl+D)', t.clip, 'selecione um clipe')}
+          disabled={!t.clip}
+          onClick={duplicateSelected}
+        />
+        <IconButton
+          icon={FlipHorizontal2}
+          label={tip('Espelhar', t.visual, 'selecione um clipe visual')}
+          disabled={!t.visual}
+          onClick={() => flipSelected('x')}
+        />
         <span className="tl-sep" />
-        <IconButton icon={Volume2} label="Volume" disabled={!hasSound} onClick={() => set({ rightTab: 'audio' })} />
-        <IconButton icon={Gauge} label="Velocidade" disabled={!hasSound} onClick={() => set({ rightTab: 'speed' })} />
+        <IconButton
+          icon={Volume2}
+          label={tip('Volume', t.sound, 'selecione um vídeo ou áudio')}
+          disabled={!t.sound}
+          onClick={() => openSoundPanel('audio')}
+        />
+        <IconButton
+          icon={Gauge}
+          label={tip('Velocidade', t.sound, 'selecione um vídeo ou áudio')}
+          disabled={!t.sound}
+          onClick={() => openSoundPanel('speed')}
+        />
       </div>
 
       <div className="tl-transport">

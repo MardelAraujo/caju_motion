@@ -1,9 +1,9 @@
 import { componentDefaults, getComponent, intrinsicSize, TEXT_DEFAULTS, type TextProps } from '@caju-motion/renderer';
-import { secondsToFrames, type Asset, type Project } from '@caju-motion/schema';
+import { secondsToFrames, type Asset, type Clip, type Project } from '@caju-motion/schema';
 import { api } from './api';
 import { kindOfFile, probeMedia } from './media';
 import {
-  clipAt,
+  clipEnd,
   deleteClip,
   duplicateClip,
   findClip,
@@ -209,23 +209,68 @@ export async function uploadFiles(files: File[]): Promise<void> {
 
 // ---------------------------------------------------------------- edição
 
-/** Alvo das ações: clipe selecionado, ou o que está sob o playhead. */
-function targetClipId(): string | null {
-  const { project, selectedClipId, frame } = st();
-  if (!project) return null;
-  if (selectedClipId && findClip(project, selectedClipId)) return selectedClipId;
-  return clipAt(project, frame)?.id ?? null;
+const hasSound = (c: Clip) => c.type === 'video' || c.type === 'audio';
+const isVisual = (c: Clip) => c.type !== 'audio';
+const containsFrame = (c: Clip, frame: number) => frame > c.start && frame < clipEnd(c);
+
+/** Clipe sob o playhead que satisfaz `ok`: trilhas visuais primeiro (a mais alta), depois as de áudio. */
+function clipUnder(p: Project, frame: number, ok: (c: Clip) => boolean = () => true): Clip | null {
+  const order = [...p.tracks].reverse().sort((a, b) => Number(a.kind === 'audio') - Number(b.kind === 'audio'));
+  for (const t of order) {
+    const c = t.clips.find((c) => frame >= c.start && frame < clipEnd(c) && ok(c));
+    if (c) return c;
+  }
+  return null;
 }
 
+export type EditTargets = {
+  /** Duplicar/excluir: o clipe selecionado, ou o que está sob o playhead. */
+  clip: Clip | null;
+  /** Dividir: o selecionado se o playhead estiver dentro dele; senão o clipe sob o playhead. */
+  split: Clip | null;
+  /** Espelhar: como `clip`, só se for visual. */
+  visual: Clip | null;
+  /** Volume/Velocidade: vídeo ou áudio (selecionado, ou sob o playhead). */
+  sound: Clip | null;
+};
+
+/**
+ * Alvos das ferramentas da timeline. A barra de ferramentas e os atalhos usam a mesma regra,
+ * então um botão habilitado sempre tem efeito.
+ */
+export function editTargets(p: Project | null, selectedClipId: string | null, frame: number): EditTargets {
+  if (!p) return { clip: null, split: null, visual: null, sound: null };
+  const sel = selectedClipId ? (findClip(p, selectedClipId)?.clip ?? null) : null;
+  const under = clipUnder(p, frame);
+  const clip = sel ?? under;
+  const split = sel && containsFrame(sel, frame) ? sel : clipUnder(p, frame, (c) => containsFrame(c, frame));
+  // sem seleção: qualquer vídeo/áudio sob o playhead (ex.: a locução embaixo de uma imagem)
+  const sound = sel ? (hasSound(sel) ? sel : null) : clipUnder(p, frame, hasSound);
+  return { clip, split, visual: clip && isVisual(clip) ? clip : null, sound };
+}
+
+const targets = () => {
+  const { project, selectedClipId, frame } = st();
+  return editTargets(project, selectedClipId, frame);
+};
+
 export function splitAtPlayhead() {
-  const id = targetClipId();
-  if (!id) return;
+  const target = targets().split;
+  if (!target) return;
   const at = st().frame;
   let rightId: string | null = null;
   st().apply((d) => {
-    rightId = splitClip(d, id, at);
+    rightId = splitClip(d, target.id, at);
   });
   if (rightId) st().select(rightId);
+}
+
+/** Abre o painel de Volume/Velocidade do clipe com som (selecionando-o, para o painel aparecer). */
+export function openSoundPanel(tab: 'audio' | 'speed') {
+  const target = targets().sound;
+  if (!target) return;
+  st().select(target.id);
+  st().set({ rightTab: tab });
 }
 
 export function deleteSelected() {
@@ -236,17 +281,17 @@ export function deleteSelected() {
 }
 
 export function duplicateSelected() {
-  const id = targetClipId();
-  if (!id) return;
+  const target = targets().clip;
+  if (!target) return;
   let copyId: string | null = null;
   st().apply((d) => {
-    copyId = duplicateClip(d, id);
+    copyId = duplicateClip(d, target.id);
   });
   if (copyId) st().select(copyId);
 }
 
 export function flipSelected(axis: 'x' | 'y') {
-  const id = targetClipId();
+  const id = targets().visual?.id;
   if (!id) return;
   st().apply((d) =>
     updateClip(d, id, (c) => {
