@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, Share, X } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Download, Share, X } from 'lucide-react';
 import {
   crfFor,
   projectDuration,
@@ -13,7 +13,7 @@ import {
   outputSize,
   type ExportSettings,
 } from '@caju-motion/schema';
-import { isActive, jobFileUrl, jobFraction, useRenderJobs, type RenderJob } from '../renderJobs';
+import { isActive, jobDownloadable, jobFileUrl, jobFraction, useRenderJobs, type RenderJob } from '../renderJobs';
 import { useEditor } from '../store';
 import { Dropdown, Segmented } from '../ui';
 
@@ -30,15 +30,24 @@ function loadSaved(): Partial<ExportSettings> {
 /** Botão "Exportar" + balão com formato, resolução, fps e qualidade. */
 export function ExportPopover() {
   const job = useRenderJobs((j) => j.job);
+  const projectId = useEditor((s) => s.project?.id);
   const active = isActive(job);
+  // a falha fica visível no botão até ser fechada (o toast some em segundos)
+  const failed = job?.status === 'error' && job.projectId === projectId;
   return (
     <Dropdown
       align="right"
       menuClassName="export-pop"
       trigger={(open, toggle) => (
-        <button type="button" className={`export-btn ${open ? 'is-open' : ''}`} onClick={toggle} aria-expanded={open}>
-          <Share size={16} strokeWidth={2} />
-          {active ? `Exportando ${Math.round(jobFraction(job!) * 100)}%` : 'Exportar'}
+        <button
+          type="button"
+          className={`export-btn ${open ? 'is-open' : ''} ${failed ? 'is-error' : ''}`}
+          onClick={toggle}
+          aria-expanded={open}
+          title={failed ? job.error : undefined}
+        >
+          {failed ? <AlertTriangle size={16} strokeWidth={2} /> : <Share size={16} strokeWidth={2} />}
+          {active ? `Exportando ${Math.round(jobFraction(job!) * 100)}%` : failed ? 'Exportação falhou' : 'Exportar'}
         </button>
       )}
     >
@@ -152,7 +161,14 @@ function ExportForm({ onDone }: { onDone: () => void }) {
             if (!project) return;
             setStarting(true);
             try {
-              if (saveState === 'dirty' || saveState === 'error') await save();
+              if (saveState === 'dirty' || saveState === 'error') {
+                await save();
+                // o render lê o project.json do disco: sem salvar, exportaria a versão antiga
+                const after = useEditor.getState().saveState;
+                if (after === 'dirty' || after === 'error') {
+                  throw new Error('o projeto não foi salvo, e o export usaria a versão antiga do disco. Salve e tente de novo.');
+                }
+              }
               await startJob(project.id, s);
             } catch (e) {
               showToast(`Não foi possível exportar: ${(e as Error).message}`);
@@ -179,23 +195,47 @@ const STATUS_LABEL: Record<RenderJob['status'], string> = {
   canceled: 'Cancelado',
 };
 
-/** Andamento do export atual: barra, velocidade, cancelar e baixar. */
+/** Segundos desde `since`, atualizados a cada segundo enquanto `live`. */
+function useSecondsSince(since: number, live: boolean): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!live) return;
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [live, since]);
+  return Math.max(0, Math.floor((now - since) / 1000));
+}
+
+/** Andamento do export atual: barra, etapa com tempo decorrido, cancelar, caminho e baixar. */
 function JobPanel({ job, onDone }: { job: RenderJob; onDone: () => void }) {
   const cancel = useRenderJobs((j) => j.cancel);
   const clear = useRenderJobs((j) => j.clear);
+  const stageSince = useRenderJobs((j) => j.stageSince);
+  const pollFailures = useRenderJobs((j) => j.pollFailures);
   const active = isActive(job);
+  const secs = useSecondsSince(stageSince, active);
   const pct = Math.round(jobFraction(job) * 100);
   const { frame, total, speed, etaSec, stage } = job.progress;
+  // nas etapas sem contador de quadros, o tempo decorrido mostra que nada travou
+  const waited = secs >= 3 ? ` · ${secs} s` : '';
   const detail =
-    job.status === 'running'
-      ? stage === 'preparing'
-        ? 'abrindo o navegador…'
-        : stage === 'encoding'
-          ? 'finalizando o arquivo…'
-          : `quadro ${frame}/${total} · ${speed.toFixed(1)} q/s${etaSec !== null ? ` · ~${Math.ceil(etaSec)} s` : ''}`
-      : job.status === 'done'
-        ? `${job.fileName ?? ''}${job.sizeBytes ? ` · ${formatBytes(job.sizeBytes)}` : ''}`
-        : (job.error ?? '');
+    job.status === 'queued'
+      ? `aguardando outro export terminar${waited}`
+      : job.status === 'running'
+        ? stage === 'preparing'
+          ? `abrindo o navegador e carregando o projeto…${waited}`
+          : stage === 'encoding'
+            ? `finalizando o arquivo…${waited}`
+            : `quadro ${frame}/${total} · ${speed.toFixed(1)} q/s${etaSec !== null ? ` · ~${Math.ceil(etaSec)} s` : ''}`
+        : job.status === 'done'
+          ? `${job.fileName ?? ''}${job.sizeBytes ? ` · ${formatBytes(job.sizeBytes)}` : ''}`
+          : (job.error ?? '');
+  const [copied, setCopied] = useState(false);
+  const copyPath = () => {
+    if (!job.outputPath) return;
+    void navigator.clipboard?.writeText(job.outputPath).then(() => setCopied(true), () => undefined);
+  };
 
   return (
     <div className={`export-job is-${job.status}`} role="status" aria-live="polite">
@@ -209,13 +249,20 @@ function JobPanel({ job, onDone }: { job: RenderJob; onDone: () => void }) {
       <small className="export-job-detail" title={detail}>
         {detail}
       </small>
+      {active && pollFailures >= 4 && <small className="export-job-warn">Sem resposta do servidor… tentando de novo.</small>}
+      {job.status === 'done' && job.outputPath && (
+        <button type="button" className="export-job-path" title="Copiar o caminho" onClick={copyPath}>
+          <span>{job.outputPath}</span>
+          {copied ? <Check size={13} /> : <Copy size={13} />}
+        </button>
+      )}
       <div className="export-job-actions">
         {active && (
           <button type="button" className="link-btn" onClick={() => void cancel()}>
             <X size={14} /> Cancelar
           </button>
         )}
-        {job.status === 'done' && job.fileName && (
+        {jobDownloadable(job) && (
           <a className="export-btn export-download" href={jobFileUrl(job)} download={job.fileName} onClick={onDone}>
             <Download size={16} strokeWidth={2} />
             Baixar

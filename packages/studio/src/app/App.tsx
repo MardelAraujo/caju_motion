@@ -7,6 +7,7 @@ import { Timeline, useFitTimeline } from './components/Timeline';
 import { TimelineToolbar } from './components/TimelineToolbar';
 import { TopBar } from './components/TopBar';
 import { AudioLayer, SHORTCUTS, usePlaybackClock, useShortcuts } from './playback';
+import { useRenderJobs } from './renderJobs';
 import { hasUnsavedChanges, useEditor } from './store';
 
 /**
@@ -27,6 +28,12 @@ export function App() {
 
   usePlaybackClock();
   useShortcuts();
+
+  // export em andamento (ex.: a página foi recarregada): volta a acompanhar
+  const projectId = project?.id;
+  useEffect(() => {
+    if (projectId) void useRenderJobs.getState().recover(projectId);
+  }, [projectId]);
 
   useEffect(() => {
     const { loadProjects, openProject } = useEditor.getState();

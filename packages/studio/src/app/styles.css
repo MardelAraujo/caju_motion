@@ -2023,6 +2023,36 @@ html.render-mode #root {
 .export-download {
   text-decoration: none;
 }
+.export-btn.is-error {
+  background: var(--danger);
+}
+.export-job-warn {
+  color: var(--faint);
+  font-size: 11px;
+}
+.export-job-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-code);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.export-job-path span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.export-job-path:hover {
+  color: var(--text);
+}
 
 /* ------------------------------------------------------------------ componentes do usuário */
 .components-dir {
