@@ -151,6 +151,16 @@ export async function transcription(opts: TranscriptionOptions): Promise<Transcr
   return { wordsSrc, srtSrc, source, text: res.text, durationSec, words: res.words, cues, cached: false };
 }
 
+/** Quantas legendas com este prefixo estão no projeto (as que se sobrepõem a outras são ignoradas). */
+export function captionCount(project: Project, prefix: string): number {
+  return project.tracks.flatMap((t) => t.clips).filter((c) => c.id.startsWith(`${prefix}-`)).length;
+}
+
+/** Texto do resultado: "3 legenda(s)" ou "2 de 3 legenda(s) (1 ignorada por sobrepor outras)". */
+export function captionSummary(added: number, total: number): string {
+  return added < total ? `${added} de ${total} legenda(s) (${total - added} ignorada(s) por sobrepor outras legendas)` : `${total} legenda(s)`;
+}
+
 /** Lê legendas de `.srt`, `.vtt` ou `.words.json` (gerado por `voiceover`). */
 export async function readCaptions(file: string, cueOpts?: CueOptions): Promise<Cue[]> {
   const content = await readFile(file, 'utf8');

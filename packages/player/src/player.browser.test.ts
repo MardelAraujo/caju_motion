@@ -70,11 +70,16 @@ describe.runIf(process.env.CAJU_RENDER_IT === '1')('<Player> no navegador', () =
   it('toca pelo tempo real, pausa e busca', async () => {
     const page = await open();
     expect(await frame(page)).toBe(0);
-    await page.evaluate(() => window.__player!.play());
+    const t0 = await page.evaluate(() => {
+      window.__player!.play();
+      return performance.now();
+    });
     await page.waitForTimeout(500);
-    const f = await frame(page);
-    expect(f).toBeGreaterThanOrEqual(8);
-    expect(f).toBeLessThanOrEqual(22);
+    // tempo medido DENTRO da página: sob carga a ida e volta do teste passa dos 500 ms
+    const { f, elapsed } = await page.evaluate((start) => ({ f: window.__player!.getCurrentFrame(), elapsed: performance.now() - start }), t0);
+    const expected = (elapsed / 1000) * 30;
+    expect(f).toBeGreaterThanOrEqual(Math.min(8, expected - 6));
+    expect(f).toBeLessThanOrEqual(expected + 4);
     expect(await playing(page)).toBe(true);
 
     await page.evaluate(() => window.__player!.pause());

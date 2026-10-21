@@ -19,12 +19,12 @@ const project = ProjectSchema.parse({
 });
 
 describe('snapshotFrames', () => {
-  it('início, fim, marcadores e meio dos clipes principais, sem repetir', () => {
+  it('início, fim, meio das cenas marcadas e dos clipes principais, sem repetir', () => {
     const f = snapshotFrames(project, { max: 6 });
-    expect(f.map((x) => x.frame)).toEqual([0, 30, 45, 60, 90, 119]); // 60 = amostra para completar as vagas
+    expect(f.map((x) => x.frame)).toEqual([0, 30, 60, 83, 90, 119]); // 83 = meio da cena do marcador; 60 = amostra
     expect(f[0]).toEqual({ frame: 0, reason: 'início' });
     expect(f.at(-1)).toEqual({ frame: 119, reason: 'fim' });
-    expect(f.find((x) => x.frame === 45)?.reason).toBe('marcador gancho');
+    expect(f.find((x) => x.frame === 83)?.reason).toBe('meio de gancho');
     expect(f.length).toBeLessThanOrEqual(6);
   });
 

@@ -288,5 +288,9 @@ describe('movimento, efeitos e mixagem por código', () => {
     expect(clips.find((c) => c.type === 'effect')?.props).toEqual({ amount: 0.4, effect: 'vignette' });
     expect(p.settings.audio).toMatchObject({ ducking: { enabled: true, ratio: 6 }, loudness: { enabled: true, targetLufs: -16 } });
     expect(p.tracks.find((t) => t.id === 'locucao')?.role).toBe('voice');
+    // sobreposição e ajuste ficam em trilhas de efeito ACIMA dos textos (o ajuste alcança o texto)
+    const order = p.tracks.map((t) => t.kind);
+    expect(order.lastIndexOf('text')).toBeLessThan(order.indexOf('effect'));
+    expect(p.tracks.filter((t) => t.kind === 'effect').flatMap((t) => t.clips.map((c) => c.type)).sort()).toEqual(['adjustment', 'effect']);
   });
 });

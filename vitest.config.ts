@@ -7,5 +7,9 @@ export default defineConfig({
   ssr: { resolve: { conditions: ['source', ...defaultServerConditions] } },
   test: {
     include: ['packages/*/src/**/*.test.{ts,tsx}'],
+    // folga para máquinas carregadas: com CAJU_RENDER_IT=1 os testes de render (Chromium + FFmpeg)
+    // disputam CPU com os outros e o limite padrão (5 s) estoura em testes que passam sozinhos
+    testTimeout: 20_000,
+    hookTimeout: 30_000,
   },
 });

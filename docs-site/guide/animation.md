@@ -165,7 +165,7 @@ s.image('logo', 600, 180, {
   loop: { type: 'float', dur: 90, amplitude: 0.5 },
   effects: [{ type: 'dropShadow', params: { y: 16, blur: 32 } }],
 });
-s.adjust([{ type: 'grayscale', params: { amount: 1 } }], { id: 'flashback' }); // filters the layers declared before it
+s.adjust([{ type: 'grayscale', params: { amount: 1 } }], { id: 'flashback' }); // goes on an effect track above everything: filters the whole scene, text included
 s.overlay('vignette', { amount: 0.5 }, { id: 'vinheta' });
 ```
 

@@ -3,6 +3,7 @@ import { createProjectStore, ProjectStoreError, type ApiExtension } from '@caju-
 import {
   addCaptions,
   addVoiceover,
+  captionCount,
   DEFAULT_PROVIDER,
   engineNames,
   providerByName,
@@ -76,7 +77,7 @@ export function voiceRoutes(): ApiExtension {
       if (b.captions !== false) project = addCaptions(project, vo.cues, { prefix: `${name}-legenda`, offsetSec: voiceoverStartSec(project, name) ?? 0 });
       await store.write(id, project, new Date(), c.req.header('x-caju-base'));
       c.header('x-caju-version', await store.version(id));
-      return c.json({ ...result, filesOnly: false });
+      return c.json({ ...result, captionsAdded: b.captions !== false ? captionCount(project, `${name}-legenda`) : 0, filesOnly: false });
     });
 
     app.post('/projects/:id/transcribe', async (c) => {
@@ -93,7 +94,7 @@ export function voiceRoutes(): ApiExtension {
       const project = addCaptions(await store.read(id), tr.cues, { prefix: `${name}-legenda`, offsetSec: num(b.offsetSec) ?? 0 });
       await store.write(id, project, new Date(), c.req.header('x-caju-base'));
       c.header('x-caju-version', await store.version(id));
-      return c.json({ ...result, filesOnly: false });
+      return c.json({ ...result, captionsAdded: captionCount(project, `${name}-legenda`), filesOnly: false });
     });
   };
 }

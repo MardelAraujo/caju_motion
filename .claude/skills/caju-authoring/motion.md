@@ -167,7 +167,7 @@ export default defineProject({ id: 'motion-demo', format: 'landscape-16x9', back
 });
 ```
 - `ElOpts`: `transitionIn`/`transitionOut`/`animIn`/`animOut` = `{ type, dur, easing?, params? }`; `loop` = `{ type, dur, amplitude? }`; `effects` = `[{ type, params?, id? }]`.
-- `s.overlay(effect, params, el)` adds a `type: "effect"` clip; `s.adjust(effects, el)` adds an adjustment clip (declare it **after** the layers it should filter).
+- `s.overlay(effect, params, el)` adds a `type: "effect"` clip; `s.adjust(effects, el)` adds an adjustment clip. Both go on `effect` tracks **above** every visual and text layer (so an adjustment also filters text), and neither gets the scene's exit fade unless you pass `exit`.
 - Pass `exit: false` when a clip has its own `transitionOut`/`animOut`; otherwise the scene's default fade-out keyframes stack on top.
 
 ## Lint codes (`caju check`)

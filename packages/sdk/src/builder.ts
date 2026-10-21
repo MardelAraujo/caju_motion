@@ -99,7 +99,8 @@ export type ComponentBox = { width?: number; height?: number };
 /** Opções de um clipe de componente: como `ElOpts`, mas a posição padrão é o centro do quadro. */
 export type ComponentOpts = Omit<ElOpts, 'x' | 'y'> & Partial<Pick<ElOpts, 'x' | 'y'>> & ComponentBox;
 
-type Pending = { scene: number; order: number; lane: 'text' | 'visual'; clip: ClipInput; track?: string };
+/** `fx` = sobreposições e ajustes: trilhas de efeito acima de tudo (o ajuste alcança textos também). */
+type Pending = { scene: number; order: number; lane: 'text' | 'visual' | 'fx'; clip: ClipInput; track?: string };
 
 export class SceneCtx {
   private order = 0;
@@ -192,17 +193,18 @@ export class SceneCtx {
 
   /** Sobreposição em tela cheia (vignette, letterbox, colorOverlay, flash, grain). */
   overlay(effect: string, params: Record<string, unknown> = {}, el: Omit<Partial<ElOpts>, 'x' | 'y'> = {}) {
-    return this.push('effect', 'visual', { ...el, x: 0, y: 0 }, { ...params, effect }, el.name ?? effect);
+    // sem o fade de saída da cena: uma vinheta/faixa que some no fim parece defeito
+    return this.push('effect', 'fx', { exit: false, ...el, x: 0, y: 0 }, { ...params, effect }, el.name ?? effect);
   }
 
   /** Clipe de ajuste: aplica os efeitos a tudo o que está abaixo dele (declare depois das camadas). */
   adjust(effects: NonNullable<ElOpts['effects']>, el: Omit<Partial<ElOpts>, 'x' | 'y' | 'effects'> = {}) {
-    return this.push('adjustment', 'visual', { ...el, x: 0, y: 0, effects }, {}, el.name ?? 'Ajuste');
+    return this.push('adjustment', 'fx', { exit: false, ...el, x: 0, y: 0, effects }, {}, el.name ?? 'Ajuste');
   }
 
   private push(
     type: 'text' | 'shape' | 'image' | 'component' | 'effect' | 'adjustment',
-    lane: 'text' | 'visual',
+    lane: 'text' | 'visual' | 'fx',
     el: ElOpts,
     props: Record<string, unknown>,
     name: string,
@@ -465,6 +467,7 @@ export class ProjectBuilder {
     const unnamed = this.pending.filter((p) => !p.track);
     const maxVisual = Math.max(0, ...unnamed.filter((p) => p.lane === 'visual').map((p) => layer.get(p)! + 1));
     const maxText = Math.max(0, ...unnamed.filter((p) => p.lane === 'text').map((p) => layer.get(p)! + 1));
+    const maxFx = Math.max(0, ...unnamed.filter((p) => p.lane === 'fx').map((p) => layer.get(p)! + 1));
 
     const visualTracks = Array.from({ length: maxVisual }, (_, i) => ({
       id: `camada-${i + 1}`,
@@ -478,6 +481,12 @@ export class ProjectBuilder {
       name: `Texto ${i + 1}`,
       clips: unnamed.filter((p) => p.lane === 'text' && layer.get(p) === i).map((p) => p.clip),
     }));
+    const fxTracks = Array.from({ length: maxFx }, (_, i) => ({
+      id: `efeitos-${i + 1}`,
+      kind: 'effect' as const,
+      name: `Efeitos ${i + 1}`,
+      clips: unnamed.filter((p) => p.lane === 'fx' && layer.get(p) === i).map((p) => p.clip),
+    }));
 
     const f = FORMATS[this.opts.format];
     const tracks = uniqueTrackIds(
@@ -486,6 +495,7 @@ export class ProjectBuilder {
         ...this.namedTracks(),
         ...visualTracks,
         ...textTracks,
+        ...fxTracks,
         ...this.audioTracks(),
       ],
       [...this.assets.map((a) => a.id), ...this.markers.map((m) => m.id)],

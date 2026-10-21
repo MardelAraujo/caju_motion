@@ -278,7 +278,7 @@ export async function generateVoiceover(req: VoiceRequest): Promise<boolean> {
     st().showToast(
       r.filesOnly
         ? `Locução gerada em ${r.audioSrc}. Projeto por código: ligue no video.ts e rode caju build.`
-        : `Locução de ${r.durationSec.toFixed(1)} s${r.cached ? ' (reaproveitada)' : ''}${req.captions === false ? '' : `, ${r.cues} legenda(s)`}.`,
+        : `Locução de ${r.durationSec.toFixed(1)} s${r.cached ? ' (reaproveitada)' : ''}${req.captions === false ? '' : `, ${captionText(r.captionsAdded ?? r.cues, r.cues)}`}.`,
     );
     return true;
   } catch (err) {
@@ -286,6 +286,9 @@ export async function generateVoiceover(req: VoiceRequest): Promise<boolean> {
     return false;
   }
 }
+
+const captionText = (added: number, total: number) =>
+  added < total ? `${added} de ${total} legendas (${total - added} sobrepunham outras e ficaram de fora)` : `${total} legenda(s)`;
 
 /** Legendas automáticas de um áudio/vídeo do projeto (transcrição local pelo VoiceStudio). */
 export async function autoCaptions(asset: Asset, language?: string): Promise<boolean> {
@@ -296,7 +299,7 @@ export async function autoCaptions(asset: Asset, language?: string): Promise<boo
     const offsetSec = clip ? Math.max(0, (clip.start - clip.trimIn / clip.speed) / fps) : 0;
     const r = await writeOnServer((id, base) => api.transcribeAsset(id, { src: asset.src, language, offsetSec }, base));
     if (!r) return false;
-    st().showToast(r.filesOnly ? `Transcrição em ${r.wordsSrc}. Projeto por código: use readCaptions no video.ts.` : `${r.cues} legenda(s) de ${asset.name}.`);
+    st().showToast(r.filesOnly ? `Transcrição em ${r.wordsSrc}. Projeto por código: use readCaptions no video.ts.` : `${captionText(r.captionsAdded ?? r.cues, r.cues)} de ${asset.name}.`);
     return true;
   } catch (err) {
     st().showToast(`Legendas: ${(err as Error).message}`);

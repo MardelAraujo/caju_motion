@@ -15,7 +15,7 @@ import { componentsDirFor, studioExtensions } from '../extensions';
 export type SnapshotFrame = { frame: number; reason: string };
 
 /**
- * Quadros do contact sheet (no máximo `max`). Sem `frames`: início, fim, marcadores, o meio de
+ * Quadros do contact sheet (no máximo `max`). Sem `frames`: início, fim, o meio de cada cena marcada, o meio de
  * cada clipe da trilha principal e, se sobrar espaço, quadros espaçados por igual. Com `atCuts`:
  * um pouco antes e um pouco depois dos cortes onde mais coisa muda ao mesmo tempo.
  */
@@ -40,7 +40,12 @@ export function snapshotFrames(
     const budget = atCuts ? Math.max(4, Math.floor(max / 2)) : max;
     add(0, 'início');
     add(last, 'fim');
-    for (const m of project.markers) if (out.size < budget) add(m.frame, `marcador ${m.label || m.id}`);
+    // marcadores costumam abrir cenas (tudo ainda entrando): mostra o MEIO da cena, até o próximo marcador
+    const marks = [...project.markers].sort((x, y) => x.frame - y.frame);
+    marks.forEach((m, i) => {
+      const next = marks[i + 1]?.frame ?? total;
+      if (out.size < budget) add((m.frame + next) / 2, `meio de ${m.label || m.id}`);
+    });
     for (const c of visual.filter((t) => t.kind === 'main').flatMap((t) => t.clips)) {
       if (out.size < budget && !c.hidden) add(c.start + c.duration / 2, `meio de ${c.name ?? c.id}`);
     }

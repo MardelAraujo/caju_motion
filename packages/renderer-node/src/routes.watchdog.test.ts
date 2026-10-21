@@ -29,7 +29,8 @@ async function start(app: ReturnType<typeof createApi>): Promise<RenderJob> {
 }
 
 async function waitJob(app: ReturnType<typeof createApi>, id: string, done: (j: RenderJob) => boolean): Promise<RenderJob> {
-  for (let i = 0; i < 100; i++) {
+  // até ~10 s: sob carga (suíte inteira em paralelo) o job demora mais para mudar de estado
+  for (let i = 0; i < 500; i++) {
     const j = (await (await app.request(`/api/render/jobs/${id}`)).json()) as RenderJob;
     if (done(j)) return j;
     await new Promise((r) => setTimeout(r, 20));
@@ -40,14 +41,15 @@ async function waitJob(app: ReturnType<typeof createApi>, id: string, done: (j: 
 describe('renderRoutes: job travado', () => {
   it('sem progresso → erro legível (não fica "renderizando" para sempre) e libera a fila', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const app = createApi({ projectsDir: FIXTURES, extensions: [renderRoutes({ stallMs: 100 })] });
+    const app = createApi({ projectsDir: FIXTURES, extensions: [renderRoutes({ stallMs: 1500 })] });
+    // 1,5 s: curto para o teste, mas longo o bastante para o 2º pedido chegar antes do 1º travar (máquina carregada)
     const job = await start(app);
     const second = await start(app);
     expect(second.status).toBe('queued');
 
     const failed = await waitJob(app, job.id, (j) => j.status !== 'running');
     expect(failed.status).toBe('error');
-    expect(failed.error).toMatch(/parou de avançar há 0 s \(abrindo o navegador/);
+    expect(failed.error).toMatch(/parou de avançar há \d+ s \(abrindo o navegador/);
     expect(error).toHaveBeenCalledWith(expect.stringContaining('export de "hello-reel" falhou'));
     // o próximo da fila começou
     expect((await waitJob(app, second.id, (j) => j.status !== 'queued')).status).not.toBe('queued');

@@ -81,8 +81,8 @@ export default defineProject(
 | `s.rect(w, h, { fill?, stroke?, sw?, ellipse? }, el)` | shape |
 | `s.image(assetId, w, h, el)` | the asset must be registered first |
 | `s.component(name, props, el)` | custom component. `x`/`y` default to the frame center; `el.width`/`el.height` set the box (defaults come from the component) |
-| `s.overlay(effect, params, el)` | full-frame `effect` clip: `vignette`, `letterbox`, `colorOverlay`, `flash`, `grain` ([motion.md](motion.md)) |
-| `s.adjust(effects, el)` | adjustment clip: its effects filter every layer below it. Declare it after those layers |
+| `s.overlay(effect, params, el)` | full-frame `effect` clip on an effect track above all layers: `vignette`, `letterbox`, `colorOverlay`, `flash`, `grain` ([motion.md](motion.md)); no exit fade by default |
+| `s.adjust(effects, el)` | adjustment clip on an effect track above all layers (text included): its effects filter the whole frame while it is active. No exit fade by default |
 | `s.from`, `s.to`, `s.duration` | scene bounds |
 
 `el` (ElOpts):

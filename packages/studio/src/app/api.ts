@@ -39,8 +39,8 @@ export type VoiceRequest = {
   startSec?: number;
   captions?: boolean;
 };
-export type VoiceResult = { audioSrc: string; durationSec: number; timed: boolean; cached: boolean; cues: number; filesOnly: boolean };
-export type TranscribeResult = { wordsSrc: string; srtSrc: string; cues: number; cached: boolean; filesOnly: boolean };
+export type VoiceResult = { audioSrc: string; durationSec: number; timed: boolean; cached: boolean; cues: number; captionsAdded?: number; filesOnly: boolean };
+export type TranscribeResult = { wordsSrc: string; srtSrc: string; cues: number; cached: boolean; captionsAdded?: number; filesOnly: boolean };
 
 /** POST que grava no projeto: manda a versão aberta (`x-caju-base`) para o servidor recusar se o disco mudou. */
 const projectPost = <T>(id: string, route: string, body: unknown, base: string | null) =>

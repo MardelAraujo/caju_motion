@@ -6,6 +6,8 @@ import { assertProjectId, createProjectStore } from '@caju-motion/server';
 import {
   addCaptions,
   addVoiceover,
+  captionCount,
+  captionSummary,
   DEFAULT_PROVIDER,
   engineNames,
   providerByName,
@@ -104,7 +106,7 @@ export async function ttsCommand(o: TtsOpts): Promise<number> {
   const offsetSec = voiceoverStartSec(project, name) ?? 0;
   if (o.captions) project = addCaptions(project, vo.cues, { prefix: `${name}-legenda`, offsetSec });
   await store.write(o.id, project, new Date(), version);
-  console.log(`${summary}${o.captions ? `, ${vo.cues.length} legenda(s)` : ''}`);
+  console.log(`${summary}${o.captions ? `, ${captionSummary(captionCount(project, `${name}-legenda`), vo.cues.length)}` : ''}`);
   console.log(`  ${vo.srtSrc} · ${vo.wordsSrc}`);
   return 0;
 }
@@ -191,6 +193,6 @@ export async function transcribeCommand(o: TranscribeOpts): Promise<number> {
   const project = await store.read(o.id);
   const next = addCaptions(project, tr.cues, { prefix: `${name}-legenda`, offsetSec: num(o.offset, '--offset') ?? 0 });
   await store.write(o.id, next, new Date(), version);
-  console.log(`  ${tr.cues.length} legenda(s) na trilha "Legendas"`);
+  console.log(`  ${captionSummary(captionCount(next, `${name}-legenda`), tr.cues.length)} na trilha "Legendas"`);
   return 0;
 }
