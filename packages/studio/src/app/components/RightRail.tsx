@@ -36,6 +36,8 @@ import { selectedClip, useEditor, type RightTab } from '../store';
 import { formatClock } from '../time';
 import { NumberField, Section, Segmented, SliderRow, Swatches } from '../ui';
 import { EffectsPanel, MotionPanel, OverlaySection } from './MotionPanels';
+import { KeyframeButton, KeyframesSection } from './KeyframeUI';
+import { setAnimatable, valueAt } from '../keyframes';
 
 type TabDef = { id: RightTab; label: string; icon: typeof Music };
 
@@ -135,7 +137,10 @@ function BasicPanel({ clip }: { clip: Clip }) {
   const edit = useClipEdit(clip);
   const project = useEditor((s) => s.project)!;
   const t = clip.transform;
-  const hasKf = (path: string) => (clip.keyframes[path]?.length ?? 0) > 0;
+  const frame = useEditor((s) => s.frame);
+  // valores no playhead (com keyframes); mudar uma propriedade animada grava o keyframe ali
+  const v = (path: string) => valueAt(clip, path, frame);
+  const anim = (key: string, path: string, value: number) => edit(key, (c) => setAnimatable(c, path, frame, value));
 
   return (
     <>
@@ -163,28 +168,37 @@ function BasicPanel({ clip }: { clip: Clip }) {
           </button>
         }
       >
-        <Row label="Posição">
-          <NumberField prefix="X" value={t.x} onChange={(v) => edit('x', (c) => void (c.transform.x = v))} />
-          <NumberField prefix="Y" value={t.y} onChange={(v) => edit('y', (c) => void (c.transform.y = v))} />
-        </Row>
-        <SliderRow
-          label="Escala"
-          value={t.scale * 100}
-          min={1}
-          max={400}
-          unit="%"
-          format={pct}
-          onChange={(v) => edit('scale', (c) => void (c.transform.scale = Math.max(0.01, v / 100)))}
-        />
-        <SliderRow
-          label="Rotação"
-          value={t.rotation}
-          min={-180}
-          max={180}
-          unit="°"
-          format={pct}
-          onChange={(v) => edit('rotation', (c) => void (c.transform.rotation = v))}
-        />
+        <div className="kf-row">
+          <Row label="Posição">
+            <NumberField prefix="X" value={v('transform.x')} onChange={(n) => anim('x', 'transform.x', n)} />
+            <NumberField prefix="Y" value={v('transform.y')} onChange={(n) => anim('y', 'transform.y', n)} />
+          </Row>
+          <KeyframeButton clip={clip} paths={['transform.x', 'transform.y']} />
+        </div>
+        <div className="kf-row">
+          <SliderRow
+            label="Escala"
+            value={v('transform.scale') * 100}
+            min={1}
+            max={400}
+            unit="%"
+            format={pct}
+            onChange={(n) => anim('scale', 'transform.scale', Math.max(0.01, n / 100))}
+          />
+          <KeyframeButton clip={clip} paths={['transform.scale']} />
+        </div>
+        <div className="kf-row">
+          <SliderRow
+            label="Rotação"
+            value={v('transform.rotation')}
+            min={-180}
+            max={180}
+            unit="°"
+            format={pct}
+            onChange={(n) => anim('rotation', 'transform.rotation', n)}
+          />
+          <KeyframeButton clip={clip} paths={['transform.rotation']} />
+        </div>
         <Row label="Espelhar">
           <button
             type="button"
@@ -201,21 +215,21 @@ function BasicPanel({ clip }: { clip: Clip }) {
             <FlipVertical2 size={15} /> Vertical
           </button>
         </Row>
-        {(hasKf('transform.x') || hasKf('transform.y') || hasKf('transform.scale') || hasKf('transform.rotation')) && (
-          <p className="prop-note">Este clipe tem keyframes de transformação; os valores acima são a base.</p>
-        )}
       </Section>
 
       <Section title="Mistura">
-        <SliderRow
-          label="Opacidade"
-          value={clip.opacity * 100}
-          min={0}
-          max={100}
-          unit="%"
-          format={pct}
-          onChange={(v) => edit('opacity', (c) => void (c.opacity = v / 100))}
-        />
+        <div className="kf-row">
+          <SliderRow
+            label="Opacidade"
+            value={v('opacity') * 100}
+            min={0}
+            max={100}
+            unit="%"
+            format={pct}
+            onChange={(n) => anim('opacity', 'opacity', n / 100)}
+          />
+          <KeyframeButton clip={clip} paths={['opacity']} />
+        </div>
         <Row label="Clipe">
           <button
             type="button"
@@ -227,6 +241,7 @@ function BasicPanel({ clip }: { clip: Clip }) {
           </button>
         </Row>
       </Section>
+      <KeyframesSection clip={clip} />
     </>
   );
 }

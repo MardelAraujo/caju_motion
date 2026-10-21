@@ -2319,3 +2319,103 @@ html.render-mode #root {
 .prop-section .export-field + .slider-row {
   margin-top: 8px;
 }
+
+/* ------------------------------------------------------------------ keyframes */
+.kf-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 6px;
+}
+.kf-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--faint);
+}
+.kf-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--line-2);
+}
+.kf-btn.is-animated {
+  color: var(--accent);
+}
+.kf-btn.is-here {
+  color: var(--caju-gold, #f6b73c);
+}
+.kf-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.kf-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+.kf-item small {
+  font-family: inherit;
+  color: var(--faint);
+}
+.kf-item.is-current {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.bezier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+.bezier svg {
+  width: 100%;
+  max-width: 220px;
+  overflow: visible;
+  touch-action: none;
+}
+.bezier-frame {
+  fill: var(--surface-2);
+  stroke: var(--line);
+}
+.bezier-arm {
+  stroke: var(--faint);
+  stroke-dasharray: 3 3;
+}
+.bezier-curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.bezier-handle {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+  cursor: grab;
+}
+.bezier-values {
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--faint);
+}
+.tl-kf {
+  position: absolute;
+  bottom: 4px;
+  z-index: 3;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  background: var(--caju-gold, #f6b73c);
+  border: 1px solid #171512;
+  transform: rotate(45deg);
+  cursor: ew-resize;
+}

@@ -5,7 +5,8 @@ import { projectDuration, type Asset, type Clip, type Project, type Track } from
 import { assetUrl } from '../api';
 import { dropPayload, hasPayload, readPayload } from '../dnd';
 import { PEAKS_PER_SECOND, usePeaks, useThumbnail } from '../media';
-import { clipEnd, moveClip, moveClips, trimClip } from '../ops';
+import { keyframeFrames, moveKeyframesAt } from '../keyframes';
+import { clipEnd, moveClip, moveClips, trimClip, updateClip } from '../ops';
 import { useEditor } from '../store';
 import { formatClock, formatShort } from '../time';
 import { MAX_PPF, MIN_PPF } from './TimelineToolbar';
@@ -476,6 +477,7 @@ function ClipBlock({
         {width > 110 && <span className="tl-clip-dur">{formatClock(clip.duration, fps)}</span>}
         {clip.speed !== 1 && width > 150 && <span className="tl-clip-dur">{clip.speed}x</span>}
       </span>
+      {selected && !locked && <KeyframeMarks clip={clip} ppf={ppf} />}
       {!locked && (
         <>
           <span className="tl-trim start" onPointerDown={onTrimStart} />
@@ -483,6 +485,48 @@ function ClipBlock({
         </>
       )}
     </div>
+  );
+}
+
+/** ◆ dos keyframes do clipe selecionado: clique leva o playhead; arrastar move o keyframe. */
+function KeyframeMarks({ clip, ppf }: { clip: Clip; ppf: number }) {
+  const drag = useRef<{ from: number; x0: number; moved: boolean } | null>(null);
+  const frames = keyframeFrames(clip);
+  if (!frames.length) return null;
+  const st = () => useEditor.getState();
+  return (
+    <>
+      {frames.map((f) => (
+        <span
+          key={f.frame}
+          className="tl-kf"
+          style={{ left: f.frame * ppf }}
+          title={f.paths.join(', ')}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            (e.target as Element).setPointerCapture(e.pointerId);
+            drag.current = { from: f.frame, x0: e.clientX, moved: false };
+            st().beginGesture();
+          }}
+          onPointerMove={(e) => {
+            const d = drag.current;
+            if (!d) return;
+            if (!d.moved && Math.abs(e.clientX - d.x0) < 3) return;
+            d.moved = true;
+            const to = d.from + Math.round((e.clientX - d.x0) / ppf);
+            st().applyFromBase((p) => updateClip(p, clip.id, (c) => moveKeyframesAt(c, d.from, to)));
+          }}
+          onPointerUp={(e) => {
+            const d = drag.current;
+            drag.current = null;
+            st().endGesture();
+            if (d && !d.moved) st().setFrame(clip.start + d.from);
+            else if (d) st().setFrame(clip.start + Math.min(clip.duration - 1, Math.max(0, d.from + Math.round((e.clientX - d.x0) / ppf))));
+          }}
+        />
+      ))}
+    </>
   );
 }
 
