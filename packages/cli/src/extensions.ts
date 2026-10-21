@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { renderRoutes } from '@caju-motion/renderer-node';
 import { componentsRoutes, type ApiExtension } from '@caju-motion/server';
+import { voiceRoutes } from './voice-routes';
 
 export type ExtensionContext = {
   /** Pasta de projetos (`--dir`). */
@@ -23,5 +24,7 @@ export async function studioExtensions(ctx: ExtensionContext): Promise<ApiExtens
     componentsRoutes({ componentsDir: ctx.componentsDir }),
     // render: usa a origem da própria requisição como servidor das páginas (componentes inclusos)
     renderRoutes(),
+    // voz: locução (TTS) e legendas por transcrição, gravadas no projeto
+    voiceRoutes(),
   ];
 }

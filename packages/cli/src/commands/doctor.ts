@@ -106,11 +106,11 @@ export function checkVoiceKeys(env: NodeJS.ProcessEnv): DoctorCheck {
     ['elevenlabs', 'ELEVENLABS_API_KEY'],
   ].filter(([, key]) => !!env[key!]?.trim()).map(([name]) => name!);
   return providers.length
-    ? { label: 'Voz (caju tts)', status: 'ok', detail: `placeholder + ${providers.join(', ')}` }
+    ? { label: 'Voz (caju tts)', status: 'ok', detail: `voicestudio (padrão), placeholder + ${providers.join(', ')}` }
     : {
         label: 'Voz (caju tts)',
         status: 'ok',
-        detail: 'só a voz provisória (placeholder)',
+        detail: 'voicestudio (padrão) e placeholder; sem chaves de vozes pagas',
         hint: 'opcional: para usar openai/elevenlabs, ponha OPENAI_API_KEY ou ELEVENLABS_API_KEY no .env do projeto',
       };
 }

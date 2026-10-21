@@ -1,6 +1,6 @@
 import { componentDefaults, getComponent, intrinsicSize, TEXT_DEFAULTS, type TextProps } from '@caju-motion/renderer';
 import { secondsToFrames, type Asset, type Clip, type Project } from '@caju-motion/schema';
-import { api } from './api';
+import { api, type VoiceRequest } from './api';
 import { kindOfFile, probeMedia } from './media';
 import {
   clipEnd,
@@ -204,6 +204,59 @@ export async function uploadFiles(files: File[]): Promise<void> {
       URL.revokeObjectURL(localUrl);
       st().set({ uploading: st().uploading.filter((n) => n !== file.name) });
     }
+  }
+}
+
+// ---------------------------------------------------------------- voz
+
+/**
+ * Salva o que está aberto, pede ao servidor para gravar no projeto (locução, legendas) e recarrega.
+ * O servidor edita o project.json como a CLI; salvar antes garante que nada do Studio se perca.
+ */
+async function writeOnServer<T>(run: (projectId: string, base: string | null) => Promise<T>): Promise<T | null> {
+  const { project } = st();
+  if (!project) return null;
+  await st().save();
+  const { saveState, diskVersion } = st();
+  if (saveState !== 'saved') {
+    st().showToast('Salve o projeto antes de gerar a voz.');
+    return null;
+  }
+  const result = await run(project.id, diskVersion);
+  await st().reloadProject();
+  return result;
+}
+
+export async function generateVoiceover(req: VoiceRequest): Promise<boolean> {
+  try {
+    const r = await writeOnServer((id, base) => api.generateVoice(id, req, base));
+    if (!r) return false;
+    st().showToast(
+      r.filesOnly
+        ? `Locução gerada em ${r.audioSrc}. Projeto por código: ligue no video.ts e rode caju build.`
+        : `Locução de ${r.durationSec.toFixed(1)} s${r.cached ? ' (reaproveitada)' : ''}${req.captions === false ? '' : `, ${r.cues} legenda(s)`}.`,
+    );
+    return true;
+  } catch (err) {
+    st().showToast(`Voz: ${(err as Error).message}`);
+    return false;
+  }
+}
+
+/** Legendas automáticas de um áudio/vídeo do projeto (transcrição local pelo VoiceStudio). */
+export async function autoCaptions(asset: Asset, language?: string): Promise<boolean> {
+  try {
+    // as legendas começam onde o clipe desse asset começa na timeline (se houver)
+    const fps = st().project?.settings.fps ?? 30;
+    const clip = st().project?.tracks.flatMap((t) => t.clips).find((c) => c.assetId === asset.id);
+    const offsetSec = clip ? Math.max(0, (clip.start - clip.trimIn / clip.speed) / fps) : 0;
+    const r = await writeOnServer((id, base) => api.transcribeAsset(id, { src: asset.src, language, offsetSec }, base));
+    if (!r) return false;
+    st().showToast(r.filesOnly ? `Transcrição em ${r.wordsSrc}. Projeto por código: use readCaptions no video.ts.` : `${r.cues} legenda(s) de ${asset.name}.`);
+    return true;
+  } catch (err) {
+    st().showToast(`Legendas: ${(err as Error).message}`);
+    return false;
   }
 }
 

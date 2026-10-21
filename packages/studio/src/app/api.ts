@@ -22,7 +22,39 @@ const json = (method: string, body: unknown): RequestInit => ({
   body: JSON.stringify(body),
 });
 
+export type VoiceProfile = { id: string; name: string; language?: string | null };
+export type VoiceStatus = {
+  defaultProvider: string;
+  keys: { openai: boolean; elevenlabs: boolean };
+  voicestudio: { ok: true; url: string; engines: string[]; voices: VoiceProfile[] } | { ok: false; url: string; error: string };
+};
+export type VoiceRequest = {
+  text: string;
+  name?: string;
+  provider?: string;
+  voice?: string;
+  model?: string;
+  language?: string;
+  speed?: number;
+  startSec?: number;
+  captions?: boolean;
+};
+export type VoiceResult = { audioSrc: string; durationSec: number; timed: boolean; cached: boolean; cues: number; filesOnly: boolean };
+export type TranscribeResult = { wordsSrc: string; srtSrc: string; cues: number; cached: boolean; filesOnly: boolean };
+
+/** POST que grava no projeto: manda a versão aberta (`x-caju-base`) para o servidor recusar se o disco mudou. */
+const projectPost = <T>(id: string, route: string, body: unknown, base: string | null) =>
+  call<T>(`/api/projects/${encodeURIComponent(id)}/${route}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...(base ? { 'x-caju-base': base } : {}) },
+    body: JSON.stringify(body),
+  });
+
 export const api = {
+  voiceStatus: () => call<VoiceStatus>('/api/voice'),
+  generateVoice: (id: string, req: VoiceRequest, base: string | null) => projectPost<VoiceResult>(id, 'tts', req, base),
+  transcribeAsset: (id: string, req: { src: string; language?: string; offsetSec?: number }, base: string | null) =>
+    projectPost<TranscribeResult>(id, 'transcribe', req, base),
   listProjects: () => call<ProjectSummary[]>('/api/projects'),
   /** Projeto + versão do arquivo no disco (hash). */
   async getProject(id: string): Promise<{ project: Project; version: string }> {

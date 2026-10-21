@@ -2144,3 +2144,63 @@ html.render-mode #root {
 .prop-json.is-invalid {
   border-color: #e94b35;
 }
+
+/* ------------------------------------------------------------------ painel de voz */
+.voice-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.voice-refresh {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.voice-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+.voice-dot.is-ok {
+  background: #3ecf8e;
+}
+.voice-dot.is-off {
+  background: var(--danger);
+}
+.voice-go {
+  justify-content: center;
+}
+.voice-assets {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.voice-assets li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.voice-assets li > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.voice-assets .link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

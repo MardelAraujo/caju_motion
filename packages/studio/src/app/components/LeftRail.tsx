@@ -8,6 +8,7 @@ import {
   CloudUpload,
   Keyboard,
   LoaderCircle,
+  Mic,
   Music,
   Plus,
   Shapes,
@@ -35,10 +36,12 @@ import { useThumbnail } from '../media';
 import { useComponentsStatus } from '../components-runtime';
 import { useEditor, type LeftTab } from '../store';
 import { formatSeconds } from '../time';
+import { VoicePanel } from './VoicePanel';
 
 const TABS: { id: LeftTab; label: string; icon: typeof Music }[] = [
   { id: 'media', label: 'Mídia', icon: Clapperboard },
   { id: 'audio', label: 'Áudio', icon: Music },
+  { id: 'voice', label: 'Voz', icon: Mic },
   { id: 'text', label: 'Texto', icon: Type },
   { id: 'elements', label: 'Elementos', icon: Shapes },
   { id: 'components', label: 'Componentes', icon: Puzzle },
@@ -76,6 +79,7 @@ export function LeftRail({ onShowShortcuts }: { onShowShortcuts: () => void }) {
         <aside className="left-panel">
           {leftTab === 'media' && <MediaPanel kinds={['video', 'image']} accept="video/*,image/*" />}
           {leftTab === 'audio' && <MediaPanel kinds={['audio']} accept="audio/*" />}
+          {leftTab === 'voice' && <VoicePanel />}
           {leftTab === 'text' && <TextPanel />}
           {leftTab === 'elements' && <ElementsPanel />}
           {leftTab === 'components' && <ComponentsPanel />}
