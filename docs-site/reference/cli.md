@@ -27,6 +27,10 @@ caju --version | -v
 | `caju check [ids...]` | validates projects: schema, assets on disk, components, determinism |
 | `caju render <id>` | exports a video (Chromium + FFmpeg) |
 | `caju still <id> --frame <n>` | exports one frame as an image |
+| `caju tts <id>` | generates the voice-over and its captions |
+| `caju voices` | lists the VoiceStudio engines and voice profiles |
+| `caju transcribe <id>` | transcribes recorded speech into captions |
+| `caju captions <id>` | imports SRT/VTT/words.json captions |
 | `caju doctor` | checks your environment |
 | `caju skills add` | installs the agent skills |
 
@@ -86,11 +90,29 @@ Reads every asset (duration, size, fps, audio, content hash), writes what change
 ### `caju tts`
 
 ```bash
-caju tts <id> --text "..." | --script roteiro.txt [--provider placeholder|openai|elevenlabs] [--voice v] [--model m]
-              [--name locucao] [--start s] [--speed 1] [--language pt] [--no-captions] [--files-only] [--force]
+caju tts <id> --text "..." | --script roteiro.txt [--provider voicestudio|placeholder|openai|elevenlabs] [--voice v]
+              [--model m] [--seed n] [--name locucao] [--start s] [--speed 1] [--language pt] [--no-captions]
+              [--files-only] [--force]
 ```
 
-Generates the voice-over, puts it on a "Locução" track and adds the captions on a "Legendas" track. The default provider is `placeholder` (free, estimated timings). The same text and voice reuse the existing file. See [Voice-over and captions](../guide/voice-captions).
+Generates the voice-over, puts it on a "Locução" track and adds the captions on a "Legendas" track. The default provider is `voicestudio`: [VoiceStudio](https://github.com/debpalash/VoiceStudio), free and local, which you install and open separately (exact word timings). `--model` picks its engine (`omnivoice` by default, `cosyvoice`, `voxcpm2`, `kittentts`…), `--voice` a voice profile (id or name) from the app, and `--seed` makes the speech repeatable; at most 4096 characters per `--name`. If VoiceStudio is closed, the command explains how to open it and never switches to a paid provider. `placeholder` is free with estimated timings; `openai` and `elevenlabs` need an API key. The same text and voice reuse the existing file. See [Voice-over and captions](../guide/voice-captions).
+
+### `caju voices`
+
+```bash
+caju voices
+```
+
+Lists the engines (`--model`) and voice profiles (`--voice`) of the VoiceStudio at `VOICESTUDIO_URL`. Profiles are created, cloned or designed in the VoiceStudio app.
+
+### `caju transcribe`
+
+```bash
+caju transcribe <id> --from video.mp4|audio.wav [--provider voicestudio|openai] [--model m] [--language pt]
+                [--name n] [--captions] [--offset s] [--force]
+```
+
+Extracts the speech of an existing audio or video with FFmpeg and transcribes it into `assets/data/<name>.words.json` and `.srt` (`--name` defaults to the file name). The result is cached by file content + provider + language (`--force` redoes it). `--captions` also adds the caption clips on the "Legendas" track, shifted by `--offset`; in a project with `video.ts` it only writes the files. The default provider is VoiceStudio (local, free); `openai` uses Whisper and `OPENAI_API_KEY`.
 
 ### `caju captions`
 
@@ -130,7 +152,7 @@ caju still <id> --frame <n> [--out frame.png] [--resolution 1080] [--serve-url <
 caju doctor [--dir projects] [--components <dir>]
 ```
 
-Diagnoses your environment and prints a hint for each problem: Node.js, npm, FFmpeg and a Chromium browser for rendering, the Studio build, the projects and components folders, write permission, free disk space and memory. Exits non-zero when a check fails (warnings don't). Run it first when something doesn't start.
+Diagnoses your environment and prints a hint for each problem: Node.js, npm, FFmpeg and a Chromium browser for rendering, the Studio build, the projects and components folders, write permission, free disk space and memory, whether VoiceStudio (the voice provider) is reachable, with its engines and voice profiles, and which paid voice keys are set. Exits non-zero when a check fails (warnings don't). Run it first when something doesn't start.
 
 ### `caju skills add`
 
@@ -165,5 +187,7 @@ npm create caju@latest [folder] [-- options]
 |---|---|
 | `CAJU_BROWSER_PATH` | Chromium/Chrome/Edge executable used for rendering |
 | `CAJU_FFMPEG_PATH` | FFmpeg executable used for rendering (default: bundled) |
-| `OPENAI_API_KEY` | key for `caju tts --provider openai` (can also go in a `.env` file in the current folder) |
+| `VOICESTUDIO_URL` | VoiceStudio address for `caju tts`, `caju voices` and `caju transcribe` (default `http://127.0.0.1:3900`) |
+| `VOICESTUDIO_API_KEY` | VoiceStudio key, only when the server is not on your machine |
+| `OPENAI_API_KEY` | key for `caju tts --provider openai` and `caju transcribe --provider openai` (can also go in a `.env` file in the current folder) |
 | `ELEVENLABS_API_KEY` | key for `caju tts --provider elevenlabs` |

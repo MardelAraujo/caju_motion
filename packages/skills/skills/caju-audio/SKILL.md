@@ -28,7 +28,7 @@ Clip ids start with the same prefix (`vo-03`, `sfx-whoosh-2`). `ProjectBuilder.a
 ## Rules
 - [file-prep.md](file-prep.md): formats, sample rate, loudness normalization commands, trimming silence, measuring durations.
 - [mixing.md](mixing.md): volume targets, fades, ducking without automation, crossfades, SFX timing.
-- [voiceover-timing.md](voiceover-timing.md): driving the scene lengths from narration, word timestamps for captions, TTS caching.
+- [voiceover-timing.md](voiceover-timing.md): driving the scene lengths from narration, word timestamps for captions, generating the voice-over (`caju tts`, VoiceStudio by default) and captioning recorded speech (`caju transcribe`).
 
 ## Quick checklist before delivering
 1. Every audio asset has `meta.durationSec`, and no clip plays past it: `trimIn + duration*speed <= durationSec*fps`.

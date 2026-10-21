@@ -14,5 +14,6 @@
 | Eyedropper button disabled | Browser without the EyeDropper API | Use Chrome or Edge |
 | Windows paths with backslashes in `src` | Path built with `path.join` | `src` must use forward slashes: `assets/images/x.png` |
 | Corporate proxy blocks `npm install` | Registry access | `npm config set proxy http://host:port` and `https-proxy` |
+| `caju tts` / `caju transcribe` → `VoiceStudio não respondeu em http://127.0.0.1:3900` | The VoiceStudio app (default voice provider) is closed or not installed | Ask the user to open it (Windows: `irm https://voicestudio.sh/install \| iex`; Docker: `ghcr.io/debpalash/voicestudio`), or set `VOICESTUDIO_URL`. Meanwhile `--provider placeholder` (free). Never switch to `openai`/`elevenlabs` (paid) without asking |
 
 When nothing matches, run `npm run check` and paste the first error to the user. Never guess silently.

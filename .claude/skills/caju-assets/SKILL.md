@@ -51,7 +51,7 @@ Per-type rules:
 ```bash
 ffprobe -v error -show_entries stream=width,height,r_frame_rate:format=duration -of json assets/video/broll-01.mp4
 ```
-For images, read the size with a library such as `sharp` (`(await sharp(file).metadata()).width`), or from the SVG `viewBox`.
+Easier: `npm run caju -- media <id>` reads every asset (videos, audio, images, SVGs) and writes `meta` (+ `hash`) into `project.json`, and builds thumbnails, waveforms and, with `--proxies auto`, light editing proxies the Studio plays instead of heavy 4K/HEVC files (export always uses the originals). In `video.ts`, `measureMedia(file)` from `@caju-motion/sdk` returns the same data.
 
 ## Availability (v0.2.0)
 | Asset | Preview (Studio) | Export |

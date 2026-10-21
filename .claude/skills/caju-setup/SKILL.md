@@ -13,6 +13,7 @@ version: 0.2.0
 | npm (or pnpm/yarn/bun) | recent | install packages | `npm -v` |
 | Chrome or Edge | recent | Studio, render (headless), eyedropper | — |
 | FFmpeg + ffprobe | optional | **asset preparation** only (convert, loudness, durations). Render uses the bundled FFmpeg | `ffmpeg -version` |
+| [VoiceStudio](https://github.com/debpalash/VoiceStudio) | optional | free local voice for `caju tts` / `caju transcribe` (default provider); installed separately, GPU recommended | `caju doctor` |
 
 Render needs no browser download: it uses an installed Chrome or Edge (or `CAJU_BROWSER_PATH`) and the bundled FFmpeg (or `CAJU_FFMPEG_PATH`). Plan for about 1 GB of free RAM and a few GB of disk for renders.
 
@@ -21,7 +22,8 @@ Render needs no browser download: it uses an installed Chrome or Edge (or `CAJU_
 - the browser used for render;
 - whether the Studio app is built;
 - projects and components;
-- disk, memory and write permission.
+- disk, memory and write permission;
+- the voice: VoiceStudio reachable (engines, voice profiles) and which paid TTS keys are set (never print a key).
 
 It exits with code 1 if something blocks. **Run it first whenever something fails.**
 

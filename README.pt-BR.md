@@ -76,7 +76,8 @@ flowchart LR
 | Vídeo por código | ✅ pronto | `video.ts` + `caju build` |
 | Componentes animados em React (gráficos, contadores, tarjas) | ✅ pronto | pasta `components/` |
 | Exportar MP4, MP4 HEVC, MOV ProRes, WebM, GIF, PNG | ✅ pronto | `caju render` ou botão **Exportar** |
-| Locução com voz gerada (TTS) + legendas automáticas | ✅ pronto | `caju tts`, `caju captions` |
+| Locução com voz gerada (TTS, grátis e local com o VoiceStudio) + legendas automáticas | ✅ pronto | `caju tts`, `caju voices`, `caju captions` |
+| Legendas de fala gravada (transcrição) | ✅ pronto | `caju transcribe` |
 | Leitura de mídia, miniaturas, forma de onda, proxies de edição | ✅ pronto | `caju media` |
 | Player para colocar o vídeo num site React | ✅ pronto | `@caju-motion/player` |
 | Diagnóstico do ambiente | ✅ pronto | `caju doctor` |
@@ -100,7 +101,8 @@ flowchart LR
 | FFmpeg | **não** | já vem embutido (`ffmpeg-static`) |
 | Memória | 4 GB livres recomendados | com pouca memória, use `--concurrency 1` |
 | Espaço em disco | ~1 GB livre | renders longos precisam de mais |
-| Chave da OpenAI ou ElevenLabs | **não** | só para vozes reais; existe uma voz provisória grátis |
+| [VoiceStudio](https://github.com/debpalash/VoiceStudio) | **não** | voz grátis e local para o `caju tts` e o `caju transcribe` (o provedor padrão), instalado à parte ([seção 8](#8-locução-e-legendas)); uma GPU ajuda |
+| Chave da OpenAI ou ElevenLabs | **não** | só para as vozes pagas na nuvem; o VoiceStudio e a voz provisória são grátis |
 
 ---
 
@@ -140,8 +142,9 @@ caju doctor — diagnóstico do ambiente
 ✓ Espaço em disco      4.6 GB livres
 ✓ Memória              6.2 de 15.7 GB livres
 ✓ Permissão de escrita projects
-✓ Voz (caju tts)       só a voz provisória (placeholder)
-                       → para vozes reais, ponha OPENAI_API_KEY ou ELEVENLABS_API_KEY no .env do projeto
+✓ VoiceStudio (voz)    http://127.0.0.1:3900 · engines: omnivoice, cosyvoice, kittentts · 1 perfil(is) de voz (Narradora)
+✓ Voz (caju tts)       voicestudio (padrão) e placeholder; sem chaves de vozes pagas
+                       → opcional: para usar openai/elevenlabs, ponha OPENAI_API_KEY ou ELEVENLABS_API_KEY no .env do projeto
 
 ✓ tudo pronto
 ```
@@ -338,10 +341,15 @@ Ele aparece na aba **Componentes** do Studio. As props do `schema` viram control
 O `caju tts` transforma um texto em locução, anota **quando cada palavra é falada** e cria as legendas sincronizadas.
 
 ```bash
-# 1. monte o vídeo com a voz provisória (grátis: um tom suave + tempos estimados)
-caju tts meu-video --text "Todo vídeo começa com uma ideia. O Caju transforma código em vídeo."
+# voz de verdade, grátis, no seu computador (com o VoiceStudio aberto; veja abaixo)
+caju tts meu-video --text "Todo vídeo começa com uma ideia. O Caju transforma código em vídeo." --language pt
+caju voices                                                   # engines e perfis de voz
+caju tts meu-video --script roteiro.txt --model omnivoice --voice <perfil> --seed 7 --language pt
 
-# 2. com o roteiro fechado, gere a voz de verdade
+# sem o VoiceStudio: voz provisória (grátis: um tom suave + tempos estimados)
+caju tts meu-video --text "Todo vídeo começa com uma ideia." --provider placeholder
+
+# vozes pagas na nuvem (sua chave, sua conta)
 caju tts meu-video --script roteiro.txt --provider openai --voice nova --language pt
 caju tts meu-video --script roteiro.txt --provider elevenlabs --voice <voice_id>
 ```
@@ -358,13 +366,30 @@ E na timeline: a locução numa trilha **Locução** e uma legenda por frase num
 
 | Provedor (`--provider`) | Custo | Tempos das palavras | Chave |
 |---|---|---|---|
-| `placeholder` (padrão) | grátis | estimados | nenhuma |
+| `voicestudio` (padrão) | grátis (roda no seu computador) | exatos | nenhuma |
+| `placeholder` | grátis | estimados | nenhuma |
 | `openai` | pago (sua conta) | exatos | `OPENAI_API_KEY` |
 | `elevenlabs` | pago (sua conta) | exatos | `ELEVENLABS_API_KEY` |
+
+O **VoiceStudio** ([github.com/debpalash/VoiceStudio](https://github.com/debpalash/VoiceStudio)) é uma alternativa grátis e de código aberto à ElevenLabs que roda na sua máquina: texto para fala, clonagem e desenho de voz. O Caju conversa com ele por HTTP (porta 3900); instale e abra à parte:
+
+- **Windows:** `irm https://voicestudio.sh/install | iex` no PowerShell, ou o `.exe` da página de Releases do projeto;
+- **macOS / Linux:** o instalador do README do projeto;
+- **Docker:** `ghcr.io/debpalash/voicestudio`.
+
+Uma GPU (NVIDIA ou Apple Silicon) é recomendada; na CPU funciona, só que mais devagar. O `caju doctor` mostra se ele está respondendo. O `--model` escolhe o engine (`omnivoice` por padrão, `cosyvoice`, `voxcpm2`, `kittentts`…), o `--voice` um perfil de voz que você criou ou clonou no app, e o `--seed` mantém a mesma leitura quando você gera de novo. A qualidade varia por engine e idioma (o VoiceStudio oferece `pt`, sem pt-BR separado): ouça uma amostra antes de gerar o roteiro inteiro. Até 4096 caracteres por locução; para roteiros maiores, use um `--name` por cena. Se o VoiceStudio estiver fechado, o `caju tts` explica como abrir; ele nunca troca sozinho para um provedor pago.
 
 **Você nunca paga duas vezes pela mesma fala.** Mesmo texto + mesma voz = o arquivo é reaproveitado. Mudou o texto ou a voz? Gera de novo (ou force com `--force`). Rodar de novo também **não desfaz** o que você ajustou no Studio: posição, trilha, volume e fades da locução ficam.
 
 Outras opções: `--start 1.5` (começa em 1,5 s), `--speed 1.1`, `--no-captions`, `--name vo-01` (uma locução por cena).
+
+**Gravou a fala você mesmo** (talking head, entrevista, podcast)? Transcreva em legendas:
+
+```bash
+caju transcribe meu-video --from assets/video/fala.mp4 --language pt --captions
+```
+
+Ele extrai o áudio com o FFmpeg, transcreve com o VoiceStudio (grátis; `--provider openai` usa a sua chave da OpenAI) e grava `assets/data/fala.words.json` + `fala.srt`; o `--captions` também põe as legendas na timeline (`--offset 2` se o vídeo começa em 2 s). O mesmo arquivo não é transcrito duas vezes.
 
 **Já tem legendas prontas?** Importe um `.srt` ou `.vtt`:
 
@@ -388,7 +413,7 @@ Guia completo: [Locução e legendas](https://mardelaraujo.github.io/caju_motion
 
 ## 9. Configurando suas chaves de API
 
-As chaves só são necessárias para **vozes reais** (`caju tts --provider openai|elevenlabs`). Todo o resto funciona sem chave.
+As chaves só são necessárias para as **vozes pagas na nuvem** (`caju tts --provider openai|elevenlabs`, `caju transcribe --provider openai`). Todo o resto, inclusive a voz do VoiceStudio, funciona sem chave.
 
 ### Onde conseguir
 
@@ -411,7 +436,7 @@ O Caju lê esse arquivo sozinho a cada comando. Depois, confira:
 
 ```bash
 caju doctor
-# ✓ Voz (caju tts)       placeholder + openai, elevenlabs
+# ✓ Voz (caju tts)       voicestudio (padrão), placeholder + openai, elevenlabs
 ```
 
 O `doctor` mostra **quais** provedores estão configurados, nunca a chave.
@@ -542,6 +567,8 @@ Depois é só pedir, por exemplo: *"crie um reel de 15 segundos sobre o lançame
 | `caju check [ids…]` | valida projetos: estrutura, arquivos, componentes, determinismo |
 | `caju media [ids…] [--proxies auto\|all]` | lê a mídia e gera miniaturas, formas de onda e proxies |
 | `caju tts <id> --text "…"` | gera locução + legendas ([detalhes](#8-locução-e-legendas)) |
+| `caju voices` | lista os engines e perfis de voz do VoiceStudio |
+| `caju transcribe <id> --from video.mp4 [--captions]` | transcreve fala gravada em legendas |
 | `caju captions <id> --from arquivo.srt` | importa legendas SRT/VTT |
 | `caju render <id>` | exporta o vídeo ([opções](#11-exportando-o-vídeo)) |
 | `caju still <id> --frame N` | exporta um quadro como PNG |
@@ -560,13 +587,14 @@ Comece sempre pelo **`caju doctor`**: ele aponta a causa e o que fazer.
 | `Caju Studio` com ✗ ("não buildado") | faltou compilar | `npm run build` (no código-fonte) |
 | Porta 3700 ocupada | outro Studio aberto | feche o outro ou use `--port 3701` |
 | Render trava ou fecha sozinho | pouca memória | feche programas e use `--concurrency 1` |
+| `caju tts` diz "VoiceStudio não respondeu" (`!` em `VoiceStudio (voz)` no `doctor`) | o app VoiceStudio está fechado ou não foi instalado | abra o app ([seção 8](#8-locução-e-legendas)), ajuste `VOICESTUDIO_URL` se ele roda em outro lugar, ou use `--provider placeholder` |
 | `caju tts` diz "defina OPENAI_API_KEY" | chave não configurada | [seção 9](#9-configurando-suas-chaves-de-api) |
 | `HTTP 401` no TTS | chave inválida ou apagada | gere outra no painel do provedor |
 | `HTTP 429` no TTS | limite ou créditos esgotados | confira o saldo no painel do provedor |
 | Vídeo de celular "pula" no export | taxa de quadros variável | converta para fps constante ([guia](https://mardelaraujo.github.io/caju_motion/pt/guide/assets)) |
 | Studio salvou e o `caju build` reclama de conflito | um clipe de código foi editado à mão | aceite as edições no código ou rode `caju build --force` |
 
-Variáveis de ambiente úteis: `CAJU_BROWSER_PATH` (navegador do render), `CAJU_FFMPEG_PATH` (outro FFmpeg), `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`.
+Variáveis de ambiente úteis: `CAJU_BROWSER_PATH` (navegador do render), `CAJU_FFMPEG_PATH` (outro FFmpeg), `VOICESTUDIO_URL` (endereço do VoiceStudio, padrão `http://127.0.0.1:3900`), `VOICESTUDIO_API_KEY` (só quando o VoiceStudio está em outra máquina), `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`.
 
 ---
 
@@ -618,7 +646,7 @@ npm run docs:dev       # site de documentação
 | [`@caju-motion/player`](packages/player) | `<Player>` para apps React |
 | [`@caju-motion/sdk`](packages/sdk) | `defineProject`, `caju build` com merge |
 | [`@caju-motion/media`](packages/media) | leitura de mídia, miniaturas, formas de onda, proxies, decodificação exata (WebCodecs) |
-| [`@caju-motion/voice`](packages/voice) | TTS (OpenAI, ElevenLabs), tempos por palavra, legendas |
+| [`@caju-motion/voice`](packages/voice) | TTS (VoiceStudio, OpenAI, ElevenLabs), transcrição, tempos por palavra, legendas |
 | [`@caju-motion/audio`](packages/audio) | mixagem de áudio do export |
 | [`@caju-motion/renderer-node`](packages/renderer-node) | render: navegador headless → FFmpeg |
 | [`@caju-motion/server`](packages/server) | servidor local do Studio |

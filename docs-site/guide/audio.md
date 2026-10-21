@@ -92,7 +92,7 @@ const scenes = vo.map((v) => {
 });
 ```
 
-**Word-level sync** (captions): TTS word boundaries or aligners (e.g. Whisper word timestamps) give each word's time; convert with `Math.round(sec * fps) + voClipStart`. Show 2–5 words per caption, at most 2 lines, each chunk ≥ 0.6 s, inside the safe area.
+**Word-level sync** (captions): TTS word boundaries or aligners (e.g. Whisper word timestamps) give each word's time; convert with `Math.round(sec * fps) + voClipStart`. Show 2–5 words per caption, at most 2 lines, each chunk ≥ 0.6 s, inside the safe area. `caju tts` (generated voice) and `caju transcribe` (recorded speech) write these timings for you: see [Voice-over and captions](./voice-captions).
 
 **SFX:** a whoosh starts 3–5 frames before the motion peaks; a pop lands exactly on the scale peak. Don't stack more than 2 SFX under a voice.
 

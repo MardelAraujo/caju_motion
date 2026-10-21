@@ -92,7 +92,7 @@ const cenas = vo.map((v) => {
 });
 ```
 
-**Sincronia por palavra** (legendas): marcações de palavra do TTS ou alinhadores (ex.: Whisper com timestamps por palavra) dão o tempo de cada palavra; converta com `Math.round(seg * fps) + inicioDoClipeDeVoz`. Mostre 2–5 palavras por legenda, no máximo 2 linhas, cada bloco ≥ 0,6 s, dentro da safe area.
+**Sincronia por palavra** (legendas): marcações de palavra do TTS ou alinhadores (ex.: Whisper com timestamps por palavra) dão o tempo de cada palavra; converta com `Math.round(seg * fps) + inicioDoClipeDeVoz`. Mostre 2–5 palavras por legenda, no máximo 2 linhas, cada bloco ≥ 0,6 s, dentro da safe area. O `caju tts` (voz gerada) e o `caju transcribe` (fala gravada) gravam esses tempos para você: veja [Locução e legendas](./voice-captions).
 
 **Efeitos:** um whoosh começa 3–5 frames antes do pico do movimento; um pop cai exatamente no pico da escala. Não empilhe mais de 2 efeitos sob a voz.
 
