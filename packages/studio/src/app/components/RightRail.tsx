@@ -15,6 +15,8 @@ import {
   RotateCcw,
   Settings2,
   SlidersHorizontal,
+  Sparkles,
+  Wand2,
   X,
 } from 'lucide-react';
 import {
@@ -33,11 +35,14 @@ import { setSpeed, updateClip } from '../ops';
 import { selectedClip, useEditor, type RightTab } from '../store';
 import { formatClock } from '../time';
 import { NumberField, Section, Segmented, SliderRow, Swatches } from '../ui';
+import { EffectsPanel, MotionPanel, OverlaySection } from './MotionPanels';
 
 type TabDef = { id: RightTab; label: string; icon: typeof Music };
 
 const ALL_TABS: Record<RightTab, TabDef> = {
   basic: { id: 'basic', label: 'Básico', icon: SlidersHorizontal },
+  motion: { id: 'motion', label: 'Animação', icon: Sparkles },
+  effects: { id: 'effects', label: 'Efeitos', icon: Wand2 },
   audio: { id: 'audio', label: 'Áudio', icon: Music },
   speed: { id: 'speed', label: 'Velocidade', icon: Gauge },
   project: { id: 'project', label: 'Projeto', icon: Settings2 },
@@ -47,11 +52,15 @@ export function tabsFor(clip: Clip | null): RightTab[] {
   if (!clip) return ['project'];
   switch (clip.type) {
     case 'video':
-      return ['basic', 'audio', 'speed'];
+      return ['basic', 'motion', 'effects', 'audio', 'speed'];
     case 'audio':
       return ['audio', 'speed'];
+    case 'effect':
+      return ['basic', 'motion'];
+    case 'adjustment':
+      return ['effects'];
     default:
-      return ['basic'];
+      return ['basic', 'motion', 'effects'];
   }
 }
 
@@ -74,7 +83,9 @@ export function RightRail() {
           </header>
           <div className="right-panel-body">
             {active === 'project' && <ProjectPanel />}
-            {sel && active === 'basic' && <BasicPanel clip={sel.clip} />}
+            {sel && active === 'basic' && (sel.clip.type === 'effect' ? <OverlaySection clip={sel.clip} /> : <BasicPanel clip={sel.clip} />)}
+            {sel && active === 'motion' && <MotionPanel clip={sel.clip} />}
+            {sel && active === 'effects' && <EffectsPanel clip={sel.clip} />}
             {sel && active === 'audio' && <AudioPanel clip={sel.clip} track={sel.track} />}
             {sel && active === 'speed' && <SpeedPanel clip={sel.clip} />}
           </div>

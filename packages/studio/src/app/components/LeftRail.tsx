@@ -10,6 +10,8 @@ import {
   LoaderCircle,
   Mic,
   Music,
+  Wand2,
+  Layers,
   Plus,
   Shapes,
   Type,
@@ -18,12 +20,14 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { FrameProvider } from '@caju-motion/core';
-import { ComponentElement, componentBox, TEXT_DEFAULTS, useComponents, type ComponentDefinition } from '@caju-motion/renderer';
+import { ComponentElement, componentBox, OVERLAYS, TEXT_DEFAULTS, useComponents, type ComponentDefinition } from '@caju-motion/renderer';
 import type { Asset } from '@caju-motion/schema';
 import { assetUrl } from '../api';
 import {
   addAssetClip,
   addComponent,
+  addAdjustment,
+  addOverlay,
   addShape,
   addText,
   BRAND_COLORS,
@@ -44,6 +48,7 @@ const TABS: { id: LeftTab; label: string; icon: typeof Music }[] = [
   { id: 'voice', label: 'Voz', icon: Mic },
   { id: 'text', label: 'Texto', icon: Type },
   { id: 'elements', label: 'Elementos', icon: Shapes },
+  { id: 'effects', label: 'Efeitos', icon: Wand2 },
   { id: 'components', label: 'Componentes', icon: Puzzle },
 ];
 
@@ -82,6 +87,7 @@ export function LeftRail({ onShowShortcuts }: { onShowShortcuts: () => void }) {
           {leftTab === 'voice' && <VoicePanel />}
           {leftTab === 'text' && <TextPanel />}
           {leftTab === 'elements' && <ElementsPanel />}
+          {leftTab === 'effects' && <EffectsLibrary />}
           {leftTab === 'components' && <ComponentsPanel />}
         </aside>
       )}
@@ -268,6 +274,27 @@ function TextPanel() {
 }
 
 // ---------------------------------------------------------------- elementos
+
+function EffectsLibrary() {
+  return (
+    <div className="panel-body">
+      <p className="panel-hint">Entram no playhead, numa trilha de efeitos acima de tudo. Animação e filtros de cada clipe ficam no painel da direita.</p>
+      <p className="panel-subtitle">Sobreposições</p>
+      <div className="motion-grid">
+        {Object.entries(OVERLAYS).map(([name, o]) => (
+          <button type="button" key={name} className="motion-chip" onClick={() => addOverlay(name)}>
+            <Wand2 size={12} /> {o.label}
+          </button>
+        ))}
+      </div>
+      <p className="panel-subtitle">Camada de ajuste</p>
+      <button type="button" className="upload-btn" onClick={() => addAdjustment()}>
+        <Layers size={16} /> Adicionar ajuste
+      </button>
+      <p className="panel-hint">Cor, desfoque ou preto e branco para tudo o que está abaixo dela, só no trecho que ela cobre.</p>
+    </div>
+  );
+}
 
 function ElementsPanel() {
   const [fill, setFill] = useState('#FFFFFF');

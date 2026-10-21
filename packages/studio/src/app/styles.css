@@ -2273,3 +2273,49 @@ html.render-mode #root {
     0 0 0 2px var(--accent),
     0 0 0 4px rgb(244 123 53 / 0.35);
 }
+
+/* ------------------------------------------------------------------ animação e efeitos */
+.motion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.motion-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+.motion-chip:hover {
+  border-color: var(--line-2);
+}
+.motion-chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.motion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.effect-actions {
+  display: inline-flex;
+  gap: 2px;
+}
+.prop-section .export-field + .export-field,
+.prop-section .slider-row + .export-field,
+.prop-section .export-field + .slider-row {
+  margin-top: 8px;
+}

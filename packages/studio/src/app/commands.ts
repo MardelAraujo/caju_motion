@@ -183,6 +183,45 @@ export function addComponent(name: string, opts: { at?: number; trackId?: string
   st().set({ rightTab: 'basic' });
 }
 
+/** Sobreposição em tela cheia (vinheta, faixas de cinema…) numa trilha de efeitos, no playhead. */
+export function addOverlay(effect: string, opts: { at?: number; trackId?: string } = {}) {
+  const { project, frame } = st();
+  if (!project) return;
+  const id = newId('effect');
+  st().apply((d) =>
+    insertClip(
+      d,
+      makeClip({ id, type: 'effect', name: effect, start: opts.at ?? frame, duration: secondsToFrames(3, d.settings.fps), props: { effect } }),
+      opts.trackId,
+    ),
+  );
+  st().select(id);
+  st().set({ rightTab: 'basic' });
+}
+
+/** Camada de ajuste: os efeitos dela valem para tudo o que está abaixo. */
+export function addAdjustment(opts: { at?: number; trackId?: string } = {}) {
+  const { project, frame } = st();
+  if (!project) return;
+  const id = newId('adjustment');
+  st().apply((d) =>
+    insertClip(
+      d,
+      makeClip({
+        id,
+        type: 'adjustment',
+        name: 'Ajuste',
+        start: opts.at ?? frame,
+        duration: secondsToFrames(3, d.settings.fps),
+        effects: [{ id: newId('fx'), type: 'saturate', enabled: true, params: {} }],
+      }),
+      opts.trackId,
+    ),
+  );
+  st().select(id);
+  st().set({ rightTab: 'effects' });
+}
+
 // ---------------------------------------------------------------- upload
 
 export async function uploadFiles(files: File[]): Promise<void> {

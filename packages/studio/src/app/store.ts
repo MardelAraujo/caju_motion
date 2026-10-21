@@ -4,8 +4,8 @@ import { projectDuration, type Project } from '@caju-motion/schema';
 import { api, ConflictError, type ProjectSummary } from './api';
 import type { Clipboard } from './ops';
 
-export type LeftTab = 'media' | 'text' | 'audio' | 'voice' | 'elements' | 'components';
-export type RightTab = 'basic' | 'audio' | 'speed' | 'project';
+export type LeftTab = 'media' | 'text' | 'audio' | 'voice' | 'elements' | 'effects' | 'components';
+export type RightTab = 'basic' | 'motion' | 'effects' | 'audio' | 'speed' | 'project';
 export type Tool = 'select' | 'hand';
 export type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';
 

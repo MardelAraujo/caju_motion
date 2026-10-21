@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import { Eye, EyeOff, Lock, LockOpen, Plus, Puzzle, Shapes, Type, Volume2, VolumeX } from 'lucide-react';
-import { shapeProps, textProps } from '@caju-motion/renderer';
+import { OVERLAYS, shapeProps, textProps } from '@caju-motion/renderer';
 import { projectDuration, type Asset, type Clip, type Project, type Track } from '@caju-motion/schema';
 import { assetUrl } from '../api';
 import { dropPayload, hasPayload, readPayload } from '../dnd';
@@ -446,7 +446,13 @@ function ClipBlock({
   const thumb = useThumbnail(url, clip.type);
   const width = clip.duration * ppf;
   const label =
-    clip.type === 'text' ? textProps(clip).text.split('\n')[0] : clip.name ?? asset?.name ?? (clip.type === 'shape' ? 'Forma' : clip.type);
+    clip.type === 'text'
+      ? textProps(clip).text.split('\n')[0]
+      : clip.type === 'effect'
+        ? ((OVERLAYS as Record<string, { label: string }>)[String(clip.props.effect)]?.label ?? 'Efeito')
+        : clip.type === 'adjustment'
+          ? 'Ajuste'
+          : (clip.name ?? asset?.name ?? (clip.type === 'shape' ? 'Forma' : clip.type));
 
   return (
     <div
