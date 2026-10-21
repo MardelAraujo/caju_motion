@@ -317,7 +317,12 @@ export async function runDoctor({ dir, componentsDir }: { dir: string; component
   ];
 }
 
-export async function doctorCommand(o: { dir: string; componentsDir: string }): Promise<number> {
+export async function doctorCommand(o: { dir: string; componentsDir: string; json?: boolean }): Promise<number> {
+  if (o.json) {
+    const checks = await runDoctor(o);
+    console.log(JSON.stringify({ ok: doctorExitCode(checks) === 0, checks }));
+    return doctorExitCode(checks);
+  }
   console.log('caju doctor — diagnóstico do ambiente\n');
   const checks = await runDoctor(o);
   for (const c of checks) console.log(formatCheck(c));

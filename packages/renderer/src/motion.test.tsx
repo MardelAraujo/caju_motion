@@ -128,7 +128,7 @@ describe('lint de movimento', () => {
           id: 't',
           kind: 'text',
           clips: [
-            { id: 'a', type: 'text', start: 0, duration: 20, transitionIn: { type: 'dissolve', duration: 15 }, transitionOut: { type: 'morph', duration: 10 } },
+            { id: 'a', type: 'text', start: 0, duration: 20, transform: { x: 540, y: 960 }, transitionIn: { type: 'dissolve', duration: 15 }, transitionOut: { type: 'morph', duration: 10 } },
           ],
         },
         { id: 'fx', kind: 'effect', clips: [{ id: 'e', type: 'effect', start: 0, duration: 10, props: { effect: 'lensflare' } }, { id: 'adj', type: 'adjustment', start: 10, duration: 10 }] },
@@ -140,6 +140,39 @@ describe('lint de movimento', () => {
       'a:CAJU_MOTION_OVERLAP:warn',
       'e:CAJU_UNKNOWN_OVERLAY:error',
       'adj:CAJU_ADJUSTMENT_EMPTY:warn',
+    ]);
+  });
+});
+
+describe('lint de leitura e enquadramento', () => {
+  it('fora do quadro, safe area, fonte pequena, contraste e trecho vazio', async () => {
+    const { contrastRatio, lintProject } = await import('./lint');
+    expect(contrastRatio('#FFFFFF', '#000000')).toBeCloseTo(21);
+    expect(contrastRatio('#777777', '#000000')).toBeCloseTo(4.69, 1);
+    expect(contrastRatio('#FFFFFF80', '#000000')).toBeNull();
+    const p = ProjectSchema.parse({
+      ...createEmptyProject({ id: 'p', format: 'reel-9x16' }),
+      settings: { ...createEmptyProject({ id: 'p', format: 'reel-9x16' }).settings, background: '#FFFFFF' },
+      tracks: [
+        {
+          id: 't',
+          kind: 'text',
+          clips: [
+            { id: 'ok', type: 'text', start: 0, duration: 30, transform: { x: 540, y: 960 }, props: { text: 'ok', color: '#171512' } },
+            { id: 'baixo', type: 'text', start: 30, duration: 30, transform: { x: 540, y: 1800 }, props: { text: 'x', fontSize: 30, color: '#EEEEEE' } },
+            { id: 'fora', type: 'text', start: 90, duration: 30, transform: { x: 2000, y: 960 }, props: { text: 'y', color: '#000000' } },
+          ],
+        },
+      ],
+    });
+    const got = lintProject(p).map((i) => `${i.clipId ?? '-'}:${i.code}`);
+    expect(got).toEqual([
+      'baixo:CAJU_TEXT_TOO_SMALL',
+      'baixo:CAJU_UNSAFE_AREA',
+      'baixo:CAJU_LOW_CONTRAST',
+      'fora:CAJU_OFFSCREEN',
+      'fora:CAJU_UNSAFE_AREA',
+      '-:CAJU_EMPTY_FRAME',
     ]);
   });
 });

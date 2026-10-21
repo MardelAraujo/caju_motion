@@ -121,7 +121,18 @@ export const POSES = {
 
 export type PoseName = keyof typeof POSES;
 /** Sinônimos (nomes comuns em outros editores). */
-const POSE_ALIASES: Record<string, PoseName> = { push: 'slide', dissolve: 'fade', crossfade: 'fade', scale: 'zoom', reveal: 'wipe' };
+const POSE_ALIASES: Record<string, PoseName> = {
+  push: 'slide',
+  dissolve: 'fade',
+  crossfade: 'fade',
+  'fade-in': 'fade',
+  'fade-up': 'rise',
+  'fade-down': 'drop',
+  scale: 'zoom',
+  'zoom-in': 'zoom',
+  'scale-in': 'zoom',
+  reveal: 'wipe',
+};
 
 export function poseByName(name: string): PoseDef | undefined {
   return (POSES as Record<string, PoseDef>)[name] ?? (POSE_ALIASES[name] ? POSES[POSE_ALIASES[name]] : undefined);

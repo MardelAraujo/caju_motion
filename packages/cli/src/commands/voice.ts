@@ -128,9 +128,13 @@ export async function captionsCommand(o: CaptionsOpts): Promise<number> {
 }
 
 /** `caju voices`: vozes e engines do VoiceStudio (perfis clonados/desenhados no app). */
-export async function voicesCommand(): Promise<number> {
+export async function voicesCommand({ json = false }: { json?: boolean } = {}): Promise<number> {
   const cat = await voiceStudioVoices({ signal: AbortSignal.timeout(5000) });
   const engines = engineNames(cat.engines);
+  if (json) {
+    console.log(JSON.stringify({ url: cat.url, engines, voices: cat.voices.filter((v) => v.type === 'profile') }));
+    return 0;
+  }
   console.log(`VoiceStudio em ${cat.url}`);
   if (engines.length) console.log(`engines (--model): ${engines.join(', ')}`);
   const profiles = cat.voices.filter((v) => v.type === 'profile');

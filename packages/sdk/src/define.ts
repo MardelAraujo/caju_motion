@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { FormatId, Project } from '@caju-motion/schema';
-import { ProjectBuilder } from './builder';
+import { ProjectBuilder, type BuilderOptions } from './builder';
 
 export type ProjectMeta = {
   /** Id do projeto (= nome da pasta). */
@@ -12,6 +12,8 @@ export type ProjectMeta = {
   background?: string;
   /** Duração em frames. Omitida: fim do último clipe. */
   duration?: number;
+  /** Mixagem do export: ducking da música sob a locução e loudness final. */
+  audio?: BuilderOptions['audio'];
 };
 
 /** API recebida pela função de build: cenas, assets, áudio, trilhas, marcadores e componentes. */

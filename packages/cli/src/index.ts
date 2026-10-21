@@ -9,6 +9,10 @@ import { doctorCommand } from './commands/doctor';
 import { newCommand } from './commands/new';
 import { renderCommand, stillCommand } from './commands/render';
 import { skillsCommand } from './commands/skills';
+import { snapshotCommand } from './commands/snapshot';
+import { catalogCommand } from './commands/catalog';
+import { beatsCommand } from './commands/beats';
+import { captureCommand } from './commands/capture';
 import { studioCommand } from './commands/studio';
 import { componentsDirFor } from './extensions';
 
@@ -39,6 +43,16 @@ Uso:
                                                          transcreve fala existente em words.json + SRT (legendas exatas)
   caju captions <id> --from legenda.srt|.vtt|.words.json [--offset s]
                                                          importa legendas como clipes de texto editáveis
+  caju snapshot <id> [--at-cuts] [--frames 0,45,90] [--max 24] [--cols 4] [--resolution 540] [--out a.png]
+                                                         contact sheet dos quadros-chave (e dos cortes) para revisar
+                                                         antes do render; mapa dos quadros em boards/snapshot.json
+  caju catalog [texto] [--query texto] [--kind transition|loop|effect|overlay|component|template]
+                                                         o que já existe pronto (poses, loops, efeitos, componentes…)
+  caju capture <url> --project <id> [--width 1440] [--height 900]
+                                                         screenshots, cores, fontes, textos e imagens do site em
+                                                         assets/capture/ (para vídeos a partir de um site)
+  caju beats <musica.mp3> [--project <id>] [--out arquivo]
+                                                         BPM e batidas (assets/data/<nome>.beats.json) para cortar no tempo
   caju doctor [--dir projects]                           diagnostica o ambiente (Node, FFmpeg, navegador, Studio…)
   caju skills add [--target .] [--agents claude|all]     instala as skills de agente em .claude/skills/
                                                          (all: também o bloco do Caju no AGENTS.md)
@@ -52,6 +66,7 @@ Opções:
   --components pasta dos componentes React (padrão: <dir>/../components)
   --force      (build) regenera mesmo com clipes de código editados no Studio (o código vence)
   --dry-run    (build) só mostra o que mudaria, sem gravar
+  --json       (check, doctor, snapshot, catalog, voices, beats, capture) saída em JSON para agentes
   -v, --version
   -h, --help
 
@@ -99,6 +114,16 @@ async function main(argv: string[]): Promise<number> {
       from: { type: 'string' },
       offset: { type: 'string' },
       agents: { type: 'string' },
+      frames: { type: 'string' },
+      'at-cuts': { type: 'boolean', default: false },
+      cols: { type: 'string' },
+      max: { type: 'string' },
+      json: { type: 'boolean', default: false },
+      project: { type: 'string' },
+      width: { type: 'string' },
+      height: { type: 'string' },
+      query: { type: 'string' },
+      kind: { type: 'string' },
       version: { type: 'boolean', short: 'v', default: false },
       help: { type: 'boolean', short: 'h', default: false },
     },
@@ -171,7 +196,7 @@ async function main(argv: string[]): Promise<number> {
     case 'build':
       return buildCommand({ dir: values.dir, ids: rest, force: values.force, dryRun: values['dry-run'] });
     case 'check':
-      return checkCommand({ dir: values.dir, ids: rest, componentsDir: componentsDirFor(values.dir, values.components) });
+      return checkCommand({ dir: values.dir, ids: rest, componentsDir: componentsDirFor(values.dir, values.components), json: values.json });
     case 'media':
       return mediaCommand({ dir: values.dir, ids: rest, proxies: parseProxyMode(values.proxies), force: values.force, dryRun: values['dry-run'] });
     case 'tts':
@@ -195,7 +220,27 @@ async function main(argv: string[]): Promise<number> {
     case 'captions':
       return captionsCommand({ dir: values.dir, id: rest[0], from: values.from, offset: values.offset });
     case 'voices':
-      return voicesCommand();
+      return voicesCommand({ json: values.json });
+    case 'capture':
+      return captureCommand({ dir: values.dir, url: rest[0], project: values.project, width: values.width, height: values.height, json: values.json });
+    case 'beats':
+      return beatsCommand({ dir: values.dir, file: rest[0], project: values.project, out: values.out, json: values.json });
+    case 'catalog':
+      return catalogCommand({ query: values.query ?? (rest.length ? rest.join(' ') : undefined), kind: values.kind, json: values.json, componentsDir: componentsDirFor(values.dir, values.components) });
+    case 'snapshot':
+      return snapshotCommand({
+        dir: values.dir,
+        id: rest[0],
+        frames: values.frames,
+        atCuts: values['at-cuts'],
+        max: values.max,
+        cols: values.cols,
+        resolution: values.resolution,
+        out: values.out,
+        json: values.json,
+        serveUrl: values['serve-url'],
+        components: values.components,
+      });
     case 'transcribe':
       return transcribeCommand({
         dir: values.dir,
@@ -210,7 +255,7 @@ async function main(argv: string[]): Promise<number> {
         force: values.force,
       });
     case 'doctor':
-      return doctorCommand({ dir: values.dir, componentsDir: componentsDirFor(values.dir, values.components) });
+      return doctorCommand({ dir: values.dir, componentsDir: componentsDirFor(values.dir, values.components), json: values.json });
     case 'skills':
       return skillsCommand({ action: rest[0], target: values.target, agents: values.agents });
     default:

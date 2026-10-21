@@ -261,7 +261,7 @@ describe('movimento, efeitos e mixagem por código', () => {
       defineProject(
         { id: 'fx', format: 'square-1x1', duration: 60, audio: { ducking: { enabled: true }, loudness: { targetLufs: -16 } } },
         (b) => {
-          b.asset({ id: 'vo1', kind: 'audio', src: 'assets/vo.wav' });
+          b.asset({ id: 'vo1', kind: 'audio', src: 'assets/vo.wav', meta: {} });
           b.audioClip('vo1', 0, 30, 'Locução');
           b.scene('a', 'A', 0, 60, (s) => {
             s.text('oi', { size: 40 }, {

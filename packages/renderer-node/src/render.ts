@@ -297,3 +297,40 @@ export async function renderStill(o: RenderStillOptions): Promise<{ data: Buffer
     await closeSession(session);
   }
 }
+
+export type RenderStillsOptions = RenderCommon & {
+  frames: number[];
+  resolution?: number;
+  type?: 'png' | 'jpeg';
+};
+
+/** Vários quadros numa sessão só do navegador (contact sheet, revisão de cortes). */
+export async function renderStills(o: RenderStillsOptions): Promise<{ frame: number; data: Buffer }[]> {
+  const store = createProjectStore(o.projectsDir);
+  const project = await store.read(o.projectId);
+  const total = projectDuration(project);
+  const frames = o.frames.map((f) => Math.min(Math.max(0, Math.floor(f)), Math.max(0, total - 1)));
+  if (!frames.length) return [];
+  const short = Math.min(project.settings.width, project.settings.height);
+  const size = outputSize(project.settings, o.resolution ?? short);
+  let session: Session | null = null;
+  try {
+    session = await openSession(o);
+    const page = await openRenderPage(session, project, o.projectId, size.width, frames[0]!);
+    const out: { frame: number; data: Buffer }[] = [];
+    for (const frame of frames) {
+      await setFrame(page, frame);
+      const data = await page.screenshot({
+        type: o.type ?? 'jpeg',
+        ...((o.type ?? 'jpeg') === 'jpeg' ? { quality: 90 } : {}),
+        clip: { x: 0, y: 0, width: project.settings.width, height: project.settings.height },
+        caret: 'hide',
+      });
+      out.push({ frame, data });
+    }
+    await page.close();
+    return out;
+  } finally {
+    await closeSession(session);
+  }
+}
