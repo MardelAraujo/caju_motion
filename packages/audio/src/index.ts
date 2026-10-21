@@ -1,10 +1,12 @@
-import { projectDuration, type Asset, type Clip, type Project } from '@caju-motion/schema';
+import { projectDuration, type Asset, type Clip, type Project, type Track } from '@caju-motion/schema';
 
 /**
  * Mixagem de áudio do export, montada a partir do DOCUMENTO (não do navegador):
  * cada clipe de áudio (e o áudio dos clipes de vídeo) vira uma cadeia de filtros do FFmpeg
- * com corte, velocidade, volume, fades, pan e atraso até o início do clipe; tudo é somado
- * (`amix`, sem normalizar) e completado/cortado para a duração exata do projeto.
+ * com corte, velocidade, volume (fixo ou por keyframes), fades, pan e atraso até o início do
+ * clipe; tudo é somado (`amix`, sem normalizar) e completado/cortado para a duração exata do
+ * projeto. Com `settings.audio`: a música abaixa sob a voz (`sidechaincompress`) e o resultado
+ * é normalizado para o loudness alvo (`loudnorm`).
  *
  * Módulo puro (sem fs/processos): quem executa o FFmpeg é o `@caju-motion/renderer-node`.
  */
@@ -71,15 +73,41 @@ function resolvePath(projectDir: string, src: string): string {
 /** O clipe contribui com som? */
 function audible(clip: Clip, asset: Asset | undefined, includeVideoAudio: boolean): asset is Asset {
   if (!asset || clip.hidden) return false;
-  if ((clip.audio?.volume ?? 1) <= 0) return false;
+  if ((clip.audio?.volume ?? 1) <= 0 && !clip.keyframes?.['audio.volume']?.length) return false;
   if (asset.src.includes('://')) return false; // library:// etc. ainda não resolvidos no export
   if (clip.type === 'audio') return asset.kind === 'audio';
   if (clip.type === 'video') return includeVideoAudio && asset.kind === 'video' && asset.meta.hasAudio !== false;
   return false;
 }
 
+type VolumeKeyframe = { frame: number; value: number | string; easing?: unknown };
+
+/**
+ * Expressão do filtro `volume` (avaliada por frame de áudio, `t` = segundos desde o início do
+ * clipe) a partir dos keyframes de `audio.volume`. Entre keyframes a rampa é linear (`hold`
+ * segura o valor); antes do primeiro e depois do último, vale o valor da ponta.
+ */
+export function volumeExpression(keyframes: readonly VolumeKeyframe[], fps: number): string | null {
+  const kfs = keyframes
+    .filter((k): k is VolumeKeyframe & { value: number } => typeof k.value === 'number' && Number.isFinite(k.value))
+    .map((k) => ({ t: k.frame / fps, v: Math.max(0, k.value), hold: k.easing === 'hold' }))
+    .sort((a, b) => a.t - b.t);
+  if (!kfs.length) return null;
+  let expr = num(kfs[kfs.length - 1]!.v);
+  for (let i = kfs.length - 2; i >= 0; i--) {
+    const a = kfs[i]!;
+    const b = kfs[i + 1]!;
+    const seg = a.hold || b.t === a.t ? num(a.v) : `${num(a.v)}+${num(b.v - a.v)}*(t-${num(a.t)})/${num(b.t - a.t)}`;
+    expr = `if(lt(t,${num(b.t)}),${seg},${expr})`;
+  }
+  return `if(lt(t,${num(kfs[0]!.t)}),${num(kfs[0]!.v)},${expr})`;
+}
+
 /** Filtros de UM clipe, do corte na mídia de origem até o atraso para a posição na timeline. */
-export function clipFilters(clip: Pick<Clip, 'start' | 'duration' | 'trimIn' | 'speed' | 'audio'>, fps: number): string[] {
+export function clipFilters(
+  clip: Pick<Clip, 'start' | 'duration' | 'trimIn' | 'speed' | 'audio'> & { keyframes?: Clip['keyframes'] },
+  fps: number,
+): string[] {
   const audio = clip.audio ?? { volume: 1, fadeIn: 0, fadeOut: 0, pan: 0 };
   const outDur = clip.duration / fps;
   const srcStart = clip.trimIn / fps;
@@ -91,7 +119,9 @@ export function clipFilters(clip: Pick<Clip, 'start' | 'duration' | 'trimIn' | '
     `aformat=sample_fmts=fltp:sample_rates=${MIX_SAMPLE_RATE}:channel_layouts=stereo`,
     ...atempoChain(clip.speed),
   ];
-  if (audio.volume !== 1) f.push(`volume=${num(audio.volume)}`);
+  const animated = clip.keyframes?.['audio.volume'] ? volumeExpression(clip.keyframes['audio.volume'], fps) : null;
+  if (animated) f.push(`volume='${animated}':eval=frame`);
+  else if (audio.volume !== 1) f.push(`volume=${num(audio.volume)}`);
   if (audio.fadeIn > 0) f.push(`afade=t=in:st=0:d=${num(Math.min(audio.fadeIn, clip.duration) / fps)}`);
   if (audio.fadeOut > 0) {
     const d = Math.min(audio.fadeOut, clip.duration) / fps;
@@ -103,6 +133,23 @@ export function clipFilters(clip: Pick<Clip, 'start' | 'duration' | 'trimIn' | '
   const delay = Math.round((clip.start * MIX_SAMPLE_RATE) / fps);
   if (delay > 0) f.push(`adelay=${delay}S:all=1`);
   return f;
+}
+
+type Bus = 'voice' | 'music' | 'other';
+
+/** Papel da trilha na mixagem. Sem `role`, trilha "Locução" é voz e outras trilhas de áudio são música. */
+export function trackBus(track: Pick<Track, 'kind' | 'role' | 'name'>, clip: Pick<Clip, 'type'>): Bus {
+  if (track.role === 'voice' || (!track.role && /^locu[cç][aã]o/i.test(track.name ?? ''))) return 'voice';
+  if (track.role === 'sfx' || clip.type !== 'audio') return 'other';
+  return 'music';
+}
+
+/** Soma rótulos num barramento (`anull` com um só). */
+function mixOf(labels: string[], out: string, extra = ''): string {
+  const tail = extra ? `,${extra}` : '';
+  return labels.length > 1
+    ? `${labels.join('')}amix=inputs=${labels.length}:duration=longest:dropout_transition=0:normalize=0${tail}[${out}]`
+    : `${labels[0]}anull${tail}[${out}]`;
 }
 
 /**
@@ -117,6 +164,8 @@ export function buildAudioMix(project: Project, { projectDir, includeVideoAudio 
 
   const inputs: string[] = [];
   const chains: string[] = [];
+  const buses: Record<Bus, string[]> = { voice: [], music: [], other: [] };
+  const all: string[] = [];
   for (const track of project.tracks) {
     if (track.muted || track.hidden) continue;
     for (const clip of track.clips) {
@@ -126,21 +175,38 @@ export function buildAudioMix(project: Project, { projectDir, includeVideoAudio 
       const i = inputs.length;
       inputs.push(resolvePath(projectDir, asset.src));
       chains.push(`[${i + inputOffset}:a]${clipFilters(clip, fps).join(',')}[a${i}]`);
+      buses[trackBus(track, clip)].push(`[a${i}]`);
+      all.push(`[a${i}]`);
     }
   }
   if (inputs.length === 0) return null;
 
+  const { ducking, loudness } = project.settings.audio ?? {};
+  // barramentos do mesmo tamanho (a duração do projeto): o compressor não corta a música quando a voz acaba
+  const fit = `apad,atrim=end=${num(durationSec)}`;
+  let finalLabels = all;
+  if (ducking?.enabled && buses.voice.length && buses.music.length) {
+    // a voz entra na mixagem e, em paralelo, comanda o compressor da música
+    chains.push(mixOf(buses.voice, 'voicebus', fit), '[voicebus]asplit=2[voice][sidechain]');
+    chains.push(mixOf(buses.music, 'musicbus', fit));
+    chains.push(
+      `[musicbus][sidechain]sidechaincompress=threshold=${num(ducking.threshold)}:ratio=${num(ducking.ratio)}` +
+        `:attack=${num(ducking.attackMs)}:release=${num(ducking.releaseMs)}[ducked]`,
+    );
+    finalLabels = ['[voice]', '[ducked]', ...buses.other];
+  }
+
   const outputLabel = 'mix';
-  const labels = inputs.map((_, i) => `[a${i}]`).join('');
-  // com uma entrada só, o rótulo vai direto para o apad (sem amix)
-  const head =
-    inputs.length > 1 ? `${labels}amix=inputs=${inputs.length}:duration=longest:dropout_transition=0:normalize=0,` : labels;
   const tail = [
     'apad',
     `atrim=end=${num(durationSec)}`,
     'asetpts=PTS-STARTPTS',
+    ...(loudness?.enabled ? [`loudnorm=I=${num(loudness.targetLufs)}:TP=${num(loudness.truePeakDb)}:LRA=11`, `aresample=${MIX_SAMPLE_RATE}`] : []),
     `aformat=sample_fmts=fltp:sample_rates=${MIX_SAMPLE_RATE}:channel_layouts=stereo`,
   ].join(',');
+  // com uma entrada só, o rótulo vai direto para o apad (sem amix)
+  const head =
+    finalLabels.length > 1 ? `${finalLabels.join('')}amix=inputs=${finalLabels.length}:duration=longest:dropout_transition=0:normalize=0,` : finalLabels[0]!;
   const final = `${head}${tail}[${outputLabel}]`;
   return { inputs, filterComplex: [...chains, final].join(';'), outputLabel, durationSec };
 }

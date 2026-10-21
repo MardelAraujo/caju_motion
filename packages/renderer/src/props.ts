@@ -1,4 +1,4 @@
-import { evaluateKeyframes } from '@caju-motion/core';
+import { clipValue, evaluateKeyframes } from '@caju-motion/core';
 import type { Asset, Clip } from '@caju-motion/schema';
 
 /**
@@ -103,10 +103,13 @@ export function sourceTimeAt(clip: Pick<Clip, 'start' | 'trimIn' | 'speed'>, pro
 }
 
 /** Volume efetivo (0..1+) com fade in/out aplicados. */
-export function clipVolumeAt(clip: Pick<Clip, 'start' | 'duration' | 'audio'>, projectFrame: number): number {
+export function clipVolumeAt(clip: Pick<Clip, 'start' | 'duration' | 'audio'> & { keyframes?: Clip['keyframes'] }, projectFrame: number): number {
   const audio = clip.audio ?? { volume: 1, fadeIn: 0, fadeOut: 0, pan: 0 };
   const local = projectFrame - clip.start;
-  let gain = audio.volume;
+  // keyframes de `audio.volume` (mesma curva do export; lá a rampa é linear)
+  let gain = clip.keyframes?.['audio.volume']?.length
+    ? Math.max(0, Number(clipValue({ ...clip, keyframes: clip.keyframes } as Clip, 'audio.volume', projectFrame, audio.volume)))
+    : audio.volume;
   if (audio.fadeIn > 0 && local < audio.fadeIn) gain *= Math.max(0, local / audio.fadeIn);
   const remaining = clip.duration - local;
   if (audio.fadeOut > 0 && remaining < audio.fadeOut) gain *= Math.max(0, remaining / audio.fadeOut);

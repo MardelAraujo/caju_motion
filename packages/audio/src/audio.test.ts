@@ -141,3 +141,50 @@ describe('buildAudioMix', () => {
     expect(mix.filterComplex).not.toContain('[0:a]');
   });
 });
+
+describe('volume por keyframes, ducking e loudness', () => {
+  it('volumeExpression: rampa linear, hold e pontas', async () => {
+    const { volumeExpression } = await import('./index');
+    expect(volumeExpression([], 30)).toBeNull();
+    expect(volumeExpression([{ frame: 0, value: 1 }, { frame: 30, value: 0.5 }], 30)).toBe('if(lt(t,0),1,if(lt(t,1),1+-0.5*(t-0)/1,0.5))');
+    expect(volumeExpression([{ frame: 30, value: 0.2, easing: 'hold' }, { frame: 60, value: 1 }], 30)).toBe('if(lt(t,1),0.2,if(lt(t,2),0.2,1))');
+    const f = clipFilters(
+      { start: 0, duration: 60, trimIn: 0, speed: 1, audio: { volume: 0, fadeIn: 0, fadeOut: 0, pan: 0 }, keyframes: { 'audio.volume': [{ frame: 0, value: 0, easing: 'linear' }, { frame: 30, value: 1, easing: 'linear' }] } },
+      30,
+    );
+    expect(f).toContain("volume='if(lt(t,0),0,if(lt(t,1),0+1*(t-0)/1,1))':eval=frame");
+  });
+
+  it('ducking: a voz comanda o compressor da música; efeitos e vídeo ficam de fora', () => {
+    const p = project(
+      [
+        { id: 'voz', kind: 'audio', role: 'voice', clips: [{ id: 'v1', type: 'audio', assetId: 'vo', start: 0, duration: 60 }] },
+        { id: 'bg', kind: 'audio', clips: [{ id: 'm1', type: 'audio', assetId: 'music', start: 0, duration: 90 }] },
+        { id: 'fx', kind: 'audio', role: 'sfx', clips: [{ id: 's1', type: 'audio', assetId: 'music', start: 0, duration: 10 }] },
+      ],
+      assets,
+    );
+    p.settings.audio = { ducking: { enabled: true, ratio: 8, threshold: 0.03, attackMs: 20, releaseMs: 400 } };
+    const mix = buildAudioMix(p, { projectDir: '/p' })!;
+    expect(mix.filterComplex).toContain('[a0]anull,apad,atrim=end=3[voicebus];[voicebus]asplit=2[voice][sidechain]');
+    expect(mix.filterComplex).toContain('[a1]anull,apad,atrim=end=3[musicbus]');
+    expect(mix.filterComplex).toContain('[musicbus][sidechain]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=400[ducked]');
+    expect(mix.filterComplex).toContain('[voice][ducked][a2]amix=inputs=3');
+  });
+
+  it('sem voz (ou sem música), ducking não muda nada; trilha "Locução" sem papel conta como voz', async () => {
+    const { trackBus } = await import('./index');
+    expect(trackBus({ kind: 'audio', name: 'Locução' }, { type: 'audio' })).toBe('voice');
+    expect(trackBus({ kind: 'audio', name: 'Trilha' }, { type: 'audio' })).toBe('music');
+    expect(trackBus({ kind: 'main' }, { type: 'video' })).toBe('other');
+    const p = project([{ id: 'bg', kind: 'audio', clips: [{ id: 'm1', type: 'audio', assetId: 'music', start: 0, duration: 90 }] }], assets);
+    p.settings.audio = { ducking: { enabled: true, ratio: 6, threshold: 0.03, attackMs: 20, releaseMs: 400 } };
+    expect(buildAudioMix(p, { projectDir: '/p' })!.filterComplex).not.toContain('sidechaincompress');
+  });
+
+  it('loudness: loudnorm + reamostragem no fim', () => {
+    const p = project([{ id: 'bg', kind: 'audio', clips: [{ id: 'm1', type: 'audio', assetId: 'music', start: 0, duration: 90 }] }], assets);
+    p.settings.audio = { loudness: { enabled: true, targetLufs: -16, truePeakDb: -1.5 } };
+    expect(buildAudioMix(p, { projectDir: '/p' })!.filterComplex).toContain('loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,aformat=');
+  });
+});

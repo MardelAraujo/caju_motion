@@ -235,6 +235,8 @@ export function addVoiceover(project: Project, vo: Pick<VoiceoverResult, 'audioS
   const name = opts.trackName ?? 'Locução';
   for (let n = 1; ; n++) {
     const track = ensureTrack(next, n === 1 ? base : `${base}-${n}`, 'audio', n === 1 ? name : `${name} ${n}`, 'bottom');
+    // a trilha da locução comanda o ducking da música na mixagem
+    track.role ??= 'voice';
     if (overlaps(track.clips, clip.start, clip.duration)) continue;
     track.clips.push(clip);
     track.clips.sort((a, b) => a.start - b.start);

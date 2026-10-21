@@ -179,6 +179,8 @@ export const ClipSchema = z.object({
 // ---------------------------------------------------------------- trilhas
 
 export const TRACK_KINDS = ['main', 'overlay', 'text', 'audio', 'effect'] as const;
+/** Papel de uma trilha de áudio na mixagem: a música abaixa sob a voz (ducking). */
+export const TRACK_ROLES = ['voice', 'music', 'sfx'] as const;
 
 export const TrackSchema = z.object({
   id: Id,
@@ -187,6 +189,8 @@ export const TrackSchema = z.object({
   locked: z.boolean().default(false),
   hidden: z.boolean().default(false),
   muted: z.boolean().default(false),
+  /** Trilhas de áudio: `voice` comanda o ducking, `music` (ou sem papel) abaixa, `sfx` não mexe. */
+  role: z.enum(TRACK_ROLES).optional(),
   clips: z.array(ClipSchema).default([]),
 });
 
@@ -199,6 +203,28 @@ export const MarkerSchema = z.object({
 
 // ---------------------------------------------------------------- projeto
 
+/** Mixagem do export: música abaixando sob a voz e loudness final (plataformas: ~-14 LUFS). */
+export const AudioSettingsSchema = z.object({
+  ducking: z
+    .object({
+      enabled: z.boolean().default(true),
+      /** Quanto a música abaixa (razão do compressor; 6 ≈ médio, 12 ≈ forte). */
+      ratio: z.number().min(1).max(20).default(6),
+      /** Nível da voz a partir do qual a música abaixa (0–1, linear). */
+      threshold: z.number().min(0.001).max(1).default(0.03),
+      attackMs: z.number().min(0.01).max(2000).default(20),
+      releaseMs: z.number().min(0.01).max(9000).default(400),
+    })
+    .optional(),
+  loudness: z
+    .object({
+      enabled: z.boolean().default(true),
+      targetLufs: z.number().min(-70).max(-5).default(-14),
+      truePeakDb: z.number().min(-9).max(0).default(-1),
+    })
+    .optional(),
+});
+
 export const SettingsSchema = z.object({
   format: z.enum([...FORMAT_IDS, 'custom']).default('custom'),
   width: z.number().int().positive(),
@@ -207,6 +233,7 @@ export const SettingsSchema = z.object({
   background: z.string().default('#000000'),
   /** Se omitido, a duração é o fim do último clipe. */
   duration: PositiveFrames.optional(),
+  audio: AudioSettingsSchema.optional(),
 });
 
 const ProjectShape = z.object({
@@ -310,6 +337,8 @@ export type Clip = z.output<typeof ClipSchema>;
 export type ClipInput = z.input<typeof ClipSchema>;
 export type Keyframe = z.output<typeof KeyframeSchema>;
 export type Easing = z.output<typeof EasingSchema>;
+export type AudioSettings = z.output<typeof AudioSettingsSchema>;
+export type TrackRole = (typeof TRACK_ROLES)[number];
 export type EasingPreset = (typeof EASING_PRESETS)[number];
 export type Marker = z.output<typeof MarkerSchema>;
 export type ClipType = (typeof CLIP_TYPES)[number];
