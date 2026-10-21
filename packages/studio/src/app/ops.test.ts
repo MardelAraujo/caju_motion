@@ -3,6 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { ProjectSchema, type Project } from '@caju-motion/schema';
 import {
   clipAt,
+  copyClips,
+  moveClips,
+  pasteClips,
+  rippleDelete,
+  toggleTrack,
+  trimToPlayhead,
   deleteClip,
   duplicateClip,
   findClip,
@@ -156,5 +162,69 @@ describe('ops', () => {
     expect(clipAt(project(), 15)!.id).toBe('t1');
     expect(clipAt(project(), 50)!.id).toBe('v1');
     expect(clipAt(project(), 999)).toBeNull();
+  });
+});
+
+describe('edição em grupo', () => {
+  const withOverlay = () =>
+    produce(project(), (d) => {
+      d.tracks.push({
+        id: 'ov',
+        kind: 'overlay',
+        name: 'ov',
+        locked: false,
+        hidden: false,
+        muted: false,
+        clips: [
+          makeClip({ id: 'o1', type: 'shape', start: 0, duration: 20 }),
+          makeClip({ id: 'o2', type: 'shape', start: 30, duration: 20 }),
+          makeClip({ id: 'o3', type: 'shape', start: 60, duration: 20 }),
+        ],
+      });
+    });
+
+  it('ripple delete fecha o buraco só na trilha do clipe', () => {
+    const p = produce(withOverlay(), (d) => rippleDelete(d, ['o2', 't1']));
+    expect(findClip(p, 'o3')!.clip.start).toBe(40);
+    expect(findClip(p, 'o1')!.clip.start).toBe(0);
+    expect(p.tracks.find((t) => t.id === 'txt')).toBeUndefined(); // trilha vazia some
+    const main = produce(withOverlay(), (d) => rippleDelete(d, ['v1']));
+    expect(findClip(main, 'v2')!.clip.start).toBe(0);
+  });
+
+  it('Q/W cortam até o playhead; fora do clipe não fazem nada', () => {
+    const left = produce(withOverlay(), (d) => void trimToPlayhead(d, 'o2', 40, 'left'));
+    expect(findClip(left, 'o2')!.clip).toMatchObject({ start: 40, duration: 10 });
+    const right = produce(withOverlay(), (d) => void trimToPlayhead(d, 'o2', 40, 'right'));
+    expect(findClip(right, 'o2')!.clip).toMatchObject({ start: 30, duration: 10 });
+    const p = withOverlay();
+    expect(produce(p, (d) => void trimToPlayhead(d, 'o2', 10, 'left'))).toBe(p);
+  });
+
+  it('move em grupo só se todos couberem; o grupo para no zero', () => {
+    const ok = produce(withOverlay(), (d) => void moveClips(d, ['o2', 'o3'], 5));
+    expect([findClip(ok, 'o2')!.clip.start, findClip(ok, 'o3')!.clip.start]).toEqual([35, 65]);
+    const p = withOverlay();
+    expect(produce(p, (d) => void moveClips(d, ['o2'], -15))).toBe(p); // bateria no o1
+    const clamp = produce(withOverlay(), (d) => void moveClips(d, ['o1', 't1'], -50));
+    expect(findClip(clamp, 'o1')!.clip.start).toBe(0);
+    expect(findClip(clamp, 't1')!.clip.start).toBe(10);
+  });
+
+  it('copiar e colar no playhead mantém o espaçamento e cria ids novos', () => {
+    const base = withOverlay();
+    const cb = copyClips(base, ['o2', 'o3'])!;
+    let ids: string[] = [];
+    const p = produce(base, (d) => {
+      ids = pasteClips(d, cb, 100);
+    });
+    expect(ids.map((id) => findClip(p, id)!.clip.start)).toEqual([100, 130]);
+    expect(ids.some((id) => ['o2', 'o3'].includes(id))).toBe(false);
+    expect(findClip(p, ids[0]!)!.track.id).toBe('ov');
+  });
+
+  it('alterna mudo/oculto/travado da trilha', () => {
+    const p = produce(project(), (d) => toggleTrack(d, 'txt', 'hidden'));
+    expect(p.tracks.find((t) => t.id === 'txt')!.hidden).toBe(true);
   });
 });

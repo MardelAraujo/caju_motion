@@ -74,6 +74,7 @@ export function acceptsClip(kind: TrackKind, type: ClipType): boolean {
 export function trackKindFor(type: ClipType): TrackKind {
   if (type === 'audio') return 'audio';
   if (type === 'text') return 'text';
+  if (type === 'effect' || type === 'adjustment') return 'effect';
   return 'overlay';
 }
 
@@ -332,4 +333,97 @@ export function clipAt(p: Project, frame: number, types?: ClipType[]): Clip | nu
     if (c) return c;
   }
   return null;
+}
+
+// ---------------------------------------------------------------- edição em grupo (estilo CapCut)
+
+/**
+ * Exclui e fecha o buraco: nas trilhas livres, os clipes seguintes da MESMA trilha andam para a
+ * esquerda o tanto que foi removido (a principal já é magnética).
+ */
+export function rippleDelete(p: Project, clipIds: string[]): void {
+  const ids = new Set(clipIds);
+  for (const track of p.tracks) {
+    if (track.locked) continue;
+    const removed = track.clips.filter((c) => ids.has(c.id)).sort((a, b) => b.start - a.start);
+    for (const r of removed) {
+      track.clips.splice(track.clips.indexOf(r), 1);
+      if (track.kind === 'main') continue;
+      for (const c of track.clips) if (c.start >= clipEnd(r)) c.start -= r.duration;
+    }
+  }
+  normalize(p);
+}
+
+/** Q / W: remove a parte do clipe à esquerda (`left`) ou à direita (`right`) do playhead. */
+export function trimToPlayhead(p: Project, clipId: string, frame: number, side: 'left' | 'right'): boolean {
+  const ref = findClip(p, clipId);
+  if (!ref) return false;
+  const { clip } = ref;
+  const at = Math.round(frame);
+  if (at <= clip.start || at >= clipEnd(clip)) return false;
+  if (side === 'left') trimClip(p, clipId, 'start', at - clip.start);
+  else trimClip(p, clipId, 'end', at - clipEnd(clip));
+  return true;
+}
+
+/**
+ * Move vários clipes no tempo, cada um na sua trilha. Só move se TODOS couberem (sem sobrepor
+ * clipes fora do grupo); a trilha principal, magnética, não entra no deslocamento.
+ */
+export function moveClips(p: Project, clipIds: string[], delta: number): boolean {
+  const ids = new Set(clipIds);
+  const d = Math.round(delta);
+  if (!d) return false;
+  const moving = p.tracks.flatMap((t) =>
+    t.kind === 'main' || t.locked ? [] : t.clips.filter((c) => ids.has(c.id) && !c.locked).map((c) => ({ t, c })),
+  );
+  if (!moving.length) return false;
+  // o grupo para no zero (todos andam o mesmo tanto)
+  const shift = Math.max(d, -Math.min(...moving.map((m) => m.c.start)));
+  if (!shift) return false;
+  for (const { t, c } of moving) {
+    const start = c.start + shift;
+    const blocked = t.clips.some((o) => !ids.has(o.id) && start < clipEnd(o) && start + c.duration > o.start);
+    if (blocked) return false;
+  }
+  for (const { c } of moving) c.start += shift;
+  normalize(p);
+  return true;
+}
+
+export type ClipboardItem = { clip: Clip; trackId: string; trackKind: TrackKind };
+export type Clipboard = { items: ClipboardItem[]; origin: number };
+
+/** Copia clipes (com a trilha de origem) para colar depois; tempos relativos ao primeiro. */
+export function copyClips(p: Project, clipIds: string[]): Clipboard | null {
+  const items: ClipboardItem[] = [];
+  for (const id of clipIds) {
+    const ref = findClip(p, id);
+    if (ref) items.push({ clip: cloneClip(ref.clip), trackId: ref.track.id, trackKind: ref.track.kind });
+  }
+  if (!items.length) return null;
+  return { items, origin: Math.min(...items.map((i) => i.clip.start)) };
+}
+
+/** Cola em `at` (o primeiro clipe começa ali), na trilha de origem se couber. Retorna os ids novos. */
+export function pasteClips(p: Project, cb: Clipboard, at: number): string[] {
+  const ids: string[] = [];
+  for (const item of [...cb.items].sort((a, b) => a.clip.start - b.clip.start)) {
+    const clip = cloneClip(item.clip);
+    clip.id = newId(clip.type);
+    clip.origin = 'editor';
+    clip.start = Math.max(0, Math.round(at + item.clip.start - cb.origin));
+    if (clip.effects.length) clip.effects = clip.effects.map((e) => ({ ...e, id: newId('fx') }));
+    const target = p.tracks.find((t) => t.id === item.trackId);
+    const fits = target && (target.kind === 'main' || isFree(target, clip.start, clip.duration));
+    insertClip(p, clip, fits ? target.id : undefined);
+    ids.push(clip.id);
+  }
+  return ids;
+}
+
+export function toggleTrack(p: Project, trackId: string, field: 'muted' | 'hidden' | 'locked'): void {
+  const t = p.tracks.find((x) => x.id === trackId);
+  if (t) t[field] = !t[field];
 }

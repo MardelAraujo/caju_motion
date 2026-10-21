@@ -2204,3 +2204,72 @@ html.render-mode #root {
   align-items: center;
   gap: 4px;
 }
+
+/* ------------------------------------------------------------------ janela de atalhos */
+.shortcuts-modal {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+.shortcuts-modal header .link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+.shortcuts-modal > .panel-hint {
+  margin: 0;
+  padding: 0 32px;
+}
+.shortcut-notice {
+  margin: 6px 32px 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+.shortcut-groups {
+  overflow: auto;
+}
+.shortcut-groups h4 {
+  margin: 16px 32px 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.shortcut-groups .shortcut-list {
+  padding-bottom: 4px;
+}
+.shortcut-key {
+  padding: 2px 8px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  background: var(--surface-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-xs);
+}
+.shortcut-key:hover {
+  border-color: var(--accent);
+}
+.shortcut-key.is-recording {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+/* ------------------------------------------------------------------ seleção múltipla na timeline */
+.tl-selbox {
+  position: fixed;
+  z-index: 30;
+  pointer-events: none;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 2px;
+}
+.tl-clip.is-primary {
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 4px rgb(244 123 53 / 0.35);
+}

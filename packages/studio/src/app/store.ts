@@ -2,6 +2,7 @@ import { produce, type Draft } from 'immer';
 import { create } from 'zustand';
 import { projectDuration, type Project } from '@caju-motion/schema';
 import { api, ConflictError, type ProjectSummary } from './api';
+import type { Clipboard } from './ops';
 
 export type LeftTab = 'media' | 'text' | 'audio' | 'voice' | 'elements' | 'components';
 export type RightTab = 'basic' | 'audio' | 'speed' | 'project';
@@ -27,7 +28,12 @@ type EditorState = {
 
   frame: number;
   playing: boolean;
+  /** Clipe principal da seleção (o último clicado): painéis e canvas mostram este. */
   selectedClipId: string | null;
+  /** Todos os selecionados (inclui o principal). Ações em grupo usam esta lista. */
+  selectedClipIds: string[];
+  /** Área de transferência interna (copiar/colar clipes). */
+  clipboard: Clipboard | null;
   editingTextId: string | null;
 
   pxPerFrame: number;
@@ -64,7 +70,10 @@ type EditorActions = {
 
   setFrame(frame: number): void;
   setPlaying(playing: boolean): void;
-  select(clipId: string | null): void;
+  /** `replace` (padrão) seleciona só este; `toggle` (Ctrl/Shift) inclui/tira da seleção. */
+  select(clipId: string | null, mode?: 'replace' | 'toggle'): void;
+  /** Seleção em grupo (ex.: retângulo na timeline). */
+  selectMany(clipIds: string[], additive?: boolean): void;
   setEditingText(clipId: string | null): void;
   set(partial: Partial<EditorState>): void;
   showToast(msg: string): void;
@@ -86,6 +95,8 @@ export const useEditor = create<EditorState & EditorActions>((set, get) => ({
   frame: 0,
   playing: false,
   selectedClipId: null,
+  selectedClipIds: [],
+  clipboard: null,
   editingTextId: null,
   pxPerFrame: 4,
   snapping: true,
@@ -114,6 +125,7 @@ export const useEditor = create<EditorState & EditorActions>((set, get) => ({
       frame: 0,
       playing: false,
       selectedClipId: null,
+      selectedClipIds: [],
       editingTextId: null,
       saveState: 'saved',
       saveError: null,
@@ -131,7 +143,7 @@ export const useEditor = create<EditorState & EditorActions>((set, get) => ({
   },
 
   async reloadProject() {
-    const { project: current, frame, selectedClipId } = get();
+    const { project: current, frame, selectedClipId, selectedClipIds } = get();
     if (!current) return;
     const { project, version } = await api.getProject(current.id);
     set({
@@ -145,6 +157,7 @@ export const useEditor = create<EditorState & EditorActions>((set, get) => ({
       saveError: null,
       editingTextId: null,
       selectedClipId: project.tracks.some((t) => t.clips.some((c) => c.id === selectedClipId)) ? selectedClipId : null,
+      selectedClipIds: selectedClipIds.filter((id) => project.tracks.some((t) => t.clips.some((c) => c.id === id))),
     });
     get().setFrame(frame);
   },
@@ -248,13 +261,29 @@ export const useEditor = create<EditorState & EditorActions>((set, get) => ({
     set({ playing, editingTextId: null });
   },
 
-  select(clipId) {
-    const { editingTextId } = get();
-    set({ selectedClipId: clipId, editingTextId: editingTextId === clipId ? editingTextId : null });
+  select(clipId, mode = 'replace') {
+    const { editingTextId, selectedClipIds } = get();
+    if (mode === 'toggle' && clipId) {
+      const has = selectedClipIds.includes(clipId);
+      const ids = has ? selectedClipIds.filter((id) => id !== clipId) : [...selectedClipIds, clipId];
+      set({ selectedClipIds: ids, selectedClipId: has ? (ids[ids.length - 1] ?? null) : clipId, editingTextId: null });
+      return;
+    }
+    set({
+      selectedClipId: clipId,
+      selectedClipIds: clipId ? [clipId] : [],
+      editingTextId: editingTextId === clipId ? editingTextId : null,
+    });
+  },
+
+  selectMany(clipIds, additive = false) {
+    const ids = additive ? [...new Set([...get().selectedClipIds, ...clipIds])] : [...new Set(clipIds)];
+    set({ selectedClipIds: ids, selectedClipId: ids[ids.length - 1] ?? null, editingTextId: null });
   },
 
   setEditingText(clipId) {
-    set({ editingTextId: clipId, selectedClipId: clipId ?? get().selectedClipId, playing: false });
+    const selectedClipId = clipId ?? get().selectedClipId;
+    set({ editingTextId: clipId, selectedClipId, selectedClipIds: selectedClipId ? [selectedClipId] : [], playing: false });
   },
 
   set(partial) {

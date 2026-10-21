@@ -6,7 +6,8 @@ import { RightRail } from './components/RightRail';
 import { Timeline, useFitTimeline } from './components/Timeline';
 import { TimelineToolbar } from './components/TimelineToolbar';
 import { TopBar } from './components/TopBar';
-import { AudioLayer, SHORTCUTS, usePlaybackClock, useShortcuts } from './playback';
+import { AudioLayer, usePlaybackClock, useShortcuts } from './playback';
+import { ShortcutsDialog } from './components/ShortcutsDialog';
 import { useRenderJobs } from './renderJobs';
 import { hasUnsavedChanges, useEditor } from './store';
 
@@ -89,28 +90,7 @@ export function App() {
       {error && <div className="boot is-error">{error}</div>}
       {toast && <div className="toast">{toast}</div>}
 
-      {shortcuts && (
-        <div className="modal-backdrop" onClick={() => setShortcuts(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <header>
-              <h3>Atalhos de teclado</h3>
-              <button type="button" className="icon-btn" onClick={() => setShortcuts(false)}>
-                <X size={16} />
-              </button>
-            </header>
-            <dl className="shortcut-list">
-              {SHORTCUTS.map(([k, v]) => (
-                <div key={k}>
-                  <dt>
-                    <kbd>{k}</kbd>
-                  </dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      )}
+      {shortcuts && <ShortcutsDialog onClose={() => setShortcuts(false)} />}
     </div>
   );
 }

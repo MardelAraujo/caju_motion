@@ -4,14 +4,19 @@ import { api, type VoiceRequest } from './api';
 import { kindOfFile, probeMedia } from './media';
 import {
   clipEnd,
+  copyClips,
   deleteClip,
   duplicateClip,
   findClip,
   insertClip,
   makeClip,
   maxDuration,
+  moveClips,
   newId,
+  pasteClips,
+  rippleDelete,
   splitClip,
+  trimToPlayhead,
   updateClip,
 } from './ops';
 import { useEditor } from './store';
@@ -308,14 +313,88 @@ const targets = () => {
 };
 
 export function splitAtPlayhead() {
+  const { selectedClipIds, frame: at, project } = st();
+  // vários selecionados: divide todos os que o playhead atravessa (um passo só no desfazer)
+  const many = project ? selectedClipIds.map((id) => findClip(project, id)?.clip).filter((c): c is Clip => !!c && containsFrame(c, at)) : [];
+  if (many.length > 1) {
+    const rights: string[] = [];
+    st().apply((d) => {
+      for (const c of many) {
+        const r = splitClip(d, c.id, at);
+        if (r) rights.push(r);
+      }
+    });
+    st().selectMany(rights);
+    return;
+  }
   const target = targets().split;
   if (!target) return;
-  const at = st().frame;
   let rightId: string | null = null;
   st().apply((d) => {
     rightId = splitClip(d, target.id, at);
   });
   if (rightId) st().select(rightId);
+}
+
+/** Q (`left`) / W (`right`): apaga a parte do clipe antes/depois do playhead. */
+export function trimAtPlayhead(side: 'left' | 'right') {
+  const target = targets().split;
+  if (!target) return;
+  const at = st().frame;
+  st().apply((d) => void trimToPlayhead(d, target.id, at, side));
+  st().select(target.id);
+}
+
+/** Ids da seleção (ou só o principal). */
+const selection = (): string[] => {
+  const { selectedClipIds, selectedClipId } = st();
+  return selectedClipIds.length ? selectedClipIds : selectedClipId ? [selectedClipId] : [];
+};
+
+/** Exclui e fecha o buraco na trilha (Shift+Delete). */
+export function rippleDeleteSelected() {
+  const ids = selection();
+  if (!ids.length) return;
+  st().apply((d) => rippleDelete(d, ids));
+  st().select(null);
+}
+
+export function copySelected(): boolean {
+  const { project } = st();
+  const ids = selection();
+  if (!project || !ids.length) return false;
+  const clipboard = copyClips(project, ids);
+  st().set({ clipboard });
+  if (clipboard) st().showToast(`${clipboard.items.length} clipe(s) copiado(s).`);
+  return !!clipboard;
+}
+
+export function cutSelected() {
+  if (copySelected()) deleteSelected();
+}
+
+/** Cola no playhead, nas trilhas de origem quando há espaço. */
+export function pasteAtPlayhead() {
+  const { clipboard, frame } = st();
+  if (!clipboard) return;
+  let ids: string[] = [];
+  st().apply((d) => {
+    ids = pasteClips(d, clipboard, frame);
+  });
+  st().selectMany(ids);
+}
+
+export function selectAll() {
+  const { project } = st();
+  if (!project) return;
+  st().selectMany(project.tracks.filter((t) => !t.locked).flatMap((t) => t.clips.filter((c) => !c.locked).map((c) => c.id)));
+}
+
+/** Empurra a seleção `frames` para o lado (← / → com Alt). */
+export function nudgeSelected(frames: number) {
+  const ids = selection();
+  if (!ids.length) return;
+  st().apply((d) => void moveClips(d, ids, frames), { coalesce: 'nudge' });
 }
 
 /** Abre o painel de Volume/Velocidade do clipe com som (selecionando-o, para o painel aparecer). */
@@ -327,9 +406,11 @@ export function openSoundPanel(tab: 'audio' | 'speed') {
 }
 
 export function deleteSelected() {
-  const { selectedClipId } = st();
-  if (!selectedClipId) return;
-  st().apply((d) => deleteClip(d, selectedClipId));
+  const ids = selection();
+  if (!ids.length) return;
+  st().apply((d) => {
+    for (const id of ids) deleteClip(d, id);
+  });
   st().select(null);
 }
 

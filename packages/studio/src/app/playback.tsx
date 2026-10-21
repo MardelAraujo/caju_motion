@@ -2,12 +2,7 @@ import { useEffect, useRef } from 'react';
 import { clipVolumeAt, sourceTimeAt } from '@caju-motion/renderer';
 import { projectDuration, type Clip } from '@caju-motion/schema';
 import { assetUrl } from './api';
-import {
-  deleteSelected,
-  duplicateSelected,
-  splitAtPlayhead,
-  togglePlay,
-} from './commands';
+import { actionFor, comboOf } from './actions';
 import { useEditor } from './store';
 
 /** Relógio de reprodução: avança o frame pelo tempo real enquanto `playing`. */
@@ -89,78 +84,21 @@ function isTyping(target: EventTarget | null): boolean {
   return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }
 
-/** Atalhos de teclado no padrão do CapCut. */
+/** Atalhos de teclado: o registro de ações (remapeáveis na janela de atalhos). */
 export function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Ctrl+S salva mesmo com o foco num campo de texto
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        void useEditor.getState().save();
-        return;
-      }
-      if (isTyping(e.target)) return;
-      const s = useEditor.getState();
-      if (!s.project) return;
-      const mod = e.ctrlKey || e.metaKey;
-      const fps = s.project.settings.fps;
-      const key = e.key.toLowerCase();
-
-      if (key === ' ') {
-        e.preventDefault();
-        togglePlay();
-      } else if (mod && key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        s.undo();
-      } else if (mod && (key === 'y' || (key === 'z' && e.shiftKey))) {
-        e.preventDefault();
-        s.redo();
-      } else if (mod && key === 'd') {
-        e.preventDefault();
-        duplicateSelected();
-      } else if ((mod && key === 'b') || (!mod && key === 's')) {
-        e.preventDefault();
-        splitAtPlayhead();
-      } else if (key === 'delete' || key === 'backspace') {
-        e.preventDefault();
-        deleteSelected();
-      } else if (key === 'arrowleft' || key === 'arrowright') {
-        e.preventDefault();
-        const step = e.shiftKey ? fps : 1;
-        s.setFrame(s.frame + (key === 'arrowleft' ? -step : step));
-      } else if (key === 'home') {
-        s.setFrame(0);
-      } else if (key === 'end') {
-        s.setFrame(projectDuration(s.project));
-      } else if (key === 'escape') {
-        s.select(null);
-      } else if (!mod && key === 'v') {
-        s.set({ tool: 'select' });
-      } else if (!mod && key === 'h') {
-        s.set({ tool: 'hand' });
-      } else if (key === '=' || key === '+') {
-        s.set({ pxPerFrame: Math.min(24, s.pxPerFrame * 1.4) });
-      } else if (key === '-') {
-        s.set({ pxPerFrame: Math.max(0.05, s.pxPerFrame / 1.4) });
-      }
+      // a janela de atalhos está gravando uma tecla nova
+      if (document.body.dataset.capturingShortcut) return;
+      const combo = comboOf(e);
+      if (!combo) return;
+      const action = actionFor(combo);
+      if (!action) return;
+      if (!action.global && (isTyping(e.target) || !useEditor.getState().project)) return;
+      e.preventDefault();
+      action.run();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 }
-
-export const SHORTCUTS: [string, string][] = [
-  ['Ctrl+S', 'Salvar alterações'],
-  ['Espaço', 'Reproduzir / pausar'],
-  ['S  ou  Ctrl+B', 'Dividir no playhead'],
-  ['Delete', 'Excluir clipe'],
-  ['Ctrl+D', 'Duplicar clipe'],
-  ['Ctrl+Z / Ctrl+Shift+Z', 'Desfazer / refazer'],
-  ['← / →', 'Frame anterior / próximo (Shift: 1 s)'],
-  ['Home / End', 'Início / fim'],
-  ['+ / −', 'Zoom da timeline'],
-  ['Ctrl+roda', 'Zoom (timeline ou canvas)'],
-  ['V / H', 'Ferramenta selecionar / mover tela'],
-  ['Duplo clique', 'Editar texto no canvas'],
-  ['Esc', 'Tirar seleção'],
-];

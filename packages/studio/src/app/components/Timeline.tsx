@@ -5,7 +5,7 @@ import { projectDuration, type Asset, type Clip, type Project, type Track } from
 import { assetUrl } from '../api';
 import { dropPayload, hasPayload, readPayload } from '../dnd';
 import { PEAKS_PER_SECOND, usePeaks, useThumbnail } from '../media';
-import { clipEnd, moveClip, trimClip } from '../ops';
+import { clipEnd, moveClip, moveClips, trimClip } from '../ops';
 import { useEditor } from '../store';
 import { formatClock, formatShort } from '../time';
 import { MAX_PPF, MIN_PPF } from './TimelineToolbar';
@@ -15,11 +15,14 @@ const SNAP_PX = 8;
 const ROW_H: Record<Track['kind'], number> = { main: 64, overlay: 44, text: 36, audio: 48, effect: 36 };
 const TICK_STEPS_SEC = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
 
-type Ghost = { id: string; start: number; trackId: string | 'new' };
+/** Prévia do arraste: o clipe puxado (e, em grupo, o deslocamento aplicado aos outros). */
+type Ghost = { id: string; start: number; trackId: string | 'new'; group?: string[]; delta?: number };
 type Drag =
-  | { kind: 'move'; id: string; x0: number; y0: number; start0: number; trackId0: string; moved: boolean }
+  | { kind: 'move'; id: string; x0: number; y0: number; start0: number; trackId0: string; moved: boolean; group: string[] | null }
   | { kind: 'trim'; id: string; edge: 'start' | 'end'; x0: number; edge0: number }
-  | { kind: 'scrub' };
+  | { kind: 'scrub' }
+  | { kind: 'box'; x0: number; y0: number; x1: number; y1: number; additive: boolean; moved: boolean };
+type Box = { left: number; top: number; width: number; height: number };
 
 /** Ordem de exibição: trilhas visuais de cima (última desenhada) para baixo, depois áudio. */
 function displayTracks(p: Project): Track[] {
@@ -45,7 +48,9 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
   const ppf = useEditor((s) => s.pxPerFrame);
   const snapping = useEditor((s) => s.snapping);
   const selectedId = useEditor((s) => s.selectedClipId);
-  const { select, setFrame, apply, beginGesture, applyFromBase, endGesture, set } = useEditor.getState();
+  const selectedIds = useEditor((s) => s.selectedClipIds);
+  const { select, selectMany, setFrame, apply, beginGesture, applyFromBase, endGesture, set } = useEditor.getState();
+  const [box, setBox] = useState<Box | null>(null);
 
   const [ghost, setGhost] = useState<Ghost | null>(null);
   const [snapLine, setSnapLine] = useState<number | null>(null);
@@ -128,9 +133,24 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
   const onClipPointerDown = (e: RPointerEvent, clip: Clip, track: Track) => {
     if (e.button !== 0) return;
     e.stopPropagation();
-    select(clip.id);
+    // Ctrl/Shift: inclui ou tira da seleção, sem arrastar
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      select(clip.id, 'toggle');
+      return;
+    }
+    const ids = useEditor.getState().selectedClipIds;
+    const group = ids.length > 1 && ids.includes(clip.id) ? ids : null;
+    if (group) useEditor.setState({ selectedClipId: clip.id });
+    else select(clip.id);
     if (track.locked || clip.locked) return;
-    drag.current = { kind: 'move', id: clip.id, x0: e.clientX, y0: e.clientY, start0: clip.start, trackId0: track.id, moved: false };
+    drag.current = { kind: 'move', id: clip.id, x0: e.clientX, y0: e.clientY, start0: clip.start, trackId0: track.id, moved: false, group };
+    scrollRef.current?.setPointerCapture(e.pointerId);
+  };
+
+  /** Arrastar no vazio de uma trilha: retângulo de seleção. Clique simples: tira a seleção e move o playhead. */
+  const onLanePointerDown = (e: RPointerEvent) => {
+    if (e.button !== 0) return;
+    drag.current = { kind: 'box', x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY, additive: e.ctrlKey || e.metaKey || e.shiftKey, moved: false };
     scrollRef.current?.setPointerCapture(e.pointerId);
   };
 
@@ -154,6 +174,14 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
   const onPointerMove = (e: RPointerEvent) => {
     const d = drag.current;
     if (!d) return;
+    if (d.kind === 'box') {
+      d.x1 = e.clientX;
+      d.y1 = e.clientY;
+      if (!d.moved && Math.hypot(d.x1 - d.x0, d.y1 - d.y0) < 4) return;
+      d.moved = true;
+      setBox({ left: Math.min(d.x0, d.x1), top: Math.min(d.y0, d.y1), width: Math.abs(d.x1 - d.x0), height: Math.abs(d.y1 - d.y0) });
+      return;
+    }
     if (d.kind === 'scrub') {
       setFrame(laneFrame(e.clientX));
       return;
@@ -173,7 +201,11 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
     const raw = Math.max(0, d.start0 + (e.clientX - d.x0) / ppf);
     const s = snap(raw, d.id, clip.duration);
     setSnapLine(s.line);
-    const g: Ghost = { id: d.id, start: Math.max(0, Math.round(s.value)), trackId: trackUnder(e.clientX, e.clientY) ?? d.trackId0 };
+    const start = Math.max(0, Math.round(s.value));
+    // em grupo, todos andam no tempo e ficam nas suas trilhas
+    const g: Ghost = d.group
+      ? { id: d.id, start, trackId: d.trackId0, group: d.group, delta: start - d.start0 }
+      : { id: d.id, start, trackId: trackUnder(e.clientX, e.clientY) ?? d.trackId0 };
     ghostRef.current = g;
     setGhost(g);
   };
@@ -184,9 +216,37 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
     setSnapLine(null);
     if (!d) return;
     if (d.kind === 'trim') endGesture();
+    if (d.kind === 'box') {
+      setBox(null);
+      if (!d.moved) {
+        if (!d.additive) select(null);
+        set({ playing: false });
+        setFrame(laneFrame(d.x0));
+        return;
+      }
+      const r = { l: Math.min(d.x0, d.x1), r: Math.max(d.x0, d.x1), t: Math.min(d.y0, d.y1), b: Math.max(d.y0, d.y1) };
+      const hits = [...(scrollRef.current?.querySelectorAll<HTMLElement>('.tl-clip[data-clip-id]') ?? [])]
+        .filter((el) => {
+          const b = el.getBoundingClientRect();
+          return b.right >= r.l && b.left <= r.r && b.bottom >= r.t && b.top <= r.b && !el.classList.contains('is-locked');
+        })
+        .map((el) => el.dataset.clipId!);
+      selectMany(hits, d.additive);
+      return;
+    }
     if (d.kind === 'move' && d.moved && ghostRef.current) {
       const g = ghostRef.current;
-      apply((p) => moveClip(p, g.id, g.start, g.trackId));
+      if (g.group) {
+        let moved = !g.delta;
+        if (g.delta) {
+          apply((p) => {
+            moved = moveClips(p, g.group!, g.delta!);
+          });
+        }
+        if (!moved) useEditor.getState().showToast('Não cabe: algum clipe do grupo bateria em outro.');
+      } else {
+        apply((p) => moveClip(p, g.id, g.start, g.trackId));
+      }
     }
     ghostRef.current = null;
     setGhost(null);
@@ -258,10 +318,7 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
               className={`tl-lane ${ghost?.trackId === 'new' || dropHint?.trackId === 'new' ? 'is-target' : ''}`}
               style={{ width: contentW }}
               data-track-id="new"
-              onPointerDown={(e) => {
-                select(null);
-                startScrub(e);
-              }}
+              onPointerDown={onLanePointerDown}
               onDragOver={(e) => onLaneDragOver(e, 'new')}
               onDragLeave={() => setDropHint(null)}
               onDrop={(e) => onLaneDrop(e, 'new')}
@@ -281,10 +338,7 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
                 className={`tl-lane ${ghost?.trackId === track.id || dropHint?.trackId === track.id ? 'is-target' : ''}`}
                 style={{ width: contentW }}
                 data-track-id={track.id}
-                onPointerDown={(e) => {
-                  select(null);
-                  startScrub(e);
-                }}
+                onPointerDown={onLanePointerDown}
                 onDragOver={(e) => onLaneDragOver(e, track.id)}
                 onDragLeave={() => setDropHint(null)}
                 onDrop={(e) => onLaneDrop(e, track.id)}
@@ -300,15 +354,20 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
                     projectId={project.id}
                     fps={fps}
                     ppf={ppf}
-                    selected={clip.id === selectedId}
-                    dragging={clip.id === draggingId}
+                    selected={selectedIds.includes(clip.id) || clip.id === selectedId}
+                    primary={clip.id === selectedId && selectedIds.length > 1}
+                    dragging={clip.id === draggingId || !!ghost?.group?.includes(clip.id)}
                     locked={track.locked}
                     onPointerDown={(e) => onClipPointerDown(e, clip, track)}
                     onTrimStart={(e) => onTrimPointerDown(e, clip, 'start')}
                     onTrimEnd={(e) => onTrimPointerDown(e, clip, 'end')}
                   />
                 ))}
-                {ghost?.trackId === track.id && <GhostBlock ghost={ghost} project={project} ppf={ppf} />}
+                {ghost?.group
+                  ? track.clips
+                      .filter((c) => ghost.group!.includes(c.id) && track.kind !== 'main')
+                      .map((c) => <div key={`g-${c.id}`} className="tl-ghost" style={{ left: Math.max(0, c.start + (ghost.delta ?? 0)) * ppf, width: c.duration * ppf }} />)
+                  : ghost?.trackId === track.id && <GhostBlock ghost={ghost} project={project} ppf={ppf} />}
                 {dropHint?.trackId === track.id && <div className="tl-drop-caret" style={{ left: dropHint.frame * ppf }} />}
               </div>
             </div>
@@ -318,6 +377,7 @@ export function Timeline({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
             <div key={m.id} className="tl-marker" style={{ left: HEADER_W + m.frame * ppf, borderColor: m.color }} title={m.label} />
           ))}
           {snapLine !== null && <div className="tl-snapline" style={{ left: HEADER_W + snapLine * ppf }} />}
+          {box && <div className="tl-selbox" style={box} />}
           <div className="tl-playhead" style={{ left: HEADER_W + frame * ppf }}>
             <div className="tl-playhead-handle" onPointerDown={startScrub} title={formatClock(frame, fps)} />
           </div>
@@ -362,6 +422,7 @@ function ClipBlock({
   fps,
   ppf,
   selected,
+  primary,
   dragging,
   locked,
   onPointerDown,
@@ -374,6 +435,7 @@ function ClipBlock({
   fps: number;
   ppf: number;
   selected: boolean;
+  primary: boolean;
   dragging: boolean;
   locked: boolean;
   onPointerDown: (e: RPointerEvent) => void;
@@ -388,7 +450,8 @@ function ClipBlock({
 
   return (
     <div
-      className={`tl-clip type-${clip.type} ${selected ? 'is-selected' : ''} ${dragging ? 'is-dragging' : ''} ${locked ? 'is-locked' : ''}`}
+      data-clip-id={clip.id}
+      className={`tl-clip type-${clip.type} ${selected ? 'is-selected' : ''} ${primary ? 'is-primary' : ''} ${dragging ? 'is-dragging' : ''} ${locked ? 'is-locked' : ''}`}
       style={{
         left: clip.start * ppf,
         width,
