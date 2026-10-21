@@ -114,7 +114,8 @@ export const EffectSchema = z.object({
 export const TransitionSchema = z.object({
   type: z.string().min(1),
   duration: PositiveFrames,
-  easing: EasingSchema.default('easeInOut'),
+  /** Omitido: o easing próprio da pose (ex.: `expoOut` no slide, `backOut` no pop). */
+  easing: EasingSchema.optional(),
   params: z.record(z.string(), z.unknown()).default({}),
 });
 

@@ -13,6 +13,8 @@
 | SFX | −18 LUFS | 0.3–0.7 |
 | Ambience | −24 LUFS | 0.2–0.5 |
 
+With automatic ducking on (mixing.md), give the music bed its **unducked** volume (0.5–0.8) and let the compressor lower it under the voice; the 0.12–0.25 range is for projects without ducking.
+
 Normalize with ffmpeg's `loudnorm` (two-pass is better, single pass is acceptable):
 ```bash
 ffmpeg -i raw/vo-03.wav -af "loudnorm=I=-16:TP=-1.5:LRA=11" -ar 48000 -c:a pcm_s16le assets/audio/vo/vo-03.wav

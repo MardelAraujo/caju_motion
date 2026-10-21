@@ -13,13 +13,13 @@ Caju Motion ships in phases. Each phase has a "done when" test, and the [agent s
 | **F1 Local render** | `@caju-motion/renderer-node`, `@caju-motion/audio`, `caju render` / `still`, Studio Export button, golden + A/V tests in CI (Windows + Linux) | fixtures render to MP4 identical to the preview; A/V ≤ 1 frame | done |
 | **F2 Code** | `@caju-motion/sdk` (`defineProject`), `defineComponent`, component clips, Componentes tab with hot reload, `caju build` merging by `origin` | a code-only template + a component opens in the Studio, is edited, rebuilds without losing edits, and renders | done |
 | **F3 Distribution** | `create-caju` + templates, `caju doctor`, `caju skills add`, skill evals, docs in English and Portuguese with `llms.txt`, npm release | a new developer goes from zero to MP4 in under 5 minutes; an agent with the skills makes a valid video from a prompt | in progress |
-| **F4 Ecosystem** | [`@caju-motion/player`](./reference/player) (embeddable `<Player>`) ✓, [`@caju-motion/media`](./reference/media) (proxies, frame-exact WebCodecs decode) ✓, [captions/TTS](./guide/voice-captions) ✓; later: `@caju-motion/cloud` (commercial), template marketplace | — | in progress |
+| **F4 Ecosystem** | [`@caju-motion/player`](./reference/player) (embeddable `<Player>`) ✓, [`@caju-motion/media`](./reference/media) (proxies, frame-exact WebCodecs decode) ✓, [captions/TTS](./guide/voice-captions) ✓, [motion presets](./guide/animation#motion-presets) (transitions, animations, effects, overlays, adjustment layers) ✓, [audio mix](./guide/audio#ducking) (ducking, loudness, volume keyframes, pan) ✓, agent review tools (`caju snapshot`, `capture`, `beats`, `catalog`, `--json`) ✓; later: `@caju-motion/cloud` (commercial), template marketplace | — | in progress |
 
 ## Also planned
 
 - Keyframe editing on the Studio timeline.
 - Font assets (custom fonts in renders).
-- Rendering `transitionIn/Out`, `animationIn/Out/Loop` and effects, which the schema already stores.
-- Volume keyframes and `pan` in the audio mix.
+- Masks and custom transition shaders.
+- Editing transitions, animations and effects in the Studio inspector.
 
 Follow progress and discuss priorities on [GitHub](https://github.com/MardelAraujo/caju_motion/issues).

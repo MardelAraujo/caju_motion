@@ -40,7 +40,7 @@ video.ts ──caju build──▶ project.json ◀──salvar── Caju Studi
 - As trilhas empilham **de baixo para cima**: `tracks[0]` é desenhada primeiro (o fundo).
 - **Clipes da mesma trilha nunca se sobrepõem.** O que coexiste no tempo vai em trilhas separadas.
 - Clipes de áudio só em trilhas `audio`, e trilhas de áudio só têm áudio.
-- Tipos que renderizam: `text`, `shape`, `image`, `video`, `audio`, `component`. (`effect` e `adjustment` são aceitos pelo schema, mas ainda não desenham nada.)
+- Tipos de clipe: `text`, `shape`, `image`, `video`, `audio`, `component`, mais `effect` (sobreposição em tela cheia, como uma vinheta) e `adjustment` (filtra tudo o que está abaixo). Qualquer clipe visual também aceita transições, animações e efeitos ([Animação](./animation#presets-de-movimento)).
 
 Lista completa de campos: [schema do project.json](../reference/project-json).
 

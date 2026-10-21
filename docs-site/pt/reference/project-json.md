@@ -99,6 +99,7 @@ Um reel de 5 segundos: fundo, logo, título animado, locução e música de fund
 | `fps` | inteiro > 0 | — | 30 em todos os presets |
 | `background` | hex | `#000000` | |
 | `duration` | inteiro > 0 | fim do último clipe | frames |
+| `audio` | `{ ducking?, loudness? }`? | | mixagem do export: música abaixa sob a voz, loudness final ([Áudio](../guide/audio#ducking)) |
 
 ## `Asset`
 
@@ -119,6 +120,7 @@ Um reel de 5 segundos: fundo, logo, título animado, locução e música de fund
 | `kind` | `main` \| `overlay` \| `text` \| `audio` \| `effect` | — |
 | `name` | string? | |
 | `locked`, `hidden`, `muted` | boolean | `false` |
+| `role` | `voice` \| `music` \| `sfx`? | | trilhas de áudio: quem abaixa quem |
 | `clips` | `Clip[]` | `[]` |
 
 ## `Clip`
@@ -126,7 +128,7 @@ Um reel de 5 segundos: fundo, logo, título animado, locução e música de fund
 | Campo | Tipo | Padrão | Notas |
 |---|---|---|---|
 | `id` | string | — | espaço de nomes global |
-| `type` | `video` \| `image` \| `audio` \| `text` \| `shape` \| `component` \| `effect` \| `adjustment` | — | `effect`/`adjustment` ainda não desenham |
+| `type` | `video` \| `image` \| `audio` \| `text` \| `shape` \| `component` \| `effect` \| `adjustment` | — | `effect` = sobreposição em tela cheia (`props.effect`); `adjustment` filtra as camadas de baixo |
 | `name` | string? | | |
 | `start` | inteiro ≥ 0 | — | frame |
 | `duration` | inteiro ≥ 1 | — | frames |
@@ -138,10 +140,12 @@ Um reel de 5 segundos: fundo, logo, título animado, locução e música de fund
 | `blendMode` | `normal`, `multiply`, `screen`, `overlay`, `darken`, `lighten`, `color-dodge`, `color-burn`, `soft-light`, `hard-light`, `difference` | `normal` | |
 | `keyframes` | `{ [caminho]: Keyframe[] }` | `{}` | [Animação](../guide/animation) |
 | `props` | objeto | `{}` | por tipo (abaixo) |
-| `audio` | `{ volume ≥ 0 = 1, fadeIn = 0, fadeOut = 0, pan -1..1 = 0 }`? | | `pan` ainda não aplicado |
+| `audio` | `{ volume ≥ 0 = 1, fadeIn = 0, fadeOut = 0, pan -1..1 = 0 }`? | | `audio.volume` aceita keyframes |
 | `origin` | `editor` \| `code` | `editor` | |
 | `locked`, `hidden` | boolean | `false` | |
-| `effects`, `transitionIn/Out`, `animationIn/Out/Loop` | | | gravados, **ainda não renderizados** |
+| `effects` | `{ id, type, enabled = true, params }[]` | `[]` | filtros CSS ([Animação → presets de movimento](../guide/animation#presets-de-movimento)) |
+| `transitionIn`, `transitionOut` | `{ type, duration, easing = easeInOut, params }`? | | pose de entrada/saída |
+| `animationIn`, `animationOut`, `animationLoop` | `{ preset, duration, params }`? | | pose de entrada/saída; loop (`duration` = período) |
 
 ### `transform`
 

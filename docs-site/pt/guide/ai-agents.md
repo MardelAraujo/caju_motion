@@ -33,14 +33,19 @@ O `npx caju …` funciona quando os pacotes estiverem no npm. Até lá, use `npm
 
 | Skill | Papel |
 |---|---|
-| `caju-best-practices` | Roteador + regras de ouro + fluxo ponta a ponta. O agente carrega esta primeiro |
+| `caju-best-practices` | Roteador + regras de ouro + entrevista de intenção (`BRIEF.md`) + ciclo de revisão + preferências e receitas salvas. O agente carrega esta primeiro |
 | `caju-setup` | Instalação, ambiente, diagnóstico de Node/FFmpeg/porta/navegador |
 | `caju-assets` | Estrutura de pastas, formatos, tamanhos, registro de assets |
-| `caju-audio` | Trilhas de áudio, loudness, fades, ducking, tempo pela locução |
-| `caju-authoring` | `project.json` e `video.ts` (`defineProject`), keyframes, layout, safe areas |
+| `caju-audio` | Trilhas de áudio e papéis, loudness, fades, ducking automático, tempo pela locução |
+| `caju-authoring` | `project.json` e `video.ts` (`defineProject`), keyframes, transições/efeitos, layout, safe areas, `STORYBOARD.md` |
 | `caju-components` | Componentes React determinísticos com `@caju-motion/core` |
 | `caju-studio` | Convivência com pessoas no Studio sem perder edições |
-| `caju-render` | Configurações de exportação e verificação do resultado |
+| `caju-render` | Configurações de exportação, folhas de contato e verificação do resultado |
+| `caju-creative` | Estilo da casa (o que deixa um vídeo com cara de gerado), princípios de movimento, tipografia, paletas, transições |
+| `caju-explainer` | Fluxo: tema ou roteiro → vídeo explicativo narrado (voz, legendas, música com ducking) |
+| `caju-site-to-video` | Fluxo: URL → `caju capture` → vídeo com as telas e a marca reais do site |
+| `caju-music-to-video` | Fluxo: música → `caju beats` → cortes na batida |
+| `caju-captioned-reel` | Fluxo: fala gravada → `caju transcribe` → reel legendado (inclusive estilo karaokê) |
 
 As skills são em inglês (os agentes rendem melhor assim) e cada uma tem uma tabela **Availability** que separa o que existe hoje do que está planejado, para o agente nunca rodar um comando que ainda não existe. Todo JSON de projeto das skills é validado pelo schema no CI.
 
@@ -51,7 +56,15 @@ As skills são em inglês (os agentes rendem melhor assim) e cada uma tem uma ta
 3. **Só determinístico:** nada de `Math.random`, `Date`, timers ou transições CSS no código de render.
 4. **Nunca destruir edições do Studio:** compare `meta.updatedAt` com `meta.createdAt`; use o `caju build`, que mescla.
 5. **Assets dentro da pasta do projeto,** com `src` relativo.
-6. **Verifique, não chute:** corrija todo erro do validador antes de dar o trabalho por pronto.
+6. **Verifique, depois olhe:** corrija todo erro do `caju check`, depois rode `caju snapshot --at-cuts` e olhe a folha de contato antes de dar o trabalho por pronto.
+
+## Como o agente trabalha
+
+1. **Lê o que já existe:** `STORYBOARD.md` / `BRIEF.md` para retomar um projeto, `.caju/preferences.json` para a sua marca, voz e estilo de legenda.
+2. **Pergunta só o que falta** (uma pergunta curta por campo, cada uma com uma resposta recomendada) e depois pergunta se você quer aprovar o storyboard e se ele deve trabalhar sozinho ou parar para você.
+3. **Planeja** no `STORYBOARD.md`, monta, roda o `caju check`, gera uma folha de contato com o `caju snapshot` e corrige o que vê.
+4. **Pergunta uma vez:** "renderizo agora ou o que muda?", depois renderiza e confere o arquivo.
+5. **Lembra**, se você concordar: preferências e uma receita reutilizável para "faz outro igual".
 
 ## Exemplos de pedidos
 

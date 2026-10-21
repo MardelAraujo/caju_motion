@@ -56,9 +56,10 @@ export default defineProject(
 
 ## API reference
 
-### `defineProject({ id, name?, format, background?, duration? }, build)`
+### `defineProject({ id, name?, format, background?, duration?, audio? }, build)`
 - `format` is a `FormatId`: it sets size and fps.
 - `duration` is in frames; omit it to end at the last clip.
+- `audio: { ducking: { enabled: true }, loudness: { enabled: true, targetLufs: -14 } }` turns on the export mix: music ducks under the voice, final loudness normalized (caju-audio → mixing).
 - `build(p)` may be `async`, for example to measure media with `measureMedia(file)` (bundled FFmpeg, no ffprobe).
 - Captions: `s.captions(cues, style, { x, y, track: 'Legendas', offsetSec })` adds one text clip per line, with times in seconds from the scene start. Get cues with `readCaptions('…/locucao.words.json' | '.srt' | '.vtt')` from `@caju-motion/voice` (caju-audio → voiceover-timing).
 
@@ -80,6 +81,8 @@ export default defineProject(
 | `s.rect(w, h, { fill?, stroke?, sw?, ellipse? }, el)` | shape |
 | `s.image(assetId, w, h, el)` | the asset must be registered first |
 | `s.component(name, props, el)` | custom component. `x`/`y` default to the frame center; `el.width`/`el.height` set the box (defaults come from the component) |
+| `s.overlay(effect, params, el)` | full-frame `effect` clip: `vignette`, `letterbox`, `colorOverlay`, `flash`, `grain` ([motion.md](motion.md)) |
+| `s.adjust(effects, el)` | adjustment clip: its effects filter every layer below it. Declare it after those layers |
 | `s.from`, `s.to`, `s.duration` | scene bounds |
 
 `el` (ElOpts):
@@ -89,6 +92,9 @@ export default defineProject(
 - `enter: { at, dur = 18, rise?, dx?, pop?, easing = 'softOut' }`: produces opacity 0 → 1, plus y + rise → y, x + dx → x, and scale × 0.6 → scale with `backOut`.
 - `exit`: frames of fade-out, or `false`. Applies when the clip reaches the scene end; defaults to the scene's `exit`.
 - `kf: { 'transform.x': [[frame, value, easing?], …] }`: frames relative to the **scene**.
+- `transitionIn`, `transitionOut`, `animIn`, `animOut`: `{ type, dur, easing?, params? }` (poses `fade`, `slide`, `rise`, `drop`, `zoom`, `pop`, `blur`, `spin`, `wipe`, `iris`). Set `exit: false` on a clip that has its own exit.
+- `loop: { type, dur, amplitude? }` (`pulse`, `float`, `wiggle`, `breathe`, `spin`; `dur` = period in frames).
+- `effects: [{ type, params?, id? }]` (CSS filters; see [motion.md](motion.md)).
 - `track`: a named track.
 - `name`, `anchorX`, `anchorY`, `scale`, `rotation`, `opacity`, `flipX`, `blend`, `locked`.
 
@@ -97,7 +103,7 @@ export default defineProject(
 2. Named tracks, in `p.tracks()` order. Overlaps spill to "name 2".
 3. Unnamed visual layers `camada-N`: the N-th shape/image of each scene shares layer N.
 4. Unnamed text layers `texto-N`.
-5. Audio: `locucao`, then `audio-<prefix>-<n>`.
+5. Audio: `locucao`, then `audio-<prefix>-<n>`. Roles are set from the prefix: `vo-` → `voice`, `mus-`/`amb-` → `music`, `sfx-` → `sfx`.
 
 **An element that spans several scenes must use a named track**, or it collides with the next scene's layer.
 

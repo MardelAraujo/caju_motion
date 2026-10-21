@@ -22,7 +22,9 @@ projects/<id>/
       amb/       ambience / room tone
     fonts/       woff2 (reserved; see Availability)
     data/        json/csv used by generator scripts (not read by the renderer)
+    capture/     written by `caju capture <url> --project <id>`: page.png, viewport.png, tokens.json, text.txt, images.json (caju-site-to-video)
 ```
+- `assets/data/` also receives `<name>.words.json` / `.srt` from `caju tts` / `caju transcribe` and `<name>.beats.json` from `caju beats`.
 - Files the Studio uploads land in `assets/` root with a sanitized name. That is valid; move them only if the user asks.
 - **Names:** lowercase kebab-case, ASCII, no spaces, stable over time (`logo-acme.svg`, `vo-03-pricing.mp3`). The Linux render is case-sensitive.
 - **Asset id** = file name without extension, prefixed by kind when ambiguous (`img-hero`, `vo-03`).

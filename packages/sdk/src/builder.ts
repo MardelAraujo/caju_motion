@@ -69,7 +69,7 @@ export type MotionOpts = { type: string; dur: number; easing?: EasingPreset; par
 
 /** Campos de movimento/efeitos do clipe a partir das opções do elemento. */
 function motionFields(el: ElOpts, clipId: string): Partial<ClipInput> {
-  const tr = (m?: MotionOpts) => m && { type: m.type, duration: m.dur, easing: m.easing ?? undefined, params: m.params ?? {} };
+  const tr = (m?: MotionOpts) => m && { type: m.type, duration: m.dur, ...(m.easing ? { easing: m.easing } : {}), params: m.params ?? {} };
   const an = (m?: MotionOpts) => m && { preset: m.type, duration: m.dur, params: { ...(m.params ?? {}), ...(m.easing ? { easing: m.easing } : {}) } };
   const out: Partial<ClipInput> = {};
   if (el.transitionIn) out.transitionIn = tr(el.transitionIn);

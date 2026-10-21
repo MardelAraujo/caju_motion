@@ -33,14 +33,19 @@ npx caju skills add --agents all         # also point other agents at them via A
 
 | Skill | Role |
 |---|---|
-| `caju-best-practices` | Router + golden rules + end-to-end workflow. The agent loads it first |
+| `caju-best-practices` | Router + golden rules + intent interview (`BRIEF.md`) + review loop + saved preferences and recipes. The agent loads it first |
 | `caju-setup` | Install, environment, diagnosing Node/FFmpeg/port/browser problems |
 | `caju-assets` | Folder structure, formats, sizes, registering assets |
-| `caju-audio` | Audio tracks, loudness, fades, ducking, timing to narration |
-| `caju-authoring` | `project.json` and `video.ts` (`defineProject`), keyframes, layout, safe areas |
+| `caju-audio` | Audio tracks and roles, loudness, fades, automatic ducking, timing to narration |
+| `caju-authoring` | `project.json` and `video.ts` (`defineProject`), keyframes, transitions/effects, layout, safe areas, `STORYBOARD.md` |
 | `caju-components` | Deterministic React components with `@caju-motion/core` |
 | `caju-studio` | Coexisting with humans in the Studio without losing their edits |
-| `caju-render` | Export settings and verifying the output |
+| `caju-render` | Export settings, contact sheets and verifying the output |
+| `caju-creative` | House style (what makes a video look generated), motion principles, typography, palettes, transitions |
+| `caju-explainer` | Workflow: topic or script → narrated explainer (voice, captions, ducked music) |
+| `caju-site-to-video` | Workflow: URL → `caju capture` → video with the site's real screens and brand |
+| `caju-music-to-video` | Workflow: song → `caju beats` → cuts on the beat |
+| `caju-captioned-reel` | Workflow: recorded speech → `caju transcribe` → captioned reel (incl. karaoke style) |
 
 The skills are in English (agents do better that way) and each has an **Availability** table separating what exists today from what is planned, so the agent never runs a command that doesn't exist yet. Every project JSON in the skills is validated against the schema in CI.
 
@@ -51,7 +56,15 @@ The skills are in English (agents do better that way) and each has an **Availabi
 3. **Deterministic only:** no `Math.random`, `Date`, timers or CSS transitions in render code.
 4. **Never destroy Studio edits:** check `meta.updatedAt` vs `meta.createdAt`; use `caju build`, which merges.
 5. **Assets live inside the project folder,** referenced by relative `src`.
-6. **Check, don't guess:** fix every validator error before calling the work done.
+6. **Check, then look:** fix every `caju check` error, then `caju snapshot --at-cuts` and look at the contact sheet before calling the work done.
+
+## How the agent works
+
+1. **Reads what exists first:** `STORYBOARD.md` / `BRIEF.md` to resume a project, `.caju/preferences.json` for your brand, voice and caption style.
+2. **Asks only what is missing** (one short question per field, each with a recommended answer), then asks whether you want to approve the storyboard and whether it should work autonomously or stop for you.
+3. **Plans** in `STORYBOARD.md`, builds, runs `caju check`, renders a contact sheet with `caju snapshot` and fixes what it sees.
+4. **Asks once:** "render now, or what should change?", then renders and verifies the file.
+5. **Remembers**, if you agree: preferences and a reusable recipe for "make another one like that".
 
 ## Example prompts
 

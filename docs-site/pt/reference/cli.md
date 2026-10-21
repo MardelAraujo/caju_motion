@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Referência do comando caju - studio, new, build, check, render, still, doctor e skills add - com todas as flags, mais o create-caju.
+description: Referência do comando caju - studio, new, build, check, render, still, snapshot, capture, beats, catalog, comandos de voz, doctor e skills add - com todas as flags, mais o create-caju.
 ---
 
 # CLI
@@ -24,9 +24,13 @@ caju --version | -v
 | `caju studio` | abre o Caju Studio no navegador |
 | `caju new <id>` | cria um projeto vazio |
 | `caju build [ids...]` | gera o `project.json` a partir do `video.ts`, preservando as edições do Studio |
-| `caju check [ids...]` | valida projetos: schema, assets no disco, componentes, determinismo |
+| `caju check [ids...]` | valida projetos: schema, assets no disco, componentes, determinismo, lint `CAJU_*` |
 | `caju render <id>` | exporta vídeo (Chromium + FFmpeg) |
 | `caju still <id> --frame <n>` | exporta um quadro como imagem |
+| `caju snapshot <id>` | renderiza quadros-chave numa folha de contato para revisão |
+| `caju capture <url>` | captura um site e extrai cores, fontes, textos e imagens |
+| `caju beats <audio>` | estima BPM, batidas e tempos fortes de uma música |
+| `caju catalog` | lista transições, loops, efeitos, sobreposições, componentes e templates |
 | `caju tts <id>` | gera a locução e as legendas |
 | `caju voices` | lista os engines e perfis de voz do VoiceStudio |
 | `caju transcribe <id>` | transcreve fala gravada em legendas |
@@ -74,10 +78,12 @@ Veja [Vídeo por código](../guide/video-by-code) e [mesclagem](../guide/studio#
 ### `caju check`
 
 ```bash
-caju check [ids...] [--dir projects] [--components <pasta>]
+caju check [ids...] [--dir projects] [--components <pasta>] [--json]
 ```
 
 Valida todos os projetos (ou os ids dados): as [regras do schema](./project-json#regras-de-validacao), assets no disco, componentes que existem e compilam, e a lint de determinismo em `components/`. Sai com código diferente de zero se houver erros.
+
+Também mostra avisos `CAJU_*` para o que é válido mas não vai sair como esperado: nomes de movimento desconhecidos, entrada + saída maiores que o clipe, âncoras fora do quadro, texto na área insegura, texto pequeno ou com pouco contraste, trechos sem nada na tela. Lista completa: [Animação → avisos do lint](../guide/animation#avisos-do-lint). `--json` imprime erros e avisos como dados.
 
 ### `caju media`
 
@@ -100,7 +106,7 @@ Gera a locução, põe numa trilha "Locução" e cria as legendas numa trilha "L
 ### `caju voices`
 
 ```bash
-caju voices
+caju voices [--json]
 ```
 
 Lista os engines (`--model`) e os perfis de voz (`--voice`) do VoiceStudio em `VOICESTUDIO_URL`. Os perfis são criados, clonados ou desenhados no app do VoiceStudio.
@@ -121,6 +127,64 @@ caju captions <id> --from legenda.srt|.vtt|.words.json [--offset s]
 ```
 
 Importa legendas como clipes de texto editáveis (substituindo as importadas antes do mesmo arquivo).
+
+### `caju snapshot`
+
+```bash
+caju snapshot <id> [--frames 0,45,90] [--at-cuts] [--cols 4] [--resolution 540] [--out arquivo.png]
+                   [--json] [--serve-url <url>] [--components <pasta>] [--dir projects]
+```
+
+Renderiza quadros-chave numa única sessão do navegador e monta uma **folha de contato** para revisão: `projects/<id>/boards/snapshot.png` (padrão), mais `boards/snapshot.json` dizendo o frame, o tempo e o motivo de cada quadro. Os agentes abrem o PNG para revisar o próprio trabalho antes de perguntar a você.
+
+| Flag | Padrão | Significado |
+|---|---|---|
+| `--frames` | frame 0, o meio de cada clipe das trilhas visuais (sem repetir), marcadores, último frame | frames exatos, separados por vírgula |
+| `--at-cuts` | desligado | também captura corte − 3 e corte + 6 frames em cada fronteira entre clipes seguidos nas trilhas principal/sobreposição (0,1 s / 0,2 s a 30 fps) |
+| `--cols` | `4` | quadros por linha |
+| `--resolution` | `540` | lado menor de cada quadro, px |
+| `--out` | `boards/snapshot.png` | caminho da folha (o `.json` vai ao lado) |
+| `--json` | desligado | imprime a lista de quadros em JSON |
+
+### `caju capture`
+
+```bash
+caju capture <url> --project <id> [--width 1440] [--height 900] [--dir projects]
+```
+
+Abre um site no navegador do render e grava em `projects/<id>/assets/capture/`:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `page.png` | captura da página inteira |
+| `viewport.png` | a primeira tela (`--width` × `--height`) |
+| `tokens.json` | `{ colors: [{ hex, role: background\|text\|accent, count }], fonts: [{ family, weights, role: heading\|body }], title, description }` |
+| `text.txt` | texto visível, títulos primeiro |
+| `images.json` | imagens grandes e candidatos a logo: `src`, `alt`, `width`, `height` |
+
+Use as capturas e os tokens de marca reais no vídeo em vez de redesenhar o site.
+
+### `caju beats`
+
+```bash
+caju beats <arquivo-de-audio> [--project <id>] [--out arquivo] [--dir projects]
+```
+
+Decodifica o áudio com o FFmpeg e estima o andamento e os tempos das batidas. Grava `assets/data/<nome>.beats.json` no projeto (ou `--out`):
+
+```json
+{ "bpm": 122, "beats": [0.49, 0.98, 1.47], "downbeats": [0.49, 2.46], "durationSec": 31.2, "confidence": 0.82 }
+```
+
+Tempos em segundos; o frame de uma batida é `Math.round(seg * fps)`. `confidence` baixa indica pulso fraco ou irregular.
+
+### `caju catalog`
+
+```bash
+caju catalog [--query "texto"] [--kind transition|loop|effect|overlay|component|template] [--json]
+```
+
+Lista o que dá para usar por nome: poses embutidas (transições e animações de entrada/saída), loops, efeitos e sobreposições com rótulos e parâmetros, os seus componentes em `components/` e os templates do `create-caju`. `--query` busca em nomes, rótulos e descrições. Procure aqui antes de construir à mão um visual com nome.
 
 ### `caju render`
 
@@ -149,10 +213,10 @@ caju still <id> --frame <n> [--out quadro.png] [--resolution 1080] [--serve-url 
 ### `caju doctor` {#doctor}
 
 ```bash
-caju doctor [--dir projects] [--components <pasta>]
+caju doctor [--dir projects] [--components <pasta>] [--json]
 ```
 
-Diagnostica o ambiente e mostra uma dica para cada problema: Node.js, npm, FFmpeg e um navegador Chromium para o render, o build do Studio, as pastas de projetos e de componentes, permissão de escrita, espaço em disco e memória, se o VoiceStudio (o provedor de voz) está respondendo, com os engines e perfis de voz, e quais chaves de voz paga estão definidas. Sai com código diferente de zero quando uma verificação falha (avisos não contam). Rode primeiro quando algo não sobe.
+Diagnostica o ambiente e mostra uma dica para cada problema: Node.js, npm, FFmpeg e um navegador Chromium para o render, o build do Studio, as pastas de projetos e de componentes, permissão de escrita, espaço em disco e memória, se o VoiceStudio (o provedor de voz) está respondendo, com os engines e perfis de voz, e quais chaves de voz paga estão definidas. Sai com código diferente de zero quando uma verificação falha (avisos não contam). Rode primeiro quando algo não sobe. `--json` imprime as verificações como dados.
 
 ### `caju skills add`
 

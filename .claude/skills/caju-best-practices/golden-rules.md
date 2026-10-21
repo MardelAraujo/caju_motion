@@ -36,5 +36,5 @@ The repo enforces this with `npm run lint` (`scripts/lint-determinism.ts`).
 - No absolute paths. No `http(s)://` URLs: the render must work offline and be reproducible.
 
 ## 6. Validate, then look
-- `check` catches schema and consistency errors.
-- It cannot judge looks. Open the Studio (or a single-frame render) and inspect the key frames: first frame, every scene change, last frame.
+- `check` catches schema and consistency errors, plus `CAJU_*` warnings for things that are valid but come out wrong (unknown motion names, off-frame or unsafe text, tiny text, low contrast, empty stretches).
+- It cannot judge looks. Run `caju snapshot <id> --at-cuts` and **open the contact sheet**: first frame, every clip, every cut, last frame. Fix what you see before asking the user ([review-loop.md](review-loop.md)).

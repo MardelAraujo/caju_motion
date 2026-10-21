@@ -99,6 +99,7 @@ A 5-second reel: background, logo, animated title, voice-over and a music bed.
 | `fps` | int > 0 | — | 30 for every preset |
 | `background` | hex | `#000000` | |
 | `duration` | int > 0 | end of last clip | frames |
+| `audio` | `{ ducking?, loudness? }`? | | export mix: music ducked under voice, final loudness ([Audio](../guide/audio#ducking)) |
 
 ## `Asset`
 
@@ -119,6 +120,7 @@ A 5-second reel: background, logo, animated title, voice-over and a music bed.
 | `kind` | `main` \| `overlay` \| `text` \| `audio` \| `effect` | — |
 | `name` | string? | |
 | `locked`, `hidden`, `muted` | boolean | `false` |
+| `role` | `voice` \| `music` \| `sfx`? | | audio tracks: who ducks whom |
 | `clips` | `Clip[]` | `[]` |
 
 ## `Clip`
@@ -126,7 +128,7 @@ A 5-second reel: background, logo, animated title, voice-over and a music bed.
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `id` | string | — | global namespace |
-| `type` | `video` \| `image` \| `audio` \| `text` \| `shape` \| `component` \| `effect` \| `adjustment` | — | `effect`/`adjustment` render nothing yet |
+| `type` | `video` \| `image` \| `audio` \| `text` \| `shape` \| `component` \| `effect` \| `adjustment` | — | `effect` = full-frame overlay (`props.effect`); `adjustment` filters the layers below |
 | `name` | string? | | |
 | `start` | int ≥ 0 | — | frame |
 | `duration` | int ≥ 1 | — | frames |
@@ -138,10 +140,12 @@ A 5-second reel: background, logo, animated title, voice-over and a music bed.
 | `blendMode` | `normal`, `multiply`, `screen`, `overlay`, `darken`, `lighten`, `color-dodge`, `color-burn`, `soft-light`, `hard-light`, `difference` | `normal` | |
 | `keyframes` | `{ [path]: Keyframe[] }` | `{}` | [Animation](../guide/animation) |
 | `props` | object | `{}` | type-specific (below) |
-| `audio` | `{ volume ≥ 0 = 1, fadeIn = 0, fadeOut = 0, pan -1..1 = 0 }`? | | `pan` not applied yet |
+| `audio` | `{ volume ≥ 0 = 1, fadeIn = 0, fadeOut = 0, pan -1..1 = 0 }`? | | `audio.volume` can be keyframed |
 | `origin` | `editor` \| `code` | `editor` | |
 | `locked`, `hidden` | boolean | `false` | |
-| `effects`, `transitionIn/Out`, `animationIn/Out/Loop` | | | stored, **not rendered yet** |
+| `effects` | `{ id, type, enabled = true, params }[]` | `[]` | CSS filters ([Animation → motion presets](../guide/animation#motion-presets)) |
+| `transitionIn`, `transitionOut` | `{ type, duration, easing = easeInOut, params }`? | | entrance/exit pose |
+| `animationIn`, `animationOut`, `animationLoop` | `{ preset, duration, params }`? | | entrance/exit pose; loop (`duration` = period) |
 
 ### `transform`
 

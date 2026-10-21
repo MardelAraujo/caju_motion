@@ -20,7 +20,9 @@ Requirements:
 ```bash
 caju render <id> [--out out.mp4] [--format mp4-h264] [--resolution 1080] [--fps 30] [--quality high] [--no-audio] [--concurrency 2] [--dir projects]
 caju still  <id> --frame <n> [--out frame.png] [--resolution 1080] [--dir projects]
+caju snapshot <id> [--frames 0,45,90] [--at-cuts] [--cols 4] [--resolution 540] [--out file] [--json]
 ```
+- `caju snapshot` renders many key frames in one browser session and composes a contact sheet: `projects/<id>/boards/snapshot.png` + `boards/snapshot.json` (tile → frame, time, reason). Default tiles: frame 0, the middle of each visual clip, markers, the last frame; `--at-cuts` adds cut−3 / cut+6 around every boundary. Use it before rendering to review (caju-best-practices → review-loop.md), and open the PNG to look at it.
 - The default output is `<project>/renders/<id>-<timestamp>.<ext>`.
 - Ctrl+C cancels a render and deletes the partial file.
 - `--serve-url http://localhost:3700` reuses a Studio that is already running instead of starting an internal server.
@@ -44,5 +46,6 @@ Settings: [export-settings.md](export-settings.md). Verification: [verify-output
 |---|---|
 | MP4 H.264/H.265, MOV ProRes, WebM VP9, GIF, PNG sequence | ✓ |
 | Stills (PNG) | ✓ |
+| Contact sheets for review (`caju snapshot`) | ✓ |
 | Custom component clips in renders | ✓ (loaded from `components/`) |
 | Cloud / distributed render | **Not available** (`@caju-motion/cloud` is postponed) |

@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: Reference for the caju command - studio, new, build, check, render, still, doctor and skills add - with every flag, plus create-caju.
+description: Reference for the caju command - studio, new, build, check, render, still, snapshot, capture, beats, catalog, voice commands, doctor and skills add - with every flag, plus create-caju.
 ---
 
 # CLI
@@ -24,9 +24,13 @@ caju --version | -v
 | `caju studio` | opens Caju Studio in the browser |
 | `caju new <id>` | creates an empty project |
 | `caju build [ids...]` | generates `project.json` from `video.ts`, keeping Studio edits |
-| `caju check [ids...]` | validates projects: schema, assets on disk, components, determinism |
+| `caju check [ids...]` | validates projects: schema, assets on disk, components, determinism, `CAJU_*` lint |
 | `caju render <id>` | exports a video (Chromium + FFmpeg) |
 | `caju still <id> --frame <n>` | exports one frame as an image |
+| `caju snapshot <id>` | renders key frames into a contact sheet for review |
+| `caju capture <url>` | screenshots a website and extracts its colors, fonts, text and images |
+| `caju beats <audio>` | estimates BPM, beats and downbeats of a song |
+| `caju catalog` | lists transitions, loops, effects, overlays, components and templates |
 | `caju tts <id>` | generates the voice-over and its captions |
 | `caju voices` | lists the VoiceStudio engines and voice profiles |
 | `caju transcribe <id>` | transcribes recorded speech into captions |
@@ -74,10 +78,12 @@ See [Video by code](../guide/video-by-code) and [merging](../guide/studio#confli
 ### `caju check`
 
 ```bash
-caju check [ids...] [--dir projects] [--components <dir>]
+caju check [ids...] [--dir projects] [--components <dir>] [--json]
 ```
 
 Validates every project (or the given ids): the [schema rules](./project-json#validation-rules), assets on disk, components that exist and compile, and the determinism lint on `components/`. Exits non-zero on errors.
+
+It also prints `CAJU_*` warnings for things that are valid but won't look as intended: unknown motion names, entrance + exit longer than the clip, off-frame anchors, text in the unsafe area, text too small or with low contrast, stretches with nothing on screen. Full list: [Animation → lint warnings](../guide/animation#lint-warnings). `--json` prints errors and warnings as data.
 
 ### `caju media`
 
@@ -100,7 +106,7 @@ Generates the voice-over, puts it on a "Locução" track and adds the captions o
 ### `caju voices`
 
 ```bash
-caju voices
+caju voices [--json]
 ```
 
 Lists the engines (`--model`) and voice profiles (`--voice`) of the VoiceStudio at `VOICESTUDIO_URL`. Profiles are created, cloned or designed in the VoiceStudio app.
@@ -121,6 +127,64 @@ caju captions <id> --from legenda.srt|.vtt|.words.json [--offset s]
 ```
 
 Imports captions as editable text clips (replacing the ones previously imported from the same file).
+
+### `caju snapshot`
+
+```bash
+caju snapshot <id> [--frames 0,45,90] [--at-cuts] [--cols 4] [--resolution 540] [--out file.png]
+                   [--json] [--serve-url <url>] [--components <dir>] [--dir projects]
+```
+
+Renders stills of key frames in one browser session and composes a **contact sheet** for review: `projects/<id>/boards/snapshot.png` (default), plus `boards/snapshot.json` mapping each tile to its frame, time and reason. Agents open the PNG to review their own work before asking you.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--frames` | frame 0, the middle of each clip on the visual tracks (deduplicated), markers, last frame | exact frames to capture, comma-separated |
+| `--at-cuts` | off | also capture cut − 3 and cut + 6 frames around every boundary between consecutive clips on the main/overlay tracks (0.1 s / 0.2 s at 30 fps) |
+| `--cols` | `4` | tiles per row |
+| `--resolution` | `540` | shorter side of each tile, px |
+| `--out` | `boards/snapshot.png` | sheet path (the `.json` goes next to it) |
+| `--json` | off | print the tile list as JSON |
+
+### `caju capture`
+
+```bash
+caju capture <url> --project <id> [--width 1440] [--height 900] [--dir projects]
+```
+
+Opens a website in the render browser and writes into `projects/<id>/assets/capture/`:
+
+| File | Content |
+|---|---|
+| `page.png` | full-page screenshot |
+| `viewport.png` | the first screen (`--width` × `--height`) |
+| `tokens.json` | `{ colors: [{ hex, role: background\|text\|accent, count }], fonts: [{ family, weights, role: heading\|body }], title, description }` |
+| `text.txt` | visible text, headings first |
+| `images.json` | large images and logo candidates: `src`, `alt`, `width`, `height` |
+
+Use the real screenshots and brand tokens in the video instead of redrawing the site.
+
+### `caju beats`
+
+```bash
+caju beats <audio-file> [--project <id>] [--out file] [--dir projects]
+```
+
+Decodes the audio with FFmpeg and estimates the tempo and beat times. Writes `assets/data/<name>.beats.json` in the project (or `--out`):
+
+```json
+{ "bpm": 122, "beats": [0.49, 0.98, 1.47], "downbeats": [0.49, 2.46], "durationSec": 31.2, "confidence": 0.82 }
+```
+
+Times are seconds; the frame of a beat is `Math.round(sec * fps)`. Low `confidence` means a weak or irregular pulse.
+
+### `caju catalog`
+
+```bash
+caju catalog [--query "text"] [--kind transition|loop|effect|overlay|component|template] [--json]
+```
+
+Lists what you can use by name: built-in poses (transitions and entrance/exit animations), loops, effects and overlays with their labels and params, your components in `components/`, and the `create-caju` templates. `--query` searches names, labels and descriptions. Search here before hand-building a named look.
 
 ### `caju render`
 
@@ -149,10 +213,10 @@ caju still <id> --frame <n> [--out frame.png] [--resolution 1080] [--serve-url <
 ### `caju doctor` {#doctor}
 
 ```bash
-caju doctor [--dir projects] [--components <dir>]
+caju doctor [--dir projects] [--components <dir>] [--json]
 ```
 
-Diagnoses your environment and prints a hint for each problem: Node.js, npm, FFmpeg and a Chromium browser for rendering, the Studio build, the projects and components folders, write permission, free disk space and memory, whether VoiceStudio (the voice provider) is reachable, with its engines and voice profiles, and which paid voice keys are set. Exits non-zero when a check fails (warnings don't). Run it first when something doesn't start.
+Diagnoses your environment and prints a hint for each problem: Node.js, npm, FFmpeg and a Chromium browser for rendering, the Studio build, the projects and components folders, write permission, free disk space and memory, whether VoiceStudio (the voice provider) is reachable, with its engines and voice profiles, and which paid voice keys are set. Exits non-zero when a check fails (warnings don't). Run it first when something doesn't start. `--json` prints the checks as data.
 
 ### `caju skills add`
 

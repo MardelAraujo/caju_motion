@@ -1,5 +1,7 @@
 # Animation: keyframes and easing
 
+For common entrances, exits, loops and filters, prefer the named presets in [motion.md](motion.md) (`transitionIn`, `animationIn`, `animationLoop`, `effects`): one field instead of several keyframe tracks. Use keyframes for everything custom.
+
 ## Keyframes
 ```json
 "keyframes": {

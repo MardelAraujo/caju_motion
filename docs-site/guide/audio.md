@@ -1,6 +1,6 @@
 ---
 title: Audio
-description: Voice-over, music, sound effects and ambience in Caju Motion - file preparation, loudness targets, track layout, fades, ducking without automation and timing scenes to narration.
+description: Voice-over, music, sound effects and ambience in Caju Motion - file preparation, loudness targets, track layout and roles, fades, automatic ducking and loudness normalization, volume keyframes and timing scenes to narration.
 ---
 
 # Audio
@@ -10,19 +10,21 @@ description: Voice-over, music, sound effects and ambience in Caju Motion - file
 - Audio is an asset (`kind: "audio"`) plus an **audio clip** on a track with `kind: "audio"`. Audio clips only go on audio tracks, and audio tracks only hold audio clips.
 - Clips on one track **cannot overlap**: music under voice, or two SFX at once, need separate tracks.
 - Per clip: `start`, `duration`, `trimIn`, `speed`, and `audio: { volume ≥ 0, fadeIn, fadeOut, pan }` (fades in frames, linear).
-- **Volume is static per clip, plus fades.** Volume keyframes are not applied and `pan` is stored but not applied yet. To change volume over time, split the clip (see [ducking](#ducking)).
-- There is no automatic loudness normalization: **normalize files before importing.**
+- **Volume over time:** keyframes on `audio.volume` ([below](#volume-keyframes)). `pan` is applied in the export.
+- **Track roles:** audio tracks may have `role: "voice" | "music" | "sfx"`. Music ducks under voice when [ducking](#ducking) is on.
+- **Project mix** (`settings.audio`): automatic ducking and final loudness normalization, in the export.
+- Still **normalize files before importing**: the mix starts from sane levels.
 
 ## Track layout
 
 | Track id | Role | File prefix | Folder |
 |---|---|---|---|
-| `locucao` (or `audio-vo-0`) | voice-over | `vo-` | `assets/audio/vo/` |
-| `audio-mus-0` (`-1` for crossfades) | music | `mus-` | `assets/audio/music/` |
-| `audio-amb-0` | ambience / room tone | `amb-` | `assets/audio/amb/` |
-| `audio-sfx-0`, `audio-sfx-1`… | sound effects | `sfx-` | `assets/audio/sfx/` |
+| `locucao` (or `audio-vo-0`), `role: voice` | voice-over | `vo-` | `assets/audio/vo/` |
+| `audio-mus-0` (`-1` for crossfades), `role: music` | music | `mus-` | `assets/audio/music/` |
+| `audio-amb-0`, `role: music` | ambience / room tone | `amb-` | `assets/audio/amb/` |
+| `audio-sfx-0`, `audio-sfx-1`…, `role: sfx` | sound effects | `sfx-` | `assets/audio/sfx/` |
 
-In `video.ts`, `p.audioClip()` groups clips into these tracks by id prefix automatically.
+In `video.ts`, `p.audioClip()` groups clips into these tracks by id prefix and sets the role automatically (`vo-` → voice, `mus-`/`amb-` → music, `sfx-` → sfx). Without a role, a track named "Locução…" counts as voice and any other audio track as music.
 
 ## Preparing files
 
@@ -36,7 +38,7 @@ Integrated LUFS, true peak −1.5 dBTP.
 | Role | Normalize file to | Clip `volume` |
 |---|---|---|
 | Voice-over | −16 LUFS | 1.0 |
-| Music bed | −16 LUFS | 0.12–0.25 under VO, 0.5–0.8 alone |
+| Music bed | −16 LUFS | 0.5–0.8 with automatic [ducking](#ducking); 0.12–0.25 under VO without it |
 | SFX | −18 LUFS | 0.3–0.7 |
 | Ambience | −24 LUFS | 0.2–0.5 |
 
@@ -61,15 +63,43 @@ Timeline frames for audio: `Math.ceil(durationSec * fps)`, so the tail is never 
 
 ## Ducking
 
-Volume is static per clip, so **split the music into segments**, each with its own volume, on two music tracks so segments overlap for a crossfade:
+Turn on the project mix and keep **one continuous music clip**; the export ducks it under the voice with a sidechain compressor (about 10 dB with the defaults):
 
-| Segment | Track | Frames | `trimIn` | Volume | Fades |
-|---|---|---|---|---|---|
-| Intro (no VO) | `audio-mus-0` | 0 → 95 | 0 | 0.7 | in 20, out 10 |
-| Under VO | `audio-mus-1` | 85 → 640 | 85 | 0.18 | in 10, out 10 |
-| Outro | `audio-mus-0` | 630 → 900 | 630 | 0.7 | in 10, out 45 |
+```json
+"settings": {
+  "format": "reel-9x16", "width": 1080, "height": 1920, "fps": 30,
+  "audio": {
+    "ducking":  { "enabled": true, "ratio": 6, "threshold": 0.03, "attackMs": 20, "releaseMs": 400 },
+    "loudness": { "enabled": true, "targetLufs": -14, "truePeakDb": -1 }
+  }
+}
+```
 
-The key: **`trimIn` = segment start**, so the song plays continuously across segments. The overlaps (85–95, 630–640) are the crossfades.
+In `video.ts`: `defineProject({ id, format, audio: { ducking: { enabled: true }, loudness: { enabled: true } } }, …)`.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `ducking.ratio` | 6 | how hard the music ducks (10–12 for dense music) |
+| `ducking.threshold` | 0.03 | voice level (linear, 0–1) above which the music ducks |
+| `ducking.attackMs` / `releaseMs` | 20 / 400 | how fast it ducks / comes back (raise release to 600–800 if the music "pumps") |
+| `loudness.targetLufs` | −14 | final integrated loudness (−14 for social/YouTube, −16 for spoken content) |
+| `loudness.truePeakDb` | −1 | true-peak ceiling |
+
+- Voice = tracks with `role: "voice"`; music = `role: "music"` or audio tracks without a role; `role: "sfx"` is never ducked. Speech inside a video clip drives the ducking only when the video's track has `role: "voice"`.
+- Give the music clip its volume for the parts **without** voice (0.5–0.8); the compressor lowers it under the voice.
+- Ducking and loudness are applied in the **export**; the Studio preview plays the raw levels.
+
+### Volume keyframes
+
+For a deliberate swell or a manual duck, keyframe `audio.volume` (frames relative to the clip; linear ramps, `hold` steps):
+
+```json
+"keyframes": { "audio.volume": [
+  { "frame": 0, "value": 0.7 }, { "frame": 85, "value": 0.7 }, { "frame": 100, "value": 0.2 },
+  { "frame": 620, "value": 0.2 }, { "frame": 640, "value": 0.7 } ] }
+```
+
+Use either volume keyframes or automatic ducking on a music clip, not both.
 
 ## Timing scenes to the voice-over
 

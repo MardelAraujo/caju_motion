@@ -40,7 +40,7 @@ video.ts ──caju build──▶ project.json ◀──save── Caju Studio
 - Tracks stack **bottom → top**: `tracks[0]` is drawn first (the back).
 - **Clips on one track never overlap.** Things that coexist in time go on separate tracks.
 - Audio clips only on `audio` tracks, and audio tracks only hold audio.
-- Clip types that render: `text`, `shape`, `image`, `video`, `audio`, `component`. (`effect` and `adjustment` are accepted by the schema but render nothing yet.)
+- Clip types: `text`, `shape`, `image`, `video`, `audio`, `component`, plus `effect` (a full-frame overlay such as a vignette) and `adjustment` (filters everything below it). Any visual clip can also carry transitions, animations and effects ([Animation](./animation#motion-presets)).
 
 Full field list: [project.json schema](../reference/project-json).
 

@@ -4,11 +4,16 @@ Skills that teach coding agents (Claude Code and other Agent Skills–compatible
 
 | Skill | Role |
 |---|---|
-| `caju-best-practices` | Router: golden rules, end-to-end workflow, availability table |
+| `caju-best-practices` | Router: project state, intent interview (`BRIEF.md`), review loop, preferences/recipes, golden rules |
+| `caju-creative` | House style, motion principles, typography, palettes, transitions |
+| `caju-explainer` | Workflow: faceless explainer with generated voice-over |
+| `caju-site-to-video` | Workflow: website/product URL → video (`caju capture`) |
+| `caju-music-to-video` | Workflow: beat-synced video from a song (`caju beats`) |
+| `caju-captioned-reel` | Workflow: captions from recorded speech (`caju transcribe`) |
 | `caju-setup` | Install, environment, troubleshooting |
 | `caju-assets` | Folder structure, image/video/font preparation, asset registration |
 | `caju-audio` | VO, music, SFX, loudness, ducking, narration-driven timing |
-| `caju-authoring` | `project.json` reference, elements, keyframes/easing, generator scripts |
+| `caju-authoring` | `project.json` reference, elements, keyframes/easing, motion presets and effects, storyboard, generator scripts |
 | `caju-components` | Deterministic frame-driven React with the core runtime |
 | `caju-studio` | Never lose Studio edits when regenerating |
 | `caju-render` | Export settings, stills, verifying output |
