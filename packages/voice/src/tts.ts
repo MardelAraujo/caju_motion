@@ -1,4 +1,7 @@
 import { alignScript, estimateWords, round, type Word } from './captions';
+import { env, failure, type FetchLike } from './http';
+import { openAiStt, type SttProvider } from './stt';
+import { voiceStudioStt, voiceStudioTts } from './voicestudio';
 
 /**
  * Locução gerada (TTS) com provedores plugáveis. Cada provedor devolve o áudio e, quando sabe,
@@ -35,22 +38,6 @@ export type TtsProvider = {
   readonly id: string;
   synthesize(req: TtsRequest): Promise<TtsResult>;
 };
-
-type FetchLike = typeof fetch;
-
-const env = (name: string): string | undefined =>
-  (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.[name];
-
-async function failure(res: Response, provider: string): Promise<Error> {
-  let detail = '';
-  try {
-    detail = (await res.text()).slice(0, 400);
-  } catch {
-    // corpo ilegível
-  }
-  const hint = res.status === 401 ? ' (chave de API inválida?)' : res.status === 429 ? ' (limite de uso/créditos)' : '';
-  return new Error(`${provider}: HTTP ${res.status}${hint}${detail ? ` — ${detail}` : ''}`);
-}
 
 // ---------------------------------------------------------------- OpenAI
 
@@ -104,21 +91,13 @@ export function openAiTts(opts: OpenAiTtsOptions = {}): TtsProvider {
       const audio = new Uint8Array(await res.arrayBuffer());
       if (opts.alignWords === false) return { audio, format };
 
-      const form = new FormData();
-      form.append('file', new Blob([audio], { type: format === 'mp3' ? 'audio/mpeg' : 'audio/wav' }), `speech.${format}`);
-      form.append('model', opts.transcriptionModel ?? 'whisper-1');
-      form.append('response_format', 'verbose_json');
-      form.append('timestamp_granularities[]', 'word');
-      if (req.language) form.append('language', req.language);
-      const tr = await doFetch(`${base}/audio/transcriptions`, {
-        method: 'POST',
-        headers: { authorization: `Bearer ${apiKey}` },
-        body: form,
+      const tr = await openAiStt({ apiKey, model: opts.transcriptionModel, baseUrl: base, fetch: doFetch }).transcribe({
+        audio,
+        filename: `speech.${format}`,
+        language: req.language,
         signal: req.signal,
       });
-      if (!tr.ok) throw await failure(tr, 'OpenAI (transcrição para tempos das palavras)');
-      const data = (await tr.json()) as { words?: { word: string; start: number; end: number }[] };
-      const timed = (data.words ?? []).map((w) => ({ text: w.word, start: w.start, end: w.end }));
+      const timed = tr.words;
       return { audio, format, words: timed.length ? alignScript(req.text, timed) : undefined };
     },
   };
@@ -244,11 +223,16 @@ export function toneWav(durationSec: number, sampleRate = 16_000): Uint8Array {
   return new Uint8Array(buf);
 }
 
-export type ProviderName = 'openai' | 'elevenlabs' | 'placeholder';
+export type ProviderName = 'voicestudio' | 'openai' | 'elevenlabs' | 'placeholder';
 
-/** Provedor pelo nome (CLI). */
-export function providerByName(name: ProviderName | string, opts: { voice?: string; model?: string } = {}): TtsProvider {
+/** Provedor padrão: o VoiceStudio, local e gratuito. */
+export const DEFAULT_PROVIDER: ProviderName = 'voicestudio';
+
+/** Provedor pelo nome (CLI). Em `voicestudio`, `model` é o engine. */
+export function providerByName(name: ProviderName | string, opts: { voice?: string; model?: string; seed?: number } = {}): TtsProvider {
   switch (name) {
+    case 'voicestudio':
+      return voiceStudioTts({ voice: opts.voice, engine: opts.model, seed: opts.seed });
     case 'openai':
       return openAiTts({ voice: opts.voice, model: opts.model });
     case 'elevenlabs':
@@ -256,6 +240,18 @@ export function providerByName(name: ProviderName | string, opts: { voice?: stri
     case 'placeholder':
       return placeholderTts();
     default:
-      throw new Error(`provedor de voz desconhecido: ${name} (use openai, elevenlabs ou placeholder)`);
+      throw new Error(`provedor de voz desconhecido: ${name} (use voicestudio, openai, elevenlabs ou placeholder)`);
+  }
+}
+
+/** Transcritor pelo nome (CLI): `voicestudio` (padrão, local) ou `openai` (Whisper, pago). */
+export function sttByName(name: string = DEFAULT_PROVIDER, opts: { model?: string } = {}): SttProvider {
+  switch (name) {
+    case 'voicestudio':
+      return voiceStudioStt({ model: opts.model });
+    case 'openai':
+      return openAiStt({ model: opts.model });
+    default:
+      throw new Error(`transcrição: provedor desconhecido: ${name} (use voicestudio ou openai)`);
   }
 }

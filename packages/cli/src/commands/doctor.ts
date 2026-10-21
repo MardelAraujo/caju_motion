@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { ffmpegPath } from '@caju-motion/renderer-node';
 import { STUDIO_APP_DIR, STUDIO_ROOT } from '@caju-motion/studio';
+import { engineNames, VOICESTUDIO_OFFLINE_HINT, voiceStudioUrl, voiceStudioVoices, type VoiceStudioCatalog } from '@caju-motion/voice';
 import { loadComponentsInNode } from '../components';
 
 /**
@@ -110,8 +111,34 @@ export function checkVoiceKeys(env: NodeJS.ProcessEnv): DoctorCheck {
         label: 'Voz (caju tts)',
         status: 'ok',
         detail: 'só a voz provisória (placeholder)',
-        hint: 'para vozes reais, ponha OPENAI_API_KEY ou ELEVENLABS_API_KEY no .env do projeto',
+        hint: 'opcional: para usar openai/elevenlabs, ponha OPENAI_API_KEY ou ELEVENLABS_API_KEY no .env do projeto',
       };
+}
+
+/** VoiceStudio, o provedor de voz padrão (local, grátis). Fechado é só aviso: o resto do Caju funciona. */
+export function checkVoiceStudio(result: VoiceStudioCatalog | { url: string; error: string }): DoctorCheck {
+  const label = 'VoiceStudio (voz)';
+  if ('error' in result) {
+    return { label, status: 'warn', detail: `não respondeu em ${result.url}`, hint: VOICESTUDIO_OFFLINE_HINT };
+  }
+  const engines = engineNames(result.engines);
+  const profiles = result.voices.filter((v) => v.type === 'profile');
+  return {
+    label,
+    status: 'ok',
+    detail:
+      `${result.url}` +
+      (engines.length ? ` · engines: ${engines.join(', ')}` : '') +
+      ` · ${profiles.length} perfil(is) de voz${profiles.length ? ` (${profiles.slice(0, 5).map((v) => v.name).join(', ')}${profiles.length > 5 ? '…' : ''})` : ''}`,
+  };
+}
+
+async function probeVoiceStudio(): Promise<DoctorCheck> {
+  try {
+    return checkVoiceStudio(await voiceStudioVoices({ signal: AbortSignal.timeout(2500) }));
+  } catch (err) {
+    return checkVoiceStudio({ url: voiceStudioUrl(), error: (err as Error).message });
+  }
 }
 
 const ICON: Record<CheckStatus, string> = { ok: '✓', warn: '!', fail: '✗' };
@@ -285,6 +312,7 @@ export async function runDoctor({ dir, componentsDir }: { dir: string; component
     checkDisk(await freeDisk(projectsDir)),
     checkMemory(os.freemem(), os.totalmem()),
     await checkWritable(projectsDir),
+    await probeVoiceStudio(),
     checkVoiceKeys(process.env),
   ];
 }

@@ -3,7 +3,7 @@ import { parseArgs } from 'node:util';
 import { loadDotEnv } from './env';
 import { buildCommand } from './commands/build';
 import { mediaCommand, parseProxyMode } from './commands/media';
-import { captionsCommand, ttsCommand } from './commands/voice';
+import { captionsCommand, transcribeCommand, ttsCommand, voicesCommand } from './commands/voice';
 import { checkCommand } from './commands/check';
 import { doctorCommand } from './commands/doctor';
 import { newCommand } from './commands/new';
@@ -28,10 +28,15 @@ Uso:
                                                          exporta vídeo (Chromium + FFmpeg)
   caju still <id> --frame <n> [--out quadro.png] [--resolution 1080]
                                                          exporta um quadro como imagem
-  caju tts <id> --text "..." [--script roteiro.txt] [--provider placeholder|openai|elevenlabs] [--voice v]
-             [--name locucao] [--start s] [--speed 1] [--language pt] [--no-captions] [--files-only] [--force]
-                                                         gera a locução (OPENAI_API_KEY / ELEVENLABS_API_KEY), o áudio
-                                                         numa trilha e as legendas; mesmo texto+voz não gera de novo
+  caju tts <id> --text "..." [--script roteiro.txt] [--provider voicestudio|placeholder|openai|elevenlabs] [--voice v]
+             [--model engine] [--seed n] [--name locucao] [--start s] [--speed 1] [--language pt] [--no-captions]
+             [--files-only] [--force]
+                                                         gera a locução (padrão: VoiceStudio local e grátis; openai e
+                                                         elevenlabs pedem chave), o áudio numa trilha e as legendas;
+                                                         mesmo texto+voz não gera de novo
+  caju voices                                            lista os engines e as vozes do VoiceStudio (VOICESTUDIO_URL)
+  caju transcribe <id> --from video.mp4|audio.wav [--provider voicestudio|openai] [--language pt] [--captions]
+                                                         transcreve fala existente em words.json + SRT (legendas exatas)
   caju captions <id> --from legenda.srt|.vtt|.words.json [--offset s]
                                                          importa legendas como clipes de texto editáveis
   caju doctor [--dir projects]                           diagnostica o ambiente (Node, FFmpeg, navegador, Studio…)
@@ -86,6 +91,8 @@ async function main(argv: string[]): Promise<number> {
       model: { type: 'string' },
       speed: { type: 'string' },
       language: { type: 'string' },
+      seed: { type: 'string' },
+      captions: { type: 'boolean', default: false },
       start: { type: 'string' },
       'no-captions': { type: 'boolean', default: false },
       'files-only': { type: 'boolean', default: false },
@@ -179,6 +186,7 @@ async function main(argv: string[]): Promise<number> {
         model: values.model,
         speed: values.speed,
         language: values.language,
+        seed: values.seed,
         start: values.start,
         captions: !values['no-captions'],
         filesOnly: values['files-only'],
@@ -186,6 +194,21 @@ async function main(argv: string[]): Promise<number> {
       });
     case 'captions':
       return captionsCommand({ dir: values.dir, id: rest[0], from: values.from, offset: values.offset });
+    case 'voices':
+      return voicesCommand();
+    case 'transcribe':
+      return transcribeCommand({
+        dir: values.dir,
+        id: rest[0],
+        from: values.from,
+        name: values.name,
+        provider: values.provider,
+        model: values.model,
+        language: values.language,
+        offset: values.offset,
+        captions: values.captions,
+        force: values.force,
+      });
     case 'doctor':
       return doctorCommand({ dir: values.dir, componentsDir: componentsDirFor(values.dir, values.components) });
     case 'skills':

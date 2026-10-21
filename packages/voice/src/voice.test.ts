@@ -9,17 +9,27 @@ import {
   addVoiceover,
   alignScript,
   elevenLabsTts,
+  engineNames,
   estimateWords,
+  openAiStt,
   openAiTts,
   parseSubtitles,
+  providerByName,
   placeholderTts,
   readCaptions,
+  toneWav,
   toSrt,
+  transcription,
   toVtt,
   voiceover,
   voiceoverStartSec,
+  voiceStudioStt,
+  voiceStudioTts,
+  voiceStudioUrl,
+  voiceStudioVoices,
   wordsFromCharacters,
   wordsToCues,
+  type SttProvider,
   type TtsProvider,
   type Word,
 } from './index';
@@ -145,6 +155,95 @@ describe('provedores', () => {
   });
 });
 
+describe('VoiceStudio (local)', () => {
+  it('fala + transcrição local, sem chave, com engine, perfil e semente', async () => {
+    const calls: { url: string; init: RequestInit }[] = [];
+    const fake: typeof fetch = async (url, init) => {
+      calls.push({ url: String(url), init: init! });
+      if (String(url).endsWith('/audio/speech')) return new Response(new Uint8Array([4, 5]));
+      return Response.json({ text: ' ola mundo', words: [{ word: ' ola', start: 0, end: 0.4 }, { word: 'mundo', start: 0.4, end: 0.9 }] });
+    };
+    const tts = voiceStudioTts({ baseUrl: 'http://localhost:3900/v1/', engine: 'cosyvoice', voice: 'Narrador', seed: 7, fetch: fake });
+    expect(tts.id).toBe('voicestudio:cosyvoice:Narrador:7');
+    const r = await tts.synthesize({ text: 'Olá mundo.', language: 'pt', speed: 1.1 });
+    expect([...r.audio]).toEqual([4, 5]);
+    expect(r.words).toEqual([W('Olá', 0, 0.4), W('mundo.', 0.4, 0.9)]);
+
+    expect(calls[0]!.url).toBe('http://localhost:3900/v1/audio/speech');
+    expect((calls[0]!.init.headers as Record<string, string>).authorization).toBeUndefined();
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({
+      model: 'cosyvoice', voice: 'Narrador', input: 'Olá mundo.', response_format: 'mp3', speed: 1.1, language: 'pt', seed: 7,
+    });
+    const form = calls[1]!.init.body as FormData;
+    expect(calls[1]!.url).toBe('http://localhost:3900/v1/audio/transcriptions');
+    expect(form.get('timestamp_granularities[]')).toBe('word');
+    expect(form.get('response_format')).toBe('verbose_json');
+    expect(form.get('language')).toBe('pt');
+  });
+
+  it('padrões: omnivoice, voz default, URL local e chave opcional', async () => {
+    const prevUrl = process.env.VOICESTUDIO_URL;
+    const prevKey = process.env.VOICESTUDIO_API_KEY;
+    delete process.env.VOICESTUDIO_URL;
+    process.env.VOICESTUDIO_API_KEY = 'vs-key';
+    try {
+      expect(voiceStudioUrl()).toBe('http://127.0.0.1:3900');
+      let seen: { url: string; init: RequestInit } | undefined;
+      const fake: typeof fetch = async (url, init) => {
+        seen = { url: String(url), init: init! };
+        return new Response(new Uint8Array([1]));
+      };
+      const tts = providerByName('voicestudio', {});
+      expect(tts.id).toBe('voicestudio:omnivoice:default');
+      await voiceStudioTts({ alignWords: false, fetch: fake }).synthesize({ text: 'x', format: 'wav' });
+      expect(seen!.url).toBe('http://127.0.0.1:3900/v1/audio/speech');
+      expect((seen!.init.headers as Record<string, string>).authorization).toBe('Bearer vs-key');
+      expect(JSON.parse(seen!.init.body as string)).toEqual({ model: 'omnivoice', voice: 'default', input: 'x', response_format: 'wav' });
+    } finally {
+      if (prevUrl === undefined) delete process.env.VOICESTUDIO_URL;
+      else process.env.VOICESTUDIO_URL = prevUrl;
+      if (prevKey === undefined) delete process.env.VOICESTUDIO_API_KEY;
+      else process.env.VOICESTUDIO_API_KEY = prevKey;
+    }
+  });
+
+  it('fechado: erro que explica como abrir ou trocar de provedor; texto longo demais', async () => {
+    const down: typeof fetch = async () => {
+      throw new TypeError('fetch failed');
+    };
+    await expect(voiceStudioTts({ baseUrl: 'http://127.0.0.1:3900', fetch: down }).synthesize({ text: 'x' })).rejects.toThrow(
+      /VoiceStudio não respondeu em http:\/\/127\.0\.0\.1:3900.*--provider placeholder/,
+    );
+    const bad = voiceStudioTts({ fetch: async () => Response.json({ error: { message: 'unknown voice' } }, { status: 400 }) });
+    await expect(bad.synthesize({ text: 'x' })).rejects.toThrow(/VoiceStudio: HTTP 400.*unknown voice/);
+    await expect(voiceStudioTts({ fetch: down }).synthesize({ text: 'a'.repeat(5000) })).rejects.toThrow(/máximo 4096/);
+  });
+
+  it('transcrição avulsa e lista de vozes', async () => {
+    const fake: typeof fetch = async (url) => {
+      if (String(url).endsWith('/audio/voices')) {
+        return Response.json({
+          voices: [
+            { voice_id: 'alloy', id: 'alloy', name: 'Alloy', type: 'openai_alias' },
+            { voice_id: 'p1', id: 'p1', name: 'Minha voz', type: 'profile', language: 'pt' },
+          ],
+          engines: [{ id: 'omnivoice' }, 'cosyvoice'],
+        });
+      }
+      return Response.json({ text: 'oi gente', language: 'pt', duration: 1.2, words: [{ word: 'oi', start: 0.1, end: 0.3 }, { word: ' gente', start: 0.35, end: 0.9 }] });
+    };
+    const tr = await voiceStudioStt({ fetch: fake }).transcribe({ audio: new Uint8Array([1]), filename: 'fala.wav' });
+    expect(tr).toEqual({ words: [W('oi', 0.1, 0.3), W('gente', 0.35, 0.9)], text: 'oi gente', language: 'pt', durationSec: 1.2 });
+    const cat = await voiceStudioVoices({ fetch: fake });
+    expect(cat.voices.map((v) => v.id)).toEqual(['alloy', 'p1']);
+    expect(engineNames(cat.engines)).toEqual(['omnivoice', 'cosyvoice']);
+    const prev = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    await expect(openAiStt({ fetch: fake }).transcribe({ audio: new Uint8Array(), filename: 'a.mp3' })).rejects.toThrow(/OPENAI_API_KEY/);
+    if (prev !== undefined) process.env.OPENAI_API_KEY = prev;
+  });
+});
+
 describe('locução no projeto', () => {
   function project(): Project {
     return ProjectSchema.parse(createEmptyProject({ id: 'p', format: 'reel-9x16', now: '2030-01-01T00:00:00.000Z' }));
@@ -237,5 +336,32 @@ describe('locução no projeto', () => {
     expect(voiceoverStartSec(p, 'locucao')).toBe(3);
     expect(p.tracks.flatMap((t) => t.clips).filter((c) => c.id === 'locucao-clip')).toHaveLength(1);
     expect(ProjectSchema.safeParse(p).success).toBe(true);
+  });
+
+  it('transcription: extrai a fala, grava words.json + srt legíveis pelo caju captions e reaproveita', async () => {
+    const dir = tmp();
+    const { writeFileSync } = await import('node:fs');
+    writeFileSync(path.join(dir, 'fala.wav'), toneWav(1.5));
+    let calls = 0;
+    let sent: { filename: string; language?: string; size: number } | undefined;
+    const stt: SttProvider = {
+      id: 'fake-stt',
+      async transcribe(req) {
+        calls++;
+        sent = { filename: req.filename, language: req.language, size: req.audio.length };
+        return { words: [W('Oi', 0.1, 0.4), W('gente.', 0.5, 1)], text: 'Oi gente.' };
+      },
+    };
+    const r = await transcription({ projectDir: dir, name: 'talk', file: 'fala.wav', provider: stt, language: 'pt' });
+    expect(sent).toMatchObject({ filename: 'talk.mp3', language: 'pt' });
+    expect(sent!.size).toBeGreaterThan(0);
+    expect(r).toMatchObject({ wordsSrc: 'assets/data/talk.words.json', source: 'fala.wav', cached: false, text: 'Oi gente.' });
+    expect(r.durationSec).toBeCloseTo(1.5, 1);
+    expect(readFileSync(path.join(dir, r.srtSrc), 'utf8')).toContain('Oi gente.');
+    expect(await readCaptions(path.join(dir, r.wordsSrc))).toEqual(r.cues);
+    const again = await transcription({ projectDir: dir, name: 'talk', file: path.join(dir, 'fala.wav'), provider: stt, language: 'pt' });
+    expect(again.cached).toBe(true);
+    expect(calls).toBe(1);
+    await expect(transcription({ projectDir: dir, name: 'x', file: 'nao-existe.wav', provider: stt })).rejects.toThrow(/não encontrado/);
   });
 });

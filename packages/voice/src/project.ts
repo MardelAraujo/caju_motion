@@ -2,9 +2,10 @@ import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { probeMedia } from '@caju-motion/media';
+import { hashFile, probeMedia, runFfmpegOk } from '@caju-motion/media';
 import { ClipSchema, TrackSchema, type Clip, type Project, type Track } from '@caju-motion/schema';
 import { estimateWords, parseSubtitles, toSrt, wordsToCues, type Cue, type CueOptions, type Word } from './captions';
+import type { SttProvider } from './stt';
 import type { TtsProvider, TtsRequest } from './tts';
 
 // ---------------------------------------------------------------- arquivos da locução
@@ -92,6 +93,62 @@ export async function voiceover(opts: VoiceoverOptions): Promise<VoiceoverResult
   await writeAtomic(wordsFile, JSON.stringify(file, null, 2) + '\n');
   await writeAtomic(path.join(projectDir, srtSrc), toSrt(cues));
   return { audioSrc, wordsSrc, srtSrc, durationSec, words, cues, timed, cached: false };
+}
+
+export type TranscriptionOptions = {
+  projectDir: string;
+  /** Nome base: `assets/data/<name>.words.json` e `.srt`. */
+  name: string;
+  /** Áudio ou vídeo (absoluto ou relativo ao projeto). */
+  file: string;
+  provider: SttProvider;
+  language?: string;
+  force?: boolean;
+  cues?: CueOptions;
+  signal?: AbortSignal;
+};
+
+export type TranscriptionResult = Omit<VoiceoverResult, 'audioSrc' | 'timed'> & { text: string; source: string };
+
+/**
+ * Transcreve um áudio/vídeo que já existe (talking-head, podcast, locução gravada) em palavras com
+ * tempo + SRT, no mesmo formato da locução gerada (`caju captions --from <name>.words.json`).
+ * Extrai a fala com o FFmpeg (mono 16 kHz) antes de enviar. Mesmo arquivo + provedor reaproveita.
+ */
+export async function transcription(opts: TranscriptionOptions): Promise<TranscriptionResult> {
+  const { projectDir, provider, cues: cueOpts } = opts;
+  const name = safeName(opts.name);
+  const file = path.resolve(projectDir, opts.file);
+  if (!existsSync(file)) throw new Error(`arquivo não encontrado: ${opts.file}`);
+  const source = path.relative(projectDir, file).split(path.sep).join('/');
+  const wordsSrc = `assets/data/${name}.words.json`;
+  const srtSrc = `assets/data/${name}.srt`;
+  const key = createHash('sha256')
+    .update(JSON.stringify([provider.id, opts.language ?? '', await hashFile(file)]))
+    .digest('hex')
+    .slice(0, 16);
+
+  const wordsFile = path.join(projectDir, wordsSrc);
+  if (!opts.force && existsSync(wordsFile)) {
+    const prev = JSON.parse(await readFile(wordsFile, 'utf8')) as WordsFile;
+    if (prev.key === key) {
+      return { wordsSrc, srtSrc, source, text: prev.text, durationSec: prev.durationSec, words: prev.words, cues: wordsToCues(prev.words, cueOpts), cached: true };
+    }
+  }
+
+  const { stdout } = await runFfmpegOk(['-i', file, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '48k', '-f', 'mp3', 'pipe:1'], {
+    captureStdout: true,
+    signal: opts.signal,
+  });
+  if (!stdout.length) throw new Error(`${opts.file}: sem trilha de áudio`);
+  const res = await provider.transcribe({ audio: new Uint8Array(stdout), filename: `${name}.mp3`, language: opts.language, signal: opts.signal });
+  if (!res.words.length) throw new Error(`${opts.file}: nenhuma fala reconhecida`);
+  const durationSec = res.durationSec ?? (await probeMedia(file)).durationSec ?? res.words[res.words.length - 1]!.end;
+  const cues = wordsToCues(res.words, cueOpts);
+  const out: WordsFile = { version: 1, key, provider: provider.id, text: res.text, audio: source, durationSec, timed: true, words: res.words };
+  await writeAtomic(wordsFile, JSON.stringify(out, null, 2) + '\n');
+  await writeAtomic(path.join(projectDir, srtSrc), toSrt(cues));
+  return { wordsSrc, srtSrc, source, text: res.text, durationSec, words: res.words, cues, cached: false };
 }
 
 /** Lê legendas de `.srt`, `.vtt` ou `.words.json` (gerado por `voiceover`). */

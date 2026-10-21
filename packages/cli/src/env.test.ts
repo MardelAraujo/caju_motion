@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { checkVoiceKeys } from './commands/doctor';
+import { checkVoiceKeys, checkVoiceStudio } from './commands/doctor';
 import { loadDotEnv, parseDotEnv } from './env';
 
 describe('.env', () => {
@@ -49,5 +49,22 @@ describe('.env', () => {
     expect(both.detail).toContain('openai');
     expect(both.detail).toContain('elevenlabs');
     expect(JSON.stringify(both)).not.toContain('secreta');
+  });
+
+  it('doctor mostra o VoiceStudio: engines e perfis, ou como abrir', () => {
+    const up = checkVoiceStudio({
+      url: 'http://127.0.0.1:3900',
+      voices: [
+        { id: 'alloy', name: 'Alloy', type: 'openai_alias' },
+        { id: 'p1', name: 'Minha voz', type: 'profile', language: 'pt' },
+      ],
+      engines: ['omnivoice'],
+    });
+    expect(up.status).toBe('ok');
+    expect(up.detail).toContain('omnivoice');
+    expect(up.detail).toContain('Minha voz');
+    const down = checkVoiceStudio({ url: 'http://127.0.0.1:3900', error: 'fetch failed' });
+    expect(down.status).toBe('warn');
+    expect(down.hint).toContain('--provider placeholder');
   });
 });
