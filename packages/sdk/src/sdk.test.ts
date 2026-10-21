@@ -254,3 +254,39 @@ describe('determinismo', () => {
     expect(lintDeterminismSource(src, 'x.tsx').map((p) => p.line)).toEqual([1, 4]);
   });
 });
+
+describe('movimento, efeitos e mixagem por código', () => {
+  it('transições, animações, loop, efeitos, sobreposição, ajuste e settings.audio', async () => {
+    const p = await buildProject(
+      defineProject(
+        { id: 'fx', format: 'square-1x1', duration: 60, audio: { ducking: { enabled: true }, loudness: { targetLufs: -16 } } },
+        (b) => {
+          b.asset({ id: 'vo1', kind: 'audio', src: 'assets/vo.wav' });
+          b.audioClip('vo1', 0, 30, 'Locução');
+          b.scene('a', 'A', 0, 60, (s) => {
+            s.text('oi', { size: 40 }, {
+              x: 0,
+              y: 0,
+              transitionIn: { type: 'wipe', dur: 12, params: { direction: 'up' } },
+              animOut: { type: 'slide', dur: 10, easing: 'expoOut', params: { direction: 'right' } },
+              loop: { type: 'float', dur: 40, amplitude: 2 },
+              effects: [{ type: 'dropShadow' }],
+            });
+            s.adjust([{ type: 'grayscale', params: { amount: 0.5 } }], { at: [10, 30] });
+            s.overlay('vignette', { amount: 0.4 });
+          });
+        },
+      ),
+    );
+    const clips = p.tracks.flatMap((t) => t.clips);
+    const text = clips.find((c) => c.type === 'text')!;
+    expect(text.transitionIn).toMatchObject({ type: 'wipe', duration: 12, params: { direction: 'up' } });
+    expect(text.animationOut).toEqual({ preset: 'slide', duration: 10, params: { direction: 'right', easing: 'expoOut' } });
+    expect(text.animationLoop).toEqual({ preset: 'float', duration: 40, params: { amplitude: 2 } });
+    expect(text.effects).toEqual([{ id: `${text.id}-fx1`, type: 'dropShadow', enabled: true, params: {} }]);
+    expect(clips.find((c) => c.type === 'adjustment')).toMatchObject({ start: 10, duration: 20, effects: [{ type: 'grayscale', params: { amount: 0.5 } }] });
+    expect(clips.find((c) => c.type === 'effect')?.props).toEqual({ amount: 0.4, effect: 'vignette' });
+    expect(p.settings.audio).toMatchObject({ ducking: { enabled: true, ratio: 6 }, loudness: { enabled: true, targetLufs: -16 } });
+    expect(p.tracks.find((t) => t.id === 'locucao')?.role).toBe('voice');
+  });
+});

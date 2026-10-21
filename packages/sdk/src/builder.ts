@@ -13,6 +13,7 @@ import {
   FORMATS,
   ProjectSchema,
   type Asset,
+  type AudioSettings,
   type ClipInput,
   type EasingPreset,
   type FormatId,
@@ -51,7 +52,34 @@ export type ElOpts = {
    * "<nome> 2", "<nome> 3"… logo acima. Sem nome: uma camada por elemento da cena.
    */
   track?: string;
+  /** Transição de entrada/saída do renderer (fade, slide, rise, zoom, pop, blur, spin, wipe, iris…). */
+  transitionIn?: MotionOpts;
+  transitionOut?: MotionOpts;
+  /** Animação de entrada/saída (mesmas poses das transições, sem easing próprio no schema). */
+  animIn?: MotionOpts;
+  animOut?: MotionOpts;
+  /** Loop: pulse, float, wiggle, breathe, spin (`dur` = período em frames). */
+  loop?: { type: string; dur: number; amplitude?: number };
+  /** Efeitos (filtros): blur, brightness, contrast, saturate, grayscale, sepia, hueRotate, invert, dropShadow. */
+  effects?: { type: string; params?: Record<string, unknown>; id?: string }[];
 };
+
+/** Movimento de clipe: `type` = pose, `dur` em frames, `params` (ex.: `{ direction: 'left' }`). */
+export type MotionOpts = { type: string; dur: number; easing?: EasingPreset; params?: Record<string, unknown> };
+
+/** Campos de movimento/efeitos do clipe a partir das opções do elemento. */
+function motionFields(el: ElOpts, clipId: string): Partial<ClipInput> {
+  const tr = (m?: MotionOpts) => m && { type: m.type, duration: m.dur, easing: m.easing ?? undefined, params: m.params ?? {} };
+  const an = (m?: MotionOpts) => m && { preset: m.type, duration: m.dur, params: { ...(m.params ?? {}), ...(m.easing ? { easing: m.easing } : {}) } };
+  const out: Partial<ClipInput> = {};
+  if (el.transitionIn) out.transitionIn = tr(el.transitionIn);
+  if (el.transitionOut) out.transitionOut = tr(el.transitionOut);
+  if (el.animIn) out.animationIn = an(el.animIn);
+  if (el.animOut) out.animationOut = an(el.animOut);
+  if (el.loop) out.animationLoop = { preset: el.loop.type, duration: el.loop.dur, params: el.loop.amplitude !== undefined ? { amplitude: el.loop.amplitude } : {} };
+  if (el.effects?.length) out.effects = el.effects.map((e, i) => ({ id: e.id ?? `${clipId}-fx${i + 1}`, type: e.type, params: e.params ?? {} }));
+  return out;
+}
 
 export type TextStyle = {
   size: number;
@@ -162,8 +190,18 @@ export class SceneCtx {
     return this.push('component', 'visual', pos, { ...props, ...box, component: name }, el.name ?? name);
   }
 
+  /** Sobreposição em tela cheia (vignette, letterbox, colorOverlay, flash, grain). */
+  overlay(effect: string, params: Record<string, unknown> = {}, el: Omit<Partial<ElOpts>, 'x' | 'y'> = {}) {
+    return this.push('effect', 'visual', { ...el, x: 0, y: 0 }, { ...params, effect }, el.name ?? effect);
+  }
+
+  /** Clipe de ajuste: aplica os efeitos a tudo o que está abaixo dele (declare depois das camadas). */
+  adjust(effects: NonNullable<ElOpts['effects']>, el: Omit<Partial<ElOpts>, 'x' | 'y' | 'effects'> = {}) {
+    return this.push('adjustment', 'visual', { ...el, x: 0, y: 0, effects }, {}, el.name ?? 'Ajuste');
+  }
+
   private push(
-    type: 'text' | 'shape' | 'image' | 'component',
+    type: 'text' | 'shape' | 'image' | 'component' | 'effect' | 'adjustment',
     lane: 'text' | 'visual',
     el: ElOpts,
     props: Record<string, unknown>,
@@ -239,6 +277,7 @@ export class SceneCtx {
       props,
       origin: 'code',
     };
+    Object.assign(clip, motionFields(el, clip.id));
     this.b.pending.push({ scene: this.index, order: this.order++, lane, clip, ...(el.track ? { track: el.track } : {}) });
     return clip;
   }
@@ -251,6 +290,8 @@ export type BuilderOptions = {
   background?: string;
   /** Duração em frames. Omitida: fim do último clipe. */
   duration?: number;
+  /** Mixagem do export: ducking da música sob a locução e loudness final. */
+  audio?: Partial<{ ducking: Partial<NonNullable<AudioSettings['ducking']>>; loudness: Partial<NonNullable<AudioSettings['loudness']>> }>;
 };
 
 /**
@@ -388,7 +429,8 @@ export class ProjectBuilder {
       const key = c.id.split('-')[0]!;
       (groups[key] ??= { name: label[key] ?? 'Áudio', clips: [] }).clips.push(c);
     }
-    const out: { id: string; kind: 'audio'; name: string; clips: ClipInput[] }[] = [];
+    const role: Record<string, 'voice' | 'music' | 'sfx'> = { vo: 'voice', mus: 'music', amb: 'music', sfx: 'sfx' };
+    const out: { id: string; kind: 'audio'; name: string; role?: 'voice' | 'music' | 'sfx'; clips: ClipInput[] }[] = [];
     for (const [key, g] of Object.entries(groups)) {
       const lanes: ClipInput[][] = [];
       for (const c of g.clips.sort((a, b) => a.start - b.start)) {
@@ -396,7 +438,15 @@ export class ProjectBuilder {
         if (lane) lane.push(c);
         else lanes.push([c]);
       }
-      lanes.forEach((l, j) => out.push({ id: key === 'vo' && j === 0 ? 'locucao' : `audio-${key}-${j}`, kind: 'audio', name: j ? `${g.name} ${j + 1}` : g.name, clips: l }));
+      lanes.forEach((l, j) =>
+        out.push({
+          id: key === 'vo' && j === 0 ? 'locucao' : `audio-${key}-${j}`,
+          kind: 'audio',
+          name: j ? `${g.name} ${j + 1}` : g.name,
+          ...(role[key] ? { role: role[key] } : {}),
+          clips: l,
+        }),
+      );
     }
     return out;
   }
@@ -451,6 +501,7 @@ export class ProjectBuilder {
         fps: f.fps,
         background: this.opts.background ?? '#000000',
         ...(this.opts.duration !== undefined ? { duration: this.opts.duration } : {}),
+        ...(this.opts.audio ? { audio: this.opts.audio } : {}),
       },
       assets: this.assets,
       tracks,
