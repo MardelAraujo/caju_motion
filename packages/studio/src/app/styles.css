@@ -2419,3 +2419,9 @@ html.render-mode #root {
   transform: rotate(45deg);
   cursor: ew-resize;
 }
+.caption-chip {
+  border-color: transparent;
+}
+.caption-chip:hover {
+  border-color: var(--accent);
+}

@@ -37,6 +37,7 @@ import { formatClock } from '../time';
 import { NumberField, Section, Segmented, SliderRow, Swatches } from '../ui';
 import { EffectsPanel, MotionPanel, OverlaySection } from './MotionPanels';
 import { KeyframeButton, KeyframesSection } from './KeyframeUI';
+import { CaptionStylesSection } from './CaptionStyles';
 import { setAnimatable, valueAt } from '../keyframes';
 
 type TabDef = { id: RightTab; label: string; icon: typeof Music };
@@ -145,6 +146,7 @@ function BasicPanel({ clip }: { clip: Clip }) {
   return (
     <>
       {clip.type === 'text' && <TextSection clip={clip} />}
+      {clip.type === 'text' && <CaptionStylesSection clip={clip} />}
       {clip.type === 'shape' && <ShapeSection clip={clip} />}
       {clip.type === 'component' && <ComponentSection clip={clip} />}
 
