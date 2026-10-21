@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { lintProject } from '@caju-motion/renderer';
 import { lintDeterminismDir } from '@caju-motion/sdk';
 import { createProjectStore } from '@caju-motion/server';
 import { loadComponentsInNode, type LoadedComponents } from '../components';
@@ -65,12 +66,17 @@ export async function checkCommand({ dir, ids, componentsDir }: { dir: string; i
         }
       }
 
+      const lint = lintProject(project);
+      for (const l of lint.filter((x) => x.severity === 'error')) problems.push(`${l.code} clipe "${l.clipId}": ${l.message}`);
+      const warnings = lint.filter((x) => x.severity === 'warn').map((l) => `${l.code} clipe "${l.clipId}": ${l.message}`);
+
       if (problems.length) {
         failures++;
         console.log(`✗ ${id}: ${problems.join('\n  ')}`);
       } else {
-        console.log(`✓ ${id}`);
+        console.log(`✓ ${id}${warnings.length ? ` (${warnings.length} aviso(s))` : ''}`);
       }
+      for (const w of warnings) console.log(`  ! ${w}`);
     } catch (err) {
       failures++;
       console.log(`✗ ${id}:\n${String((err as Error).message).replace(/^/gm, '    ')}`);
