@@ -9,6 +9,7 @@ import {
   rippleDeleteSelected,
   selectAll,
   splitAtPlayhead,
+  toggleFullscreen,
   togglePlay,
   trimAtPlayhead,
 } from './commands';
@@ -44,6 +45,7 @@ const fps = () => st().project?.settings.fps ?? 30;
 export const ACTIONS: ActionDef[] = [
   { id: 'save', label: 'Salvar alterações', group: 'Arquivo', keys: ['mod+s'], run: () => void st().save(), global: true },
   { id: 'play', label: 'Reproduzir / pausar', group: 'Reprodução', keys: ['space', 'k'], run: togglePlay },
+  { id: 'fullscreen', label: 'Tela cheia do preview', group: 'Reprodução', keys: ['f'], run: toggleFullscreen },
   { id: 'frame-back', label: 'Quadro anterior', group: 'Navegação', keys: ['left'], run: () => step(-1) },
   { id: 'frame-forward', label: 'Próximo quadro', group: 'Navegação', keys: ['right'], run: () => step(1) },
   { id: 'second-back', label: 'Voltar 1 s', group: 'Navegação', keys: ['shift+left', 'j'], run: () => step(-fps()) },

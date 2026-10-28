@@ -2,6 +2,7 @@ import { useShallow } from 'zustand/react/shallow';
 import {
   Copy,
   FlipHorizontal2,
+  Expand,
   Gauge,
   Magnet,
   Maximize2,
@@ -21,6 +22,7 @@ import {
   flipSelected,
   openSoundPanel,
   splitAtPlayhead,
+  toggleFullscreen,
   togglePlay,
 } from '../commands';
 import { selectedClip, useEditor } from '../store';
@@ -103,6 +105,7 @@ export function TimelineToolbar({ onFit }: { onFit: () => void }) {
             <Digits text={formatClock(projectDuration(project), fps)} />
           </span>
         </span>
+        <IconButton icon={Expand} label="Tela cheia (F)" onClick={toggleFullscreen} />
       </div>
 
       <div className="tl-zoom">

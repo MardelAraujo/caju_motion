@@ -498,3 +498,9 @@ export function fitSelected(mode: 'contain' | 'cover') {
 export function togglePlay() {
   st().setPlaying(!st().playing);
 }
+
+/** Tela cheia do preview (a área do canvas); de novo (ou Esc), sai. */
+export function toggleFullscreen() {
+  if (document.fullscreenElement) void document.exitFullscreen();
+  else void document.querySelector<HTMLElement>('.canvas-area')?.requestFullscreen();
+}

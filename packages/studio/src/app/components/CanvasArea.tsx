@@ -103,6 +103,14 @@ export function CanvasArea() {
     if (zoom === 'fit') setPan({ x: 0, y: 0 });
   }, [zoom]);
 
+  // tela cheia (F ou o botão da timeline): o preview passa a ocupar a tela inteira
+  const [cheia, setCheia] = useState(false);
+  useEffect(() => {
+    const onChange = () => setCheia(!!areaRef.current && document.fullscreenElement === areaRef.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
   // mede o tamanho real (px do projeto) do elemento selecionado
   const selId = sel?.clip.id;
   useLayoutEffect(() => {
@@ -121,10 +129,11 @@ export function CanvasArea() {
   if (!project) return <div className="canvas-area" ref={areaRef} />;
 
   const { width: pw, height: ph } = project.settings;
-  const fit = Math.max(0.05, Math.min((area.w - 96) / pw, (area.h - 64) / ph));
-  const scale = zoom === 'fit' ? fit : zoom;
-  const ox = (area.w - pw * scale) / 2 + pan.x;
-  const oy = (area.h - ph * scale) / 2 + pan.y;
+  const [mx, my] = cheia ? [0, 0] : [96, 64];
+  const fit = Math.max(0.05, Math.min((area.w - mx) / pw, (area.h - my) / ph));
+  const scale = zoom === 'fit' || cheia ? fit : zoom;
+  const ox = (area.w - pw * scale) / 2 + (cheia ? 0 : pan.x);
+  const oy = (area.h - ph * scale) / 2 + (cheia ? 0 : pan.y);
 
   const toClient = (x: number, y: number) => {
     const r = areaRef.current!.getBoundingClientRect();

@@ -804,6 +804,9 @@ button:disabled {
   top: calc(100% + 4px);
   z-index: 50;
   min-width: 220px;
+  /* com muitos itens (ex.: a lista de projetos), o menu rola em vez de passar do fim da janela */
+  max-height: calc(100vh - var(--topbar-h) - 16px);
+  overflow-y: auto;
   padding: 8px;
   background: var(--surface-2);
   border: 1px solid var(--line-2);
@@ -867,6 +870,21 @@ button:disabled {
 }
 .canvas-area.tool-hand {
   cursor: grab;
+}
+/* tela cheia do preview: só o vídeo, no preto, sem a moldura nem os controles de edição */
+.canvas-area:fullscreen {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #000;
+}
+.canvas-area:fullscreen > .dropdown,
+.canvas-area:fullscreen .stage-frame,
+.canvas-area:fullscreen .sel-pivot,
+.canvas-area:fullscreen .sel-box,
+.canvas-area:fullscreen .float-toolbar,
+.canvas-area:fullscreen .snap-guide {
+  display: none;
 }
 .canvas-area.tool-hand .stage {
   cursor: grab;
