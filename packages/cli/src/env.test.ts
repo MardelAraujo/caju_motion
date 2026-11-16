@@ -1,9 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkVoiceKeys, checkVoiceStudio } from './commands/doctor';
-import { loadDotEnv, parseDotEnv } from './env';
+import { loadDotEnv, parseDotEnv, setDotEnvValue } from './env';
 
 describe('.env', () => {
   it('parseDotEnv: comentários, aspas, export, valor com =', () => {
@@ -36,6 +36,25 @@ describe('.env', () => {
       expect(loadDotEnv(dir, env)).toEqual(['B']);
       expect(env).toEqual({ A: 'do-terminal', B: 'do-arquivo' });
       expect(loadDotEnv(path.join(dir, 'nao-existe'), env)).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('setDotEnvValue grava, troca e remove sem mexer no resto do arquivo', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'caju-env-'));
+    try {
+      const file = path.join(dir, '.env');
+      await setDotEnvValue(file, 'ELEVENLABS_API_KEY', 'xi-1');
+      expect(readFileSync(file, 'utf8')).toBe('ELEVENLABS_API_KEY=xi-1\n');
+      writeFileSync(file, '# minhas chaves\r\nOUTRA=1\r\nexport ELEVENLABS_API_KEY=velha\r\nELEVENLABS_API_KEY=dup\r\n');
+      await setDotEnvValue(file, 'ELEVENLABS_API_KEY', 'xi-2');
+      await setDotEnvValue(file, 'OPENAI_API_KEY', 'sk a#b');
+      expect(readFileSync(file, 'utf8')).toBe('# minhas chaves\r\nOUTRA=1\r\nELEVENLABS_API_KEY=xi-2\r\nOPENAI_API_KEY="sk a#b"\r\n');
+      expect(parseDotEnv(readFileSync(file, 'utf8')).OPENAI_API_KEY).toBe('sk a#b');
+      await setDotEnvValue(file, 'ELEVENLABS_API_KEY', null);
+      expect(readFileSync(file, 'utf8')).toBe('# minhas chaves\r\nOUTRA=1\r\nOPENAI_API_KEY="sk a#b"\r\n');
+      await expect(setDotEnvValue(file, 'X', 'a\nB=2')).rejects.toThrow(/quebra de linha/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

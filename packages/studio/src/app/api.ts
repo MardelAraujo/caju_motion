@@ -23,9 +23,28 @@ const json = (method: string, body: unknown): RequestInit => ({
 });
 
 export type VoiceProfile = { id: string; name: string; language?: string | null };
+export type KeyProvider = 'openai' | 'elevenlabs';
+export type VoiceModel = { id: string; label: string; description: string };
+/** Voz de um provedor, com descrição e (ElevenLabs) amostra pronta. */
+export type VoiceInfo = {
+  id: string;
+  name: string;
+  description: string;
+  previewUrl?: string;
+  language?: string;
+  category?: string;
+  /** Só funciona com estes modelos. */
+  models?: string[];
+};
+export type KeyResult = Partial<Record<KeyProvider, { configured: boolean; hint: string | null; warning?: string }>>;
 export type VoiceStatus = {
   defaultProvider: string;
   keys: { openai: boolean; elevenlabs: boolean };
+  /** Fim da chave configurada (ex.: "…a1b2"), nunca a chave. */
+  keyHints?: Record<KeyProvider, string | null>;
+  /** `.env` onde as chaves são gravadas. */
+  envFile?: string;
+  models?: Record<KeyProvider, VoiceModel[]>;
   voicestudio: { ok: true; url: string; engines: string[]; voices: VoiceProfile[] } | { ok: false; url: string; error: string };
 };
 export type VoiceRequest = {
@@ -63,6 +82,19 @@ const projectPost = <T>(id: string, route: string, body: unknown, base: string |
 
 export const api = {
   voiceStatus: () => call<VoiceStatus>('/api/voice'),
+  voices: (provider: string, refresh = false) =>
+    call<{ provider: string; voices: VoiceInfo[] }>(`/api/voice/voices?provider=${encodeURIComponent(provider)}${refresh ? '&refresh=1' : ''}`).then((r) => r.voices),
+  /** Grava (string) ou remove (null) chaves; o servidor testa antes de gravar. */
+  saveVoiceKeys: (keys: Partial<Record<KeyProvider, string | null>>) => call<KeyResult>('/api/voice/keys', json('PUT', keys)),
+  /** Amostra curta da voz (áudio mp3), gerada uma vez e reaproveitada. */
+  async voicePreview(req: { provider: string; voice?: string; model?: string; language?: string }): Promise<Blob> {
+    const res = await fetch('/api/voice/preview', json('POST', req));
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+    }
+    return res.blob();
+  },
   generateVoice: (id: string, req: VoiceRequest, base: string | null) => projectPost<VoiceResult>(id, 'tts', req, base),
   transcribeAsset: (id: string, req: { src: string; language?: string; offsetSec?: number }, base: string | null) =>
     projectPost<TranscribeResult>(id, 'transcribe', req, base),

@@ -22,7 +22,7 @@ const ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 export class ProjectStoreError extends Error {
   constructor(
     message: string,
-    readonly status: 400 | 404 | 409 | 422,
+    readonly status: 400 | 403 | 404 | 409 | 415 | 422,
   ) {
     super(message);
     this.name = 'ProjectStoreError';

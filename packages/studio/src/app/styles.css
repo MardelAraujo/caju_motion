@@ -2222,6 +2222,219 @@ html.render-mode #root {
   align-items: center;
   gap: 4px;
 }
+.voice-error {
+  color: var(--danger);
+}
+.voice-icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.voice-icon-btn:hover {
+  color: var(--accent);
+  border-color: var(--line-2);
+}
+.voice-picker-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.voice-picker-head .voice-icon-btn {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+}
+.voice-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.voice-search svg {
+  position: absolute;
+  left: 10px;
+  color: var(--faint);
+  pointer-events: none;
+}
+.voice-search .text-input {
+  padding-left: 30px;
+}
+.voice-list {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+.voice-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.voice-item:hover {
+  background: var(--surface-2);
+}
+.voice-item.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.voice-item.is-active strong {
+  color: var(--accent);
+}
+.voice-item.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.voice-item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.voice-item-text strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.voice-item-text em {
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 500;
+}
+.voice-item-text small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  overflow: hidden;
+}
+.voice-play {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+}
+.voice-play:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.voice-keys {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+.voice-keys > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.voice-keys > summary::-webkit-details-marker {
+  display: none;
+}
+.voice-keys-state {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.voice-keys-state .is-ok {
+  color: #3ecf8e;
+}
+.voice-keys[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.voice-keys > .voice-key,
+.voice-keys > .panel-hint {
+  margin: 10px;
+}
+.voice-keys code,
+.export-hint code {
+  font-family: var(--font-code);
+  font-size: 11px;
+  word-break: break-all;
+}
+.voice-key {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.voice-key-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 12px;
+}
+.voice-key-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #3ecf8e;
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+.voice-key-missing {
+  color: var(--faint);
+  font-size: 11px;
+}
+.voice-key-remove {
+  margin-left: auto;
+}
+.voice-key-remove:hover {
+  color: var(--danger);
+}
+.voice-key-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.voice-key-row .text-input {
+  flex: 1;
+  min-width: 0;
+}
 
 /* ------------------------------------------------------------------ janela de atalhos */
 .shortcuts-modal {
