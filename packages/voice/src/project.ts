@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { hashFile, probeMedia, runFfmpegOk } from '@caju-motion/media';
 import { ClipSchema, TrackSchema, type Clip, type Project, type Track } from '@caju-motion/schema';
-import { estimateWords, parseSubtitles, toSrt, wordsToCues, type Cue, type CueOptions, type Word } from './captions';
+import { estimateWords, parseSubtitles, round, toSrt, wordsToCues, type Cue, type CueOptions, type Word } from './captions';
 import type { SttProvider } from './stt';
-import type { TtsProvider, TtsRequest } from './tts';
+import type { TtsProvider, TtsRequest, TtsResult } from './tts';
 
 // ---------------------------------------------------------------- arquivos da locução
 
@@ -34,6 +35,10 @@ export type VoiceoverResult = {
   timed: boolean;
   /** Reaproveitado do disco, sem chamar o provedor. */
   cached: boolean;
+  /** Em quantos pedidos ao provedor o texto foi dividido. */
+  parts: number;
+  /** Avisos do provedor (ex.: o alinhamento falhou e os tempos foram estimados). */
+  warnings: string[];
 };
 
 type WordsFile = { version: 1; key: string; provider: string; text: string; audio: string; durationSec: number; timed: boolean; words: Word[] };
@@ -51,8 +56,77 @@ async function writeAtomic(file: string, data: string | Uint8Array): Promise<voi
 }
 
 /**
+ * Divide o roteiro em blocos de até `max` caracteres, quebrando em fim de frase (ou, numa frase
+ * longa demais, entre palavras). Juntos, os blocos refazem o texto (espaços normalizados).
+ */
+export function splitScript(text: string, max: number): string[] {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= max) return clean ? [clean] : [];
+  const sentences = clean.match(/[^.!?…]+(?:[.!?…]+["')\]]?|$)\s*/g)?.map((t) => t.trim()).filter(Boolean) ?? [clean];
+  const pieces: string[] = [];
+  for (const sentence of sentences) {
+    if (sentence.length <= max) {
+      pieces.push(sentence);
+      continue;
+    }
+    let cur = '';
+    for (const word of sentence.split(' ')) {
+      // palavra sozinha maior que o limite (ex.: uma URL enorme): corta no limite
+      for (let w = word; w; w = w.slice(max)) {
+        const part = w.slice(0, max);
+        if (cur && cur.length + 1 + part.length > max) {
+          pieces.push(cur);
+          cur = part;
+        } else cur = cur ? `${cur} ${part}` : part;
+      }
+    }
+    if (cur) pieces.push(cur);
+  }
+  const chunks: string[] = [];
+  for (const p of pieces) {
+    const last = chunks[chunks.length - 1];
+    if (last !== undefined && last.length + 1 + p.length <= max) chunks[chunks.length - 1] = `${last} ${p}`;
+    else chunks.push(p);
+  }
+  return chunks;
+}
+
+/** Arquivos temporários fora do projeto, apagados no fim. */
+async function withTempDir<T>(run: (dir: string) => Promise<T>): Promise<T> {
+  const dir = await mkdtemp(path.join(tmpdir(), 'caju-vo-'));
+  try {
+    return await run(dir);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+/** Junta as partes da locução num arquivo só (FFmpeg, mono 44,1 kHz), no formato da primeira. */
+async function concatAudio(parts: TtsResult[], out: string, signal?: AbortSignal): Promise<number[]> {
+  return withTempDir(async (dir) => {
+    const files: string[] = [];
+    const durations: number[] = [];
+    for (const [i, part] of parts.entries()) {
+      const f = path.join(dir, `part-${i}.${part.format}`);
+      await writeFile(f, part.audio);
+      files.push(f);
+      durations.push((await probeMedia(f)).durationSec ?? 0);
+    }
+    const format = parts[0]!.format;
+    const inputs = files.map((_, i) => `[${i}:a]aresample=44100,aformat=sample_fmts=s16:channel_layouts=mono[a${i}]`).join(';');
+    const graph = `${inputs};${files.map((_, i) => `[a${i}]`).join('')}concat=n=${files.length}:v=0:a=1[out]`;
+    const codec = format === 'mp3' ? ['-c:a', 'libmp3lame', '-b:a', '192k'] : ['-c:a', 'pcm_s16le'];
+    const joined = path.join(dir, `joined.${format}`);
+    await runFfmpegOk(['-y', ...files.flatMap((f) => ['-i', f]), '-filter_complex', graph, '-map', '[out]', ...codec, joined], { signal });
+    await writeAtomic(out, await readFile(joined));
+    return durations;
+  });
+}
+
+/**
  * Gera (ou reaproveita) a locução de `text` no projeto: áudio, tempos por palavra e SRT.
- * A chave de cache é provedor + voz + texto + velocidade/instruções: mudar qualquer um gera de novo.
+ * A chave de cache é provedor + voz + texto + velocidade/instruções/idioma: mudar qualquer um gera de novo.
+ * Texto maior que o limite do provedor (`maxInput`) é dividido em frases, gerado em partes e juntado.
  */
 export async function voiceover(opts: VoiceoverOptions): Promise<VoiceoverResult> {
   const { projectDir, text, provider, force = false, cues: cueOpts, ...req } = opts;
@@ -60,39 +134,72 @@ export async function voiceover(opts: VoiceoverOptions): Promise<VoiceoverResult
   const wordsSrc = `assets/data/${name}.words.json`;
   const srtSrc = `assets/data/${name}.srt`;
   const key = createHash('sha256')
-    .update(JSON.stringify([provider.id, req.voice ?? '', req.speed ?? 1, req.instructions ?? '', req.format ?? '', text]))
+    // o idioma só entra quando informado, para não invalidar as locuções que já existem sem ele
+    .update(
+      JSON.stringify([provider.id, req.voice ?? '', req.speed ?? 1, req.instructions ?? '', req.format ?? '', text, ...(req.language ? [req.language] : [])]),
+    )
     .digest('hex')
     .slice(0, 16);
 
   const wordsFile = path.join(projectDir, wordsSrc);
-  if (!force && existsSync(wordsFile)) {
-    const prev = JSON.parse(await readFile(wordsFile, 'utf8')) as WordsFile;
-    if (prev.key === key && existsSync(path.join(projectDir, prev.audio))) {
-      return {
-        audioSrc: prev.audio,
-        wordsSrc,
-        srtSrc,
-        durationSec: prev.durationSec,
-        words: prev.words,
-        cues: wordsToCues(prev.words, cueOpts),
-        timed: prev.timed,
-        cached: true,
-      };
+  let prev: WordsFile | undefined;
+  if (existsSync(wordsFile)) {
+    try {
+      prev = JSON.parse(await readFile(wordsFile, 'utf8')) as WordsFile;
+    } catch {
+      prev = undefined; // words.json ilegível: gera de novo
     }
   }
+  if (!force && prev && prev.key === key && existsSync(path.join(projectDir, prev.audio))) {
+    return {
+      audioSrc: prev.audio,
+      wordsSrc,
+      srtSrc,
+      durationSec: prev.durationSec,
+      words: prev.words,
+      cues: wordsToCues(prev.words, cueOpts),
+      timed: prev.timed,
+      cached: true,
+      parts: 1,
+      warnings: [],
+    };
+  }
 
-  const res = await provider.synthesize({ ...req, text });
-  const audioSrc = `assets/audio/vo/${name}.${res.format}`;
+  const chunks = provider.maxInput ? splitScript(text, provider.maxInput) : [text];
+  if (!chunks.length) throw new Error('texto da locução vazio');
+  const results: TtsResult[] = [];
+  for (const chunk of chunks) results.push(await provider.synthesize({ ...req, text: chunk }));
+  const warnings = [...new Set(results.map((r) => r.warning).filter((w): w is string => !!w))];
+
+  const audioSrc = `assets/audio/vo/${name}.${results[0]!.format}`;
   const audioFile = path.join(projectDir, audioSrc);
-  await writeAtomic(audioFile, res.audio);
+  const isTimed = (r: TtsResult) => !!r.words?.length && !r.estimated;
+  let words: Word[];
+  if (results.length === 1) {
+    await writeAtomic(audioFile, results[0]!.audio);
+    words = results[0]!.words?.length ? results[0]!.words : estimateWords(text, (await probeMedia(audioFile)).durationSec ?? 0);
+  } else {
+    // tempos de cada parte deslocados pela duração das anteriores
+    const durations = await concatAudio(results, audioFile, req.signal);
+    words = [];
+    let offset = 0;
+    results.forEach((r, i) => {
+      const partWords = r.words?.length ? r.words : estimateWords(chunks[i]!, durations[i]!);
+      words.push(...partWords.map((w) => ({ text: w.text, start: round(w.start + offset), end: round(w.end + offset) })));
+      offset += durations[i]!;
+    });
+  }
+  const timed = results.every(isTimed);
   const durationSec = (await probeMedia(audioFile)).durationSec ?? 0;
-  const timed = !!res.words?.length && !res.estimated;
-  const words = res.words?.length ? res.words : estimateWords(text, durationSec);
   const cues = wordsToCues(words, cueOpts);
   const file: WordsFile = { version: 1, key, provider: provider.id, text, audio: audioSrc, durationSec, timed, words };
   await writeAtomic(wordsFile, JSON.stringify(file, null, 2) + '\n');
   await writeAtomic(path.join(projectDir, srtSrc), toSrt(cues));
-  return { audioSrc, wordsSrc, srtSrc, durationSec, words, cues, timed, cached: false };
+  // trocou de formato (ex.: voz provisória .wav → VoiceStudio .mp3): apaga o áudio antigo desta locução
+  if (prev && prev.audio !== audioSrc && prev.audio.replace(/\.(mp3|wav)$/, '') === `assets/audio/vo/${name}`) {
+    await rm(path.join(projectDir, prev.audio), { force: true });
+  }
+  return { audioSrc, wordsSrc, srtSrc, durationSec, words, cues, timed, cached: false, parts: chunks.length, warnings };
 }
 
 export type TranscriptionOptions = {
@@ -108,7 +215,7 @@ export type TranscriptionOptions = {
   signal?: AbortSignal;
 };
 
-export type TranscriptionResult = Omit<VoiceoverResult, 'audioSrc' | 'timed'> & { text: string; source: string };
+export type TranscriptionResult = Omit<VoiceoverResult, 'audioSrc' | 'timed' | 'parts' | 'warnings'> & { text: string; source: string };
 
 /**
  * Transcreve um áudio/vídeo que já existe (talking-head, podcast, locução gravada) em palavras com

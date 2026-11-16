@@ -1,7 +1,6 @@
-import { alignScript } from './captions';
 import { env, failure, type FetchLike } from './http';
 import { compatibleStt, type SttProvider } from './stt';
-import type { TtsProvider } from './tts';
+import { alignedWords, type TtsProvider } from './tts';
 
 /**
  * VoiceStudio (https://github.com/debpalash/VoiceStudio): estúdio de voz local e gratuito (TTS,
@@ -66,10 +65,11 @@ export function voiceStudioTts(opts: VoiceStudioTtsOptions = {}): TtsProvider {
   const stt = voiceStudioStt(opts);
   return {
     id: `voicestudio:${engine}:${voice}${opts.seed !== undefined ? `:${opts.seed}` : ''}`,
+    maxInput: VOICESTUDIO_MAX_INPUT,
     async synthesize(req) {
       if (req.text.length > VOICESTUDIO_MAX_INPUT) {
         throw new Error(
-          `VoiceStudio: o texto tem ${req.text.length} caracteres (máximo ${VOICESTUDIO_MAX_INPUT}); divida em blocos com --name diferentes`,
+          `VoiceStudio: o texto tem ${req.text.length} caracteres (máximo ${VOICESTUDIO_MAX_INPUT}); o caju tts divide sozinho em frases`,
         );
       }
       const format = req.format ?? 'mp3';
@@ -91,8 +91,7 @@ export function voiceStudioTts(opts: VoiceStudioTtsOptions = {}): TtsProvider {
       if (!res.ok) throw await failure(res, 'VoiceStudio');
       const audio = new Uint8Array(await res.arrayBuffer());
       if (opts.alignWords === false) return { audio, format };
-      const tr = await stt.transcribe({ audio, filename: `speech.${format}`, language: req.language, signal: req.signal });
-      return { audio, format, words: tr.words.length ? alignScript(req.text, tr.words) : undefined };
+      return { audio, format, ...(await alignedWords(stt, req, audio, format)) };
     },
   };
 }

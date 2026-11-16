@@ -86,7 +86,9 @@ export async function ttsCommand(o: TtsOpts): Promise<number> {
     language: o.language,
     force: o.force,
   });
-  const summary = `✓ ${o.id}: ${vo.audioSrc} (${vo.durationSec.toFixed(2)} s${vo.cached ? ', reaproveitado' : ''}); tempos ${vo.timed ? 'do provedor' : 'estimados'}`;
+  const parts = vo.parts > 1 ? `, em ${vo.parts} partes` : '';
+  const summary = `✓ ${o.id}: ${vo.audioSrc} (${vo.durationSec.toFixed(2)} s${parts}${vo.cached ? ', reaproveitado' : ''}); tempos ${vo.timed ? 'do provedor' : 'estimados'}`;
+  for (const w of vo.warnings) console.warn(`! ${w}`);
   if (filesOnly) {
     console.log(summary);
     console.log(`  ${vo.srtSrc} · ${vo.wordsSrc}`);

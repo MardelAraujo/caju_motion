@@ -39,7 +39,18 @@ export type VoiceRequest = {
   startSec?: number;
   captions?: boolean;
 };
-export type VoiceResult = { audioSrc: string; durationSec: number; timed: boolean; cached: boolean; cues: number; captionsAdded?: number; filesOnly: boolean };
+export type VoiceResult = {
+  audioSrc: string;
+  durationSec: number;
+  timed: boolean;
+  cached: boolean;
+  cues: number;
+  captionsAdded?: number;
+  filesOnly: boolean;
+  /** Em quantos pedidos o texto foi dividido (texto maior que o limite do provedor). */
+  parts?: number;
+  warnings?: string[];
+};
 export type TranscribeResult = { wordsSrc: string; srtSrc: string; cues: number; cached: boolean; captionsAdded?: number; filesOnly: boolean };
 
 /** POST que grava no projeto: manda a versão aberta (`x-caju-base`) para o servidor recusar se o disco mudou. */

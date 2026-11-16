@@ -31,13 +31,40 @@ export type TtsResult = {
   words?: Word[];
   /** `words` são estimativas (ex.: voz provisória), não tempos medidos no áudio. */
   estimated?: boolean;
+  /** Algo não saiu como o pedido, mas o áudio é válido (ex.: o alinhamento falhou e os tempos serão estimados). */
+  warning?: string;
 };
 
 export type TtsProvider = {
   /** Identifica provedor + voz + modelo (entra na chave de cache: trocar a voz gera de novo). */
   readonly id: string;
+  /** Máximo de caracteres por pedido. Textos maiores são divididos em frases pelo `voiceover`. */
+  readonly maxInput?: number;
   synthesize(req: TtsRequest): Promise<TtsResult>;
 };
+
+/**
+ * Tempos por palavra transcrevendo o áudio gerado. Se a transcrição falhar (engine de ASR ausente,
+ * sem memória, limite da API), o áudio continua valendo: devolve sem `words` e com o aviso.
+ */
+export async function alignedWords(
+  stt: SttProvider,
+  req: Pick<TtsRequest, 'text' | 'language' | 'signal'>,
+  audio: Uint8Array,
+  format: AudioFormat,
+): Promise<{ words?: Word[]; warning?: string }> {
+  try {
+    const tr = await stt.transcribe({ audio, filename: `speech.${format}`, language: req.language, signal: req.signal });
+    if (!tr.words.length) return { warning: 'a transcrição não devolveu tempos por palavra; tempos das legendas estimados' };
+    return { words: alignScript(req.text, tr.words) };
+  } catch (err) {
+    if ((err as Error)?.name === 'AbortError' || req.signal?.aborted) throw err;
+    return { warning: `alinhamento das palavras falhou (${(err as Error).message}); tempos das legendas estimados` };
+  }
+}
+
+/** Limite de caracteres por pedido de fala na OpenAI. */
+export const OPENAI_TTS_MAX_INPUT = 4096;
 
 // ---------------------------------------------------------------- OpenAI
 
@@ -71,7 +98,11 @@ export function openAiTts(opts: OpenAiTtsOptions = {}): TtsProvider {
   };
   return {
     id: `openai:${model}:${voice}`,
+    maxInput: OPENAI_TTS_MAX_INPUT,
     async synthesize(req) {
+      if (req.text.length > OPENAI_TTS_MAX_INPUT) {
+        throw new Error(`OpenAI TTS: o texto tem ${req.text.length} caracteres (máximo ${OPENAI_TTS_MAX_INPUT})`);
+      }
       const format = req.format ?? 'mp3';
       const apiKey = key();
       const res = await doFetch(`${base}/audio/speech`, {
@@ -91,14 +122,8 @@ export function openAiTts(opts: OpenAiTtsOptions = {}): TtsProvider {
       const audio = new Uint8Array(await res.arrayBuffer());
       if (opts.alignWords === false) return { audio, format };
 
-      const tr = await openAiStt({ apiKey, model: opts.transcriptionModel, baseUrl: base, fetch: doFetch }).transcribe({
-        audio,
-        filename: `speech.${format}`,
-        language: req.language,
-        signal: req.signal,
-      });
-      const timed = tr.words;
-      return { audio, format, words: timed.length ? alignScript(req.text, timed) : undefined };
+      const stt = openAiStt({ apiKey, model: opts.transcriptionModel, baseUrl: base, fetch: doFetch });
+      return { audio, format, ...(await alignedWords(stt, req, audio, format)) };
     },
   };
 }

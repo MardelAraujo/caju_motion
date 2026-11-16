@@ -70,7 +70,7 @@ export function voiceRoutes(): ApiExtension {
       const vo = await providerCall(() =>
         voiceover({ projectDir, name, text, provider, voice, speed: num(b.speed) || undefined, language: str(b.language) }),
       );
-      const result = { audioSrc: vo.audioSrc, durationSec: vo.durationSec, timed: vo.timed, cached: vo.cached, cues: vo.cues.length };
+      const result = { audioSrc: vo.audioSrc, durationSec: vo.durationSec, timed: vo.timed, cached: vo.cached, cues: vo.cues.length, parts: vo.parts, warnings: vo.warnings };
       if (findVideoFile(projectDir)) return c.json({ ...result, filesOnly: true });
       let project = await store.read(id);
       project = addVoiceover(project, vo, { assetId: name, startSec: num(b.startSec) });

@@ -86,7 +86,10 @@ export function VoicePanel() {
       <label className="export-field">
         <span className="prop-label">Roteiro</span>
         <textarea className="text-field" rows={6} value={text} placeholder="Escreva o que a voz vai falar…" onChange={(e) => setText(e.target.value)} />
-        <small className="export-hint">{text.length} caracteres</small>
+        <small className="export-hint">
+          {text.length} caracteres
+          {(provider === 'voicestudio' || provider === 'openai') && text.length > 4096 ? ' · acima de 4096: será gerado em partes e juntado num áudio só' : ''}
+        </small>
       </label>
 
       <label className="export-field">

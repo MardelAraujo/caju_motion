@@ -275,10 +275,12 @@ export async function generateVoiceover(req: VoiceRequest): Promise<boolean> {
   try {
     const r = await writeOnServer((id, base) => api.generateVoice(id, req, base));
     if (!r) return false;
+    const parts = r.parts && r.parts > 1 ? `, em ${r.parts} partes` : '';
+    const warn = r.warnings?.length ? ` Aviso: ${r.warnings.join('; ')}.` : '';
     st().showToast(
-      r.filesOnly
+      (r.filesOnly
         ? `Locução gerada em ${r.audioSrc}. Projeto por código: ligue no video.ts e rode caju build.`
-        : `Locução de ${r.durationSec.toFixed(1)} s${r.cached ? ' (reaproveitada)' : ''}${req.captions === false ? '' : `, ${captionText(r.captionsAdded ?? r.cues, r.cues)}`}.`,
+        : `Locução de ${r.durationSec.toFixed(1)} s${parts}${r.cached ? ' (reaproveitada)' : ''}${req.captions === false ? '' : `, ${captionText(r.captionsAdded ?? r.cues, r.cues)}`}.`) + warn,
     );
     return true;
   } catch (err) {

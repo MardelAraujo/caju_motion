@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -17,6 +17,7 @@ import {
   providerByName,
   placeholderTts,
   readCaptions,
+  splitScript,
   toneWav,
   toSrt,
   transcription,
@@ -219,6 +220,25 @@ describe('VoiceStudio (local)', () => {
     await expect(voiceStudioTts({ fetch: down }).synthesize({ text: 'a'.repeat(5000) })).rejects.toThrow(/máximo 4096/);
   });
 
+  it('alinhamento falhou: o áudio vale e vem com aviso (tempos estimados depois)', async () => {
+    const fake: typeof fetch = async (url) => {
+      if (String(url).endsWith('/audio/speech')) return new Response(new Uint8Array([9]));
+      return Response.json({ error: 'no ASR engine' }, { status: 500 });
+    };
+    const r = await voiceStudioTts({ fetch: fake }).synthesize({ text: 'Olá mundo.' });
+    expect([...r.audio]).toEqual([9]);
+    expect(r.words).toBeUndefined();
+    expect(r.warning).toMatch(/alinhamento das palavras falhou.*HTTP 500/);
+    // cancelar continua cancelando
+    const ctl = new AbortController();
+    const aborting: typeof fetch = async (url) => {
+      if (String(url).endsWith('/audio/speech')) return new Response(new Uint8Array([9]));
+      ctl.abort();
+      throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+    };
+    await expect(voiceStudioTts({ fetch: aborting }).synthesize({ text: 'x', signal: ctl.signal })).rejects.toThrow(/aborted/);
+  });
+
   it('transcrição avulsa e lista de vozes', async () => {
     const fake: typeof fetch = async (url) => {
       if (String(url).endsWith('/audio/voices')) {
@@ -273,6 +293,59 @@ describe('locução no projeto', () => {
     await voiceover({ projectDir: dir, name: 'vo-01', text, provider: counting, voice: 'outra', force: true });
     expect(calls).toBe(4);
     await expect(voiceover({ projectDir: dir, name: '../fora', text, provider: counting })).rejects.toThrow(/nome inválido/);
+  }, 30_000);
+
+  it('splitScript quebra em frases dentro do limite e refaz o texto', () => {
+    const text = 'Primeira frase aqui. Segunda frase um pouco maior! Terceira? ' + 'palavra '.repeat(20).trim() + '.';
+    const chunks = splitScript(text, 40);
+    expect(chunks.every((c) => c.length <= 40)).toBe(true);
+    expect(chunks.join(' ')).toBe(text);
+    expect(chunks[0]).toBe('Primeira frase aqui.');
+    expect(splitScript('curto', 40)).toEqual(['curto']);
+    expect(splitScript('x'.repeat(25), 10)).toEqual(['x'.repeat(10), 'x'.repeat(10), 'x'.repeat(5)]);
+  });
+
+  it('texto acima do limite do provedor: gera em partes, junta o áudio e desloca os tempos', async () => {
+    const dir = tmp();
+    const base = placeholderTts();
+    const seen: string[] = [];
+    const limited: TtsProvider = { id: 'limitado', maxInput: 40, synthesize: (r) => (seen.push(r.text), base.synthesize(r)) };
+    const text = 'Primeira frase da locução. Segunda frase, que continua. Terceira e última.';
+    const vo = await voiceover({ projectDir: dir, name: 'longa', text, provider: limited });
+    expect(vo.parts).toBe(seen.length);
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen.every((t) => t.length <= 40)).toBe(true);
+    const expected = seen.reduce((s, t) => s + Math.max(0.5, Math.round((t.length / 14) * 100) / 100), 0);
+    expect(vo.durationSec).toBeCloseTo(expected, 1);
+    expect(vo.words.map((w) => w.text).join(' ')).toBe(text);
+    expect(vo.words.every((w, i) => i === 0 || w.start >= vo.words[i - 1]!.start)).toBe(true);
+    expect(vo.words[vo.words.length - 1]!.end).toBeGreaterThan(expected * 0.8);
+  }, 30_000);
+
+  it('idioma entra no cache; aviso do provedor chega ao resultado; trocar de formato apaga o áudio antigo', async () => {
+    const dir = tmp();
+    let calls = 0;
+    const base = placeholderTts();
+    const counting: TtsProvider = { id: base.id, synthesize: (r) => (calls++, base.synthesize(r)) };
+    const text = 'Uma frase só.';
+    await voiceover({ projectDir: dir, name: 'vo', text, provider: counting, language: 'pt' });
+    await voiceover({ projectDir: dir, name: 'vo', text, provider: counting, language: 'pt' });
+    expect(calls).toBe(1);
+    await voiceover({ projectDir: dir, name: 'vo', text, provider: counting, language: 'en' });
+    expect(calls).toBe(2);
+
+    const mp3: TtsProvider = {
+      id: 'mp3-falso',
+      // reaproveita o WAV provisório só para ter um áudio válido com outra extensão
+      synthesize: async (r) => ({ ...(await base.synthesize(r)), format: 'mp3', words: undefined, estimated: undefined, warning: 'alinhamento das palavras falhou (x)' }),
+    };
+    // o FFmpeg lê o conteúdo WAV mesmo com extensão .mp3
+    const vo = await voiceover({ projectDir: dir, name: 'vo', text, provider: mp3 });
+    expect(vo.audioSrc).toBe('assets/audio/vo/vo.mp3');
+    expect(vo.timed).toBe(false);
+    expect(vo.warnings).toEqual(['alinhamento das palavras falhou (x)']);
+    expect(existsSync(path.join(dir, 'assets/audio/vo/vo.wav'))).toBe(false);
+    expect(existsSync(path.join(dir, 'assets/audio/vo/vo.mp3'))).toBe(true);
   }, 30_000);
 
   it('addVoiceover + addCaptions geram um projeto válido e substituem o que já existia', () => {
